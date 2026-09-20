@@ -1,18 +1,5 @@
 (function(){
   const KEY='suruCart';
-  const SUPABASE_CDN='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-  let supabasePromise;
-
-  async function getSupabase(){
-    if(!supabasePromise){
-      supabasePromise=import(SUPABASE_CDN).then(({createClient})=>
-        createClient(window.SURU_SUPABASE_URL,window.SURU_SUPABASE_PUBLISHABLE_KEY)
-      );
-    }
-    return supabasePromise;
-  }
-  window.suruSupabase=getSupabase;
-
   function getCart(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
   function saveCart(c){localStorage.setItem(KEY,JSON.stringify(c));updateCount();}
   function add(item){

@@ -114,3 +114,66 @@
 
 .footer-logo-wrap{background:#fff;display:inline-block;padding:12px 14px;border-radius:4px}
 .footer-logo{display:block;max-width:100%;height:auto;filter:none!important}
+
+/* Final responsive/header polish */
+.header-inner{max-width:1320px;min-height:86px;gap:18px}
+.logo-link{width:auto;max-width:245px;height:70px;display:flex;align-items:center}
+.logo-link img{width:auto;max-width:100%;height:70px;object-fit:contain}
+.main-nav{flex:1;justify-content:flex-end;gap:22px;white-space:nowrap}
+.header-cart{flex:0 0 auto;padding:8px 0;font-size:13px}
+.header-cart:hover{color:var(--wine)}
+.menu-btn{flex:0 0 auto}
+.footer-logo-wrap{background:transparent;padding:0;border-radius:0}
+.footer-logo{width:245px;max-height:125px;object-fit:contain}
+.story-script{display:none}
+.story-image img{display:block}
+.newsletter{position:relative}
+.newsletter-copy small{display:block;color:#8a7b77;font-size:9px;margin-top:4px}
+.newsletter-status{grid-column:1/-1;margin:6px 0 0!important;font-size:10px!important;min-height:15px}
+.newsletter-status.success{color:#2f6f48!important}.newsletter-status.error{color:#a13b3b!important}
+.newsletter button:disabled{opacity:.65;cursor:not-allowed}
+@media(max-width:1100px){
+  .logo-link{max-width:210px;height:64px}.logo-link img{height:64px}
+  .main-nav{gap:15px;font-size:11px}.header-inner{gap:12px}
+}
+@media(max-width:900px){
+  .header-inner{min-height:78px;padding:7px 5%;gap:10px}
+  .logo-link{width:auto;max-width:190px;height:60px}.logo-link img{height:60px;width:auto}
+  .menu-btn{display:block;order:3}
+  .header-cart{order:2;margin-left:auto;font-size:12px;padding:8px 6px}
+  .main-nav{order:4;flex:0 0 auto}
+  .main-nav .header-cart{display:none}
+  .hero{min-height:0}
+  .hero-copy{padding:46px 7% 32px}
+  .hero-image{height:auto;aspect-ratio:528/435}
+  .hero-image img{object-position:center center}
+  .story-copy{padding:42px 7% 38px}
+  .story-image{min-height:0;height:auto;background:#e8c9c0}
+  .story-image img{width:100%;height:auto;object-fit:contain}
+  .values{min-height:0}
+  .value-grid{min-height:270px}
+  .newsletter{grid-template-columns:50px 1fr;padding:26px 6%;gap:12px}
+  .newsletter form{grid-column:1/-1;margin-top:5px}
+}
+@media(max-width:600px){
+  .header-inner{padding:7px 5%;min-height:72px}
+  .logo-link{height:54px;max-width:150px}.logo-link img{height:54px}
+  .menu-btn{font-size:23px;padding:5px}
+  .header-cart{font-size:11px;padding:7px 3px}
+  .cart-link span{min-width:19px;height:19px}
+  .hero-copy{padding:38px 6% 26px}
+  .hero h1{font-size:42px}
+  .hero-image{aspect-ratio:528/435}
+  .story-copy{padding:36px 7% 32px}
+  .story h2{font-size:29px}
+  .story-image img{width:100%;height:auto}
+  .value-grid{min-height:245px}
+  .newsletter{grid-template-columns:1fr;padding:28px 6% 30px;text-align:center;gap:9px}
+  .newsletter .mail-icon{margin:auto}
+  .newsletter form{display:flex;flex-wrap:wrap;justify-content:center;gap:0;margin-top:6px}
+  .newsletter input{min-width:0;width:65%;height:43px;border-radius:5px 0 0 5px}
+  .newsletter button{width:35%;height:43px;padding:0 10px;border-radius:0 5px 5px 0}
+  .newsletter-status{width:100%;margin-top:8px!important}
+  .contact{padding:44px 7%}
+  .footer-logo{width:210px;max-height:100px}
+}
