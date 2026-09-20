@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+<defs>
+  <linearGradient id="petal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#a4143e"/>
+    <stop offset="1" stop-color="#741d35"/>
+  </linearGradient>
+  <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#efb4bb"/>
+    <stop offset="1" stop-color="#d77c91"/>
+  </linearGradient>
+</defs>
+<g transform="translate(600 180)" stroke="#b98a39" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+  <path fill="url(#petal)" d="M0 145 C-62 90 -72 25 0 -92 C72 25 62 90 0 145Z"/>
+  <path fill="url(#pink)" d="M-12 132 C-115 126 -178 78 -205 8 C-130 -3 -54 31 0 94Z"/>
+  <path fill="url(#pink)" d="M12 132 C115 126 178 78 205 8 C130 -3 54 31 0 94Z"/>
+  <path fill="none" d="M-35 122 C-145 140 -235 111 -310 42 C-345 10 -376 19 -381 52"/>
+  <path fill="none" d="M35 122 C145 140 235 111 310 42 C345 10 376 19 381 52"/>
+  <path fill="#f6d9d9" d="M0 127 C-26 94 -25 59 0 22 C25 59 26 94 0 127Z"/>
+  <circle cx="0" cy="-125" r="7" fill="#c89a45" stroke="none"/>
+  <circle cx="0" cy="-152" r="5" fill="#c89a45" stroke="none"/>
+</g>
+<text x="600" y="475" text-anchor="middle" fill="#741d35"
+      font-family="Georgia, 'Times New Roman', serif" font-size="180" font-style="italic">Suru</text>
+<g fill="#c89a45">
+  <rect x="245" y="515" width="115" height="4" rx="2"/>
+  <rect x="840" y="515" width="115" height="4" rx="2"/>
+</g>
+<text x="600" y="535" text-anchor="middle" fill="#c89a45"
+      font-family="Georgia, 'Times New Roman', serif" font-size="65" letter-spacing="15">COLLECTION</text>
+<text x="600" y="600" text-anchor="middle" fill="#741d35"
+      font-family="Arial, Helvetica, sans-serif" font-size="25" letter-spacing="12">TRADITION · ELEGANCE · STYLE</text>
+</svg>
