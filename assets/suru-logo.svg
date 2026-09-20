@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="720" viewBox="0 0 1200 360">
+<rect width="1200" height="360" fill="none"/>
+<g stroke="#72282d" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M600 112 C574 88 574 54 600 25 C626 54 626 88 600 112Z"/>
+ <path d="M600 112 C571 108 545 91 537 68 C565 62 588 78 600 112Z"/>
+ <path d="M600 112 C629 108 655 91 663 68 C635 62 612 78 600 112Z"/>
+ <path d="M600 112 C600 101 600 91 600 78"/>
+</g>
+<text x="54" y="235" fill="#72282d" font-family="GFS Baskerville, Baskerville, Georgia, serif" font-size="170" letter-spacing="-7">Suru</text>
+<text x="585" y="224" fill="#72282d" font-family="GFS Baskerville, Baskerville, Georgia, serif" font-size="92" letter-spacing="-3">Collection</text>
+<g fill="#72282d" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600" letter-spacing="11">
+ <text x="54" y="305">TRADITION</text><circle cx="345" cy="297" r="4"/><text x="375" y="305">ELEGANCE</text><circle cx="700" cy="297" r="4"/><text x="730" y="305">STYLE</text>
+</g>
+</svg>
