@@ -1,15 +1,8 @@
-<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Suru Collection | Product</title>
-<meta name="description" content="Suru Collection product details.">
-<link rel="stylesheet" href="styles.css"></head><body>
-<header class="header"><div class="header-inner">
-<a href="index.html" class="logo-link"><img src="assets/suru-logo-new.png" alt="Suru Collection"></a>
-<a class="header-cart" href="order.html">Cart</a>
-</div></header>
-<main class="product-page"><div class="breadcrumbs"><a href="index.html">Home</a><span>›</span><span>Product</span></div>
-<div id="dynamicProduct"><p>Loading product…</p></div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script><script src="product.js"></script>
-</body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Suru Collection | Product</title><meta name="description" content="Suru Collection product details."><link rel="stylesheet" href="styles.css"></head><body>
+<div class="topbar"><span>Elegance for Every Occasion&nbsp; | &nbsp;Gaur, Rautahat, Nepal</span></div>
+<header class="header"><div class="header-inner"><a href="index.html" class="logo-link"><img src="assets/suru-logo-official.png" alt="Suru Collection"></a><button class="menu-btn" aria-label="Toggle navigation" aria-expanded="false">☰</button><nav class="main-nav"><a href="index.html">Home</a><a href="index.html#about">About Us</a><a href="index.html#collection">Our Collection</a><a href="index.html#products">Products</a><a href="index.html#contact">Contact</a><a class="cta" href="index.html#contact">Enquire Now</a></nav><a href="order.html" class="cart-link header-cart" aria-label="Shopping cart">Cart <span id="cartCount">0</span></a></div></header>
+<main class="product-page"><div id="dynamicProduct"><p>Loading product…</p></div></main>
+<footer class="footer"><div class="footer-grid"><div><span class="footer-logo-wrap"><img src="assets/suru-logo-official.png" class="footer-logo" alt="Suru Collection"></span></div><div><h3>Quick Links</h3><a href="index.html">Home</a><a href="index.html#collection">Our Collection</a><a href="index.html#contact">Contact</a></div><div><h3>Our Location</h3><p>Gaur, Rautahat<br>Nepal</p><p>+977 9740381427</p></div></div><div class="copyright">© <span class="year"></span> Suru Collection. All rights reserved.</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="shop.js"></script><script>
+const m=document.querySelector('.menu-btn'),n=document.querySelector('.main-nav');m?.addEventListener('click',()=>{const o=n.classList.toggle('open');m.setAttribute('aria-expanded',o?'true':'false')});n?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>n.classList.remove('open')));document.querySelector('.year').textContent=new Date().getFullYear();
+</script><script src="product.js"></script></body></html>
