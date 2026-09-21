@@ -1924,3 +1924,43 @@ a {
     margin-top: auto;
   }
 }
+
+
+/* Final hero cleanup: cover the baked-in wording in the source photo. */
+.hero {
+  position: relative;
+  isolation: isolate;
+  background-image:
+    linear-gradient(90deg, rgba(35,15,18,.70), rgba(35,15,18,.30), rgba(35,15,18,.08)),
+    url("/assets/hero.jpg");
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  width: 47%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(245,224,204,0), rgba(245,224,204,.74) 28%, rgba(245,224,204,.94) 68%, rgba(245,224,204,.97));
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 700px) {
+  .hero {
+    background-position: 28% center;
+  }
+  .hero::before {
+    width: 62%;
+    background: linear-gradient(90deg, rgba(245,224,204,0), rgba(245,224,204,.78) 32%, rgba(245,224,204,.96) 72%, rgba(245,224,204,.98));
+  }
+}
