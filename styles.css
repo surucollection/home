@@ -2155,3 +2155,99 @@ a {
     background-repeat: no-repeat !important;
   }
 }
+/* =========================================================
+   HERO TEXT VISIBILITY — STRONG READABLE HIGHLIGHT
+   ========================================================= */
+
+.hero-content {
+  position: relative;
+  z-index: 5;
+  max-width: 650px;
+
+  /* subtle dark glass behind the complete text */
+  padding: 28px 32px;
+  border-radius: 14px;
+  background: rgba(55, 20, 25, 0.32);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+
+  /* stronger separation from hero image */
+  text-shadow:
+    0 2px 4px rgba(0,0,0,.75),
+    0 4px 18px rgba(0,0,0,.55);
+}
+
+/* SURU COLLECTION */
+.hero-content .eyebrow {
+  color: #f7d99c !important;
+  font-weight: 800;
+  text-shadow:
+    0 2px 5px rgba(0,0,0,.85),
+    0 3px 12px rgba(0,0,0,.65);
+}
+
+/* More Than Fashion. It's a Feeling. */
+.hero h1 {
+  color: #ffffff !important;
+  font-weight: 600;
+  text-shadow:
+    0 3px 6px rgba(0,0,0,.9),
+    0 5px 22px rgba(0,0,0,.65);
+}
+
+.hero h1 em {
+  color: #ffffff !important;
+  text-shadow:
+    0 3px 6px rgba(0,0,0,.9),
+    0 5px 22px rgba(0,0,0,.65);
+}
+
+/* Description */
+.hero-content > p:not(.eyebrow) {
+  color: #ffffff !important;
+  font-weight: 500;
+  text-shadow:
+    0 2px 5px rgba(0,0,0,.9),
+    0 4px 16px rgba(0,0,0,.6);
+}
+
+/* Button remains clean */
+.hero-button {
+  position: relative;
+  z-index: 6;
+  text-shadow: none !important;
+}
+
+
+/* =========================================================
+   MOBILE — KEEP TEXT CLEAR WITHOUT COVERING TOO MUCH IMAGE
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .hero-content {
+    max-width: 285px;
+    padding: 18px 18px;
+    border-radius: 11px;
+    background: rgba(55, 20, 25, 0.36);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .hero-content .eyebrow {
+    text-shadow:
+      0 2px 5px rgba(0,0,0,.9),
+      0 3px 10px rgba(0,0,0,.7);
+  }
+
+  .hero h1 {
+    text-shadow:
+      0 3px 6px rgba(0,0,0,.95),
+      0 5px 18px rgba(0,0,0,.7);
+  }
+
+  .hero-content > p:not(.eyebrow) {
+    text-shadow:
+      0 2px 5px rgba(0,0,0,.95),
+      0 4px 14px rgba(0,0,0,.7);
+  }
+}
