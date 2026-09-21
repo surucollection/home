@@ -2144,3 +2144,14 @@ a {
     font-size: 12px;
   }
 }
+
+/* FINAL MOBILE HERO: show LEFT side and crop from RIGHT */
+@media (max-width: 760px) {
+  .hero {
+    aspect-ratio: 4 / 5 !important;
+    min-height: 0 !important;
+    background-size: auto 100% !important;
+    background-position: left center !important;
+    background-repeat: no-repeat !important;
+  }
+}
