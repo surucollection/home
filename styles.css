@@ -177,3 +177,364 @@
   .contact{padding:44px 7%}
   .footer-logo{width:210px;max-height:100px}
 }
+
+/* Mobile story image sizing fix
+   Keeps the story/values section balanced on narrow screens while leaving desktop unchanged. */
+@media (max-width: 600px) {
+  .values {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+
+  .story-image {
+    height: 100%;
+    min-height: 100%;
+    align-self: stretch;
+    overflow: hidden;
+  }
+
+  .story-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+}
+
+/* =========================================================
+   SURU COLLECTION — PRODUCT PAGE POLISH v2
+   Final responsive alignment / spacing pass
+   ========================================================= */
+
+/* Product detail layout */
+.product-page{
+  width:100%;
+  max-width:1240px;
+  margin:0 auto;
+  padding:30px 5% 80px;
+}
+
+.breadcrumbs{
+  align-items:center;
+  min-height:18px;
+  margin-bottom:28px;
+}
+
+.product-layout{
+  align-items:start;
+  gap:64px;
+}
+
+.product-info{
+  min-width:0;
+  padding-top:2px;
+}
+
+.product-info h1{
+  max-width:620px;
+  font-size:clamp(34px,3.2vw,46px);
+  line-height:1.08;
+  letter-spacing:-.02em;
+  margin:0 0 16px;
+}
+
+.price{
+  font-size:25px;
+  line-height:1.2;
+  margin:0 0 16px;
+}
+
+.intro{
+  max-width:600px;
+  font-size:14px;
+  line-height:1.7;
+  margin:0 0 22px;
+}
+
+.detail-list{
+  padding:16px 0;
+}
+
+.detail-list li{
+  display:grid;
+  grid-template-columns:minmax(100px,1fr) minmax(130px,1.25fr);
+  align-items:center;
+  gap:24px;
+  padding:8px 0;
+  line-height:1.4;
+}
+
+.detail-list strong{
+  text-align:right;
+  font-weight:600;
+}
+
+/* Purchase controls */
+.buy-box{
+  margin-top:22px;
+  padding:20px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fffdfb;
+}
+
+.buy-box > label{
+  display:block;
+  margin:0 0 16px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--ink);
+}
+
+.buy-box > label .size-select{
+  display:block;
+  width:100%;
+  margin:8px 0 0;
+}
+
+.size-select,
+.qty-input{
+  height:44px;
+  border:1px solid #d9cbc3;
+  border-radius:6px;
+  padding:0 12px;
+  background:#fff;
+  font:14px var(--sans);
+  color:var(--ink);
+  outline:none;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+
+.size-select:focus,
+.qty-input:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(199,146,75,.12);
+}
+
+.qty-row{
+  display:grid;
+  grid-template-columns:1fr 100px;
+  align-items:center;
+  gap:16px;
+  margin:0 0 16px;
+}
+
+.qty-row label{
+  display:block;
+  margin:0;
+  font-size:12px;
+  font-weight:700;
+}
+
+.qty-input{
+  width:100%;
+  text-align:center;
+}
+
+.buy-button{
+  width:100%;
+  height:48px;
+  margin:0;
+  border-radius:6px;
+  font-size:13px;
+  letter-spacing:.1px;
+}
+
+.buy-box .wa-button{
+  width:100%;
+  min-height:46px;
+  margin-top:10px;
+  border-radius:6px;
+  font-size:13px;
+}
+
+/* Gallery */
+.main-photo{
+  aspect-ratio:1/1.08;
+  border-radius:10px;
+}
+
+.thumbs{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+}
+
+.thumb{
+  min-width:0;
+}
+
+/* Tablet */
+@media (max-width:900px){
+  .product-page{
+    max-width:760px;
+    padding:24px 5% 64px;
+  }
+
+  .product-layout{
+    grid-template-columns:1fr;
+    gap:32px;
+  }
+
+  .main-photo{
+    aspect-ratio:1/1.08;
+  }
+
+  .product-info{
+    padding-top:0;
+  }
+
+  .product-info h1{
+    max-width:none;
+    font-size:36px;
+    line-height:1.08;
+  }
+
+  .intro{
+    max-width:none;
+  }
+
+  .buy-box{
+    margin-top:20px;
+  }
+
+  .size-section{
+    margin-top:48px;
+  }
+}
+
+/* Mobile — clean, deliberate vertical rhythm */
+@media (max-width:600px){
+  .product-page{
+    width:100%;
+    max-width:none;
+    padding:18px 5% 54px;
+  }
+
+  .breadcrumbs{
+    gap:7px;
+    margin-bottom:18px;
+    font-size:10px;
+  }
+
+  .product-layout{
+    gap:24px;
+  }
+
+  .main-photo{
+    width:100%;
+    aspect-ratio:1/1.08;
+    border-radius:8px;
+  }
+
+  .thumbs{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:7px;
+    margin-top:8px;
+  }
+
+  .thumb{
+    border-radius:5px;
+    border-width:1.5px;
+  }
+
+  .product-info h1{
+    font-size:clamp(31px,9vw,36px);
+    line-height:1.08;
+    letter-spacing:-.018em;
+    margin:0 0 14px;
+  }
+
+  .price{
+    font-size:24px;
+    margin-bottom:14px;
+  }
+
+  .intro{
+    font-size:13px;
+    line-height:1.65;
+    margin-bottom:18px;
+  }
+
+  .detail-list{
+    padding:13px 0;
+  }
+
+  .detail-list li{
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    padding:8px 0;
+    font-size:12px;
+  }
+
+  .detail-list strong{
+    text-align:right;
+  }
+
+  .buy-box{
+    margin-top:18px;
+    padding:16px;
+    border-radius:8px;
+  }
+
+  .buy-box > label{
+    margin-bottom:14px;
+  }
+
+  .buy-box > label .size-select{
+    margin-top:7px;
+  }
+
+  .size-select,
+  .qty-input{
+    height:44px;
+    font-size:14px;
+  }
+
+  .qty-row{
+    grid-template-columns:1fr 92px;
+    gap:12px;
+    margin-bottom:14px;
+  }
+
+  .buy-button{
+    height:48px;
+    font-size:14px;
+  }
+
+  .buy-box .wa-button{
+    min-height:46px;
+    margin-top:9px;
+    font-size:13px;
+  }
+
+  .size-section{
+    margin-top:42px;
+  }
+
+  .size-section h2{
+    font-size:28px;
+    margin-bottom:16px;
+  }
+}
+
+/* Very small phones */
+@media (max-width:380px){
+  .product-page{
+    padding-left:4.5%;
+    padding-right:4.5%;
+  }
+
+  .product-info h1{
+    font-size:30px;
+  }
+
+  .buy-box{
+    padding:14px;
+  }
+
+  .qty-row{
+    grid-template-columns:1fr 86px;
+  }
+}
