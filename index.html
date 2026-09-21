@@ -672,19 +672,16 @@
         "productGrid"
       );
 
-
     if (!grid) {
-
       return;
-
     }
 
-
+    /*
+      Load each public dataset independently. Images or variant
+      data are optional for rendering the product cards, so a
+      failure in one secondary request must not hide all products.
+    */
     try {
-
-      /*
-        Products
-      */
 
       products =
         await supabaseRequest(
@@ -692,251 +689,12 @@
           "select=id,product_code,name,slug,category,description,price,compare_at_price,moq,fabric,color,pattern,is_active&is_active=eq.true&order=created_at.desc"
         );
 
-
-      /*
-        Images
-      */
-
-      productImages =
-        await supabaseRequest(
-          "product_images",
-          "select=product_id,image_url,alt_text,sort_order,is_main&order=sort_order.asc"
-        );
-
-
-      /*
-        Size / colour / stock variants
-      */
-
-      productVariants =
-        await supabaseRequest(
-          "product_sizes",
-          "select=id,product_id,size,color,stock,is_active&is_active=eq.true&order=size.asc"
-        );
-
-
-      const imageMap = {};
-
-
-      productImages.forEach(
-        function (image) {
-
-          if (
-            !imageMap[
-              image.product_id
-            ]
-          ) {
-
-            imageMap[
-              image.product_id
-            ] = [];
-
-          }
-
-
-          imageMap[
-            image.product_id
-          ].push(image);
-
-        }
-      );
-
-
-      if (
-        !Array.isArray(products) ||
-        products.length === 0
-      ) {
-
-        grid.innerHTML = `
-          <div class="product-loading">
-            No products are currently available.
-          </div>
-        `;
-
-        return;
-
-      }
-
-
-      /*
-        Render product cards.
-      */
-
-      grid.innerHTML =
-        products.map(
-          function (product) {
-
-            const images =
-              imageMap[
-                product.id
-              ] || [];
-
-
-            const mainImage =
-              images.find(
-                function (image) {
-
-                  return image.is_main;
-
-                }
-              ) ||
-              images[0];
-
-
-            const imageUrl =
-              mainImage?.image_url ||
-              "";
-
-
-            return `
-              <article class="product-card">
-
-                <a
-                  class="product-image"
-                  href="/product/?code=${encodeURIComponent(
-                    product.product_code
-                  )}"
-                >
-
-                  ${
-                    imageUrl
-                      ? `
-                        <img
-                          src="${escapeHtml(
-                            imageUrl
-                          )}"
-                          alt="${escapeHtml(
-                            mainImage?.alt_text ||
-                            product.name
-                          )}"
-                          loading="lazy"
-                        >
-                      `
-                      : `
-                        <div class="product-image-placeholder">
-                          Suru Collection
-                        </div>
-                      `
-                  }
-
-                </a>
-
-
-                <div class="product-card-content">
-
-                  ${
-                    product.category
-                      ? `
-                        <div class="product-category">
-                          ${escapeHtml(
-                            product.category
-                          )}
-                        </div>
-                      `
-                      : ""
-                  }
-
-
-                  <h3>
-
-                    <a
-                      href="/product/?code=${encodeURIComponent(
-                        product.product_code
-                      )}"
-                    >
-                      ${escapeHtml(
-                        product.name
-                      )}
-                    </a>
-
-                  </h3>
-
-
-                  <div class="product-price">
-
-                    ${money(
-                      product.price
-                    )}
-
-                    ${
-                      product.compare_at_price
-                        ? `
-                          <span class="compare-price">
-                            ${money(
-                              product.compare_at_price
-                            )}
-                          </span>
-                        `
-                        : ""
-                    }
-
-                  </div>
-
-
-                  <button
-                    type="button"
-                    class="add-cart variant-aware-add"
-                    data-variant-aware="true"
-                    data-code="${escapeHtml(
-                      product.product_code
-                    )}"
-                  >
-                    Add to Cart
-                  </button>
-
-                </div>
-
-              </article>
-            `;
-
-          }
-        ).join("");
-
-
-      /*
-        Attach variant modal to every
-        homepage Add to Cart button.
-      */
-
-      grid
-        .querySelectorAll(
-          ".variant-aware-add"
-        )
-        .forEach(
-          function (button) {
-
-            button.addEventListener(
-              "click",
-              function () {
-
-                openVariantModal(
-                  button.dataset.code
-                );
-
-              }
-            );
-
-          }
-        );
-
-
-      if (
-        window.SuruShop &&
-        typeof window.SuruShop.updateCount ===
-          "function"
-      ) {
-
-        window.SuruShop.updateCount();
-
-      }
-
     } catch (error) {
 
       console.error(
-        "Products loading error:",
+        "Products request failed:",
         error
       );
-
 
       grid.innerHTML = `
         <div class="product-loading">
@@ -945,10 +703,196 @@
         </div>
       `;
 
+      return;
+    }
+
+    if (!Array.isArray(products) || products.length === 0) {
+
+      grid.innerHTML = `
+        <div class="product-loading">
+          No products are currently available.
+        </div>
+      `;
+
+      return;
+    }
+
+    /* Secondary requests are isolated so either one can fail safely. */
+    try {
+
+      productImages =
+        await supabaseRequest(
+          "product_images",
+          "select=product_id,image_url,alt_text,sort_order,is_main&order=sort_order.asc"
+        );
+
+    } catch (error) {
+
+      console.warn(
+        "Product images could not be loaded:",
+        error
+      );
+
+      productImages = [];
+    }
+
+    try {
+
+      productVariants =
+        await supabaseRequest(
+          "product_sizes",
+          "select=id,product_id,size,color,stock,is_active&is_active=eq.true&order=size.asc"
+        );
+
+    } catch (error) {
+
+      console.warn(
+        "Product variants could not be loaded:",
+        error
+      );
+
+      productVariants = [];
+    }
+
+    const imageMap = {};
+
+    productImages.forEach(
+      function (image) {
+
+        if (!imageMap[image.product_id]) {
+          imageMap[image.product_id] = [];
+        }
+
+        imageMap[image.product_id].push(image);
+      }
+    );
+
+    /*
+      Render product cards.
+    */
+    grid.innerHTML =
+      products.map(
+        function (product) {
+
+          const images =
+            imageMap[product.id] || [];
+
+          const mainImage =
+            images.find(
+              function (image) {
+                return image.is_main;
+              }
+            ) || images[0];
+
+          const imageUrl =
+            mainImage?.image_url || "";
+
+          return `
+            <article class="product-card">
+
+              <a
+                class="product-image"
+                href="/product/?code=${encodeURIComponent(
+                  product.product_code
+                )}"
+              >
+
+                ${
+                  imageUrl
+                    ? `
+                      <img
+                        src="${escapeHtml(imageUrl)}"
+                        alt="${escapeHtml(
+                          mainImage?.alt_text || product.name
+                        )}"
+                        loading="lazy"
+                      >
+                    `
+                    : `
+                      <div class="product-image-placeholder">
+                        Suru Collection
+                      </div>
+                    `
+                }
+
+              </a>
+
+              <div class="product-card-content">
+
+                ${
+                  product.category
+                    ? `
+                      <div class="product-category">
+                        ${escapeHtml(product.category)}
+                      </div>
+                    `
+                    : ""
+                }
+
+                <h3>
+                  <a
+                    href="/product/?code=${encodeURIComponent(
+                      product.product_code
+                    )}"
+                  >
+                    ${escapeHtml(product.name)}
+                  </a>
+                </h3>
+
+                <div class="product-price">
+                  ${money(product.price)}
+                  ${
+                    product.compare_at_price
+                      ? `
+                        <span class="compare-price">
+                          ${money(product.compare_at_price)}
+                        </span>
+                      `
+                      : ""
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="add-cart variant-aware-add"
+                  data-variant-aware="true"
+                  data-code="${escapeHtml(product.product_code)}"
+                >
+                  Add to Cart
+                </button>
+
+              </div>
+
+            </article>
+          `;
+        }
+      ).join("");
+
+    /*
+      Attach the variant modal after the cards exist in the DOM.
+    */
+    grid
+      .querySelectorAll(".variant-aware-add")
+      .forEach(
+        function (button) {
+
+          button.addEventListener(
+            "click",
+            function () {
+              openVariantModal(button.dataset.code);
+            }
+          );
+        }
+      );
+
+    if (
+      window.SuruShop &&
+      typeof window.SuruShop.updateCount === "function"
+    ) {
+      window.SuruShop.updateCount();
     }
 
   }
-
 
   /* =========================================================
      OPEN MODAL
