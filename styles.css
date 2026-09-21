@@ -1964,3 +1964,81 @@ a {
     background: linear-gradient(90deg, rgba(245,224,204,0), rgba(245,224,204,.78) 32%, rgba(245,224,204,.96) 72%, rgba(245,224,204,.98));
   }
 }
+
+/* =========================================================
+   FINAL HERO — CLEAN PHOTO + HTML TEXT
+   The hero image contains photography only; all copy is HTML.
+   ========================================================= */
+.hero {
+  min-height: 680px;
+  background-image: url("/assets/hero.jpg");
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.hero::before {
+  display: none !important;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  color: #6f2029;
+  width: min(1200px, calc(100% - 40px));
+  margin: auto;
+  padding: 90px 0;
+}
+
+.hero-content .eyebrow {
+  color: #9a7040;
+}
+
+.hero h1 {
+  color: #6f2029;
+  max-width: 620px;
+}
+
+.hero-content > p:not(.eyebrow) {
+  color: #3d2c2a;
+  max-width: 560px;
+}
+
+.hero-button {
+  background: #762a32;
+  color: #fff;
+}
+
+.hero-button:hover {
+  background: #5f2028;
+}
+
+@media (max-width: 700px) {
+  .hero {
+    min-height: 650px;
+    background-position: 72% center;
+  }
+
+  .hero-content {
+    width: calc(100% - 40px);
+    padding: 62px 0 55px;
+  }
+
+  .hero h1 {
+    max-width: 430px;
+    font-size: clamp(42px, 11vw, 58px);
+    line-height: 1.02;
+  }
+
+  .hero-content > p:not(.eyebrow) {
+    max-width: 370px;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  .hero-button {
+    min-height: 54px;
+    padding: 0 24px;
+  }
+}
