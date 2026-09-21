@@ -717,40 +717,34 @@
       return;
     }
 
-    /* Secondary requests are isolated so either one can fail safely. */
-    try {
+    /*
+      Images and variants are independent of each other. Fetch them
+      in parallel so the homepage does not wait for one request to
+      finish before starting the next one. Product cards only need
+      the main image, while the variant request powers the cart modal.
+    */
+    const secondaryResults = await Promise.allSettled([
+      supabaseRequest(
+        "product_images",
+        "select=product_id,image_url,alt_text,sort_order,is_main&is_main=eq.true&order=sort_order.asc"
+      ),
+      supabaseRequest(
+        "product_sizes",
+        "select=id,product_id,size,color,stock,is_active&is_active=eq.true&order=size.asc"
+      )
+    ]);
 
-      productImages =
-        await supabaseRequest(
-          "product_images",
-          "select=product_id,image_url,alt_text,sort_order,is_main&order=sort_order.asc"
-        );
-
-    } catch (error) {
-
-      console.warn(
-        "Product images could not be loaded:",
-        error
-      );
-
+    if (secondaryResults[0].status === "fulfilled") {
+      productImages = secondaryResults[0].value;
+    } else {
+      console.warn("Product images could not be loaded:", secondaryResults[0].reason);
       productImages = [];
     }
 
-    try {
-
-      productVariants =
-        await supabaseRequest(
-          "product_sizes",
-          "select=id,product_id,size,color,stock,is_active&is_active=eq.true&order=size.asc"
-        );
-
-    } catch (error) {
-
-      console.warn(
-        "Product variants could not be loaded:",
-        error
-      );
-
+    if (secondaryResults[1].status === "fulfilled") {
+      productVariants = secondaryResults[1].value;
+    } else {
+      console.warn("Product variants could not be loaded:", secondaryResults[1].reason);
       productVariants = [];
     }
 
