@@ -1772,7 +1772,7 @@ a {
 .product-gallery-main img {
   width:100%;
   aspect-ratio:4/5;
-  object-fit:contain;
+  object-fit:cover;
 }
 .product-gallery-thumbs {
   display:grid;
@@ -1788,7 +1788,7 @@ a {
   overflow:hidden;
   cursor:pointer;
 }
-.product-gallery-thumbs img { width:100%; aspect-ratio:1; object-fit:contain; }
+.product-gallery-thumbs img { width:100%; aspect-ratio:1; object-fit:cover; }
 .product-info h1 {
   margin:0 0 10px;
   font-family:Georgia,"Times New Roman",serif;
@@ -2385,132 +2385,129 @@ a {
   }
 }
 
+
 /* =========================================================
-   DEFINITIVE PRODUCT DETAIL GALLERY FIX
+   PRODUCT PAGE GALLERY — MATCHES product/product.js
+   The product renderer uses .product-layout, .product-main-image,
+   .product-thumbnails and .product-thumb. Keep this block last
+   so it overrides any older gallery rules safely.
    ========================================================= */
 
-.product-detail .product-gallery,
-.product-page .product-detail .product-gallery {
-  width: 100% !important;
-  min-width: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
+.product-page .product-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: 55px;
+  align-items: start;
+  width: 100%;
 }
 
-.product-detail .product-gallery-main,
-.product-page .product-detail .product-gallery-main {
-  position: relative !important;
-  width: 100% !important;
-  height: auto !important;
-  aspect-ratio: 4 / 5 !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: hidden !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
-  border-radius: 14px !important;
-  background: #f8f3ed !important;
-  box-sizing: border-box !important;
+.product-page .product-layout > * {
+  min-width: 0;
 }
 
-.product-detail .product-gallery-main img,
-.product-page .product-detail .product-gallery-main img {
-  display: block !important;
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  transform: none !important;
-  box-sizing: border-box !important;
+.product-page .product-gallery {
+  width: 100%;
+  min-width: 0;
 }
 
-.product-detail .product-gallery-thumbs,
-.product-page .product-detail .product-gallery-thumbs {
-  width: 100% !important;
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  gap: 10px !important;
-  margin: 10px 0 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
+.product-page .product-main-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #f8f3ed;
+  box-sizing: border-box;
 }
 
-.product-detail .product-gallery-thumbs button,
-.product-page .product-detail .product-gallery-thumbs button {
-  width: 100% !important;
-  height: auto !important;
-  aspect-ratio: 1 / 1 !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  display: block !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 7px !important;
-  background: #f8f3ed !important;
-  box-sizing: border-box !important;
+.product-page .product-main-image img,
+.product-page #productMainImage {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  object-fit: contain;
+  object-position: center center;
+  box-sizing: border-box;
 }
 
-.product-detail .product-gallery-thumbs img,
-.product-page .product-detail .product-gallery-thumbs img {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  transform: none !important;
-  box-sizing: border-box !important;
+.product-page .product-thumbnails {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.product-page .product-thumb {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.product-page .product-thumb.active {
+  border-color: var(--maroon);
+}
+
+.product-page .product-thumb img {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  object-fit: contain;
+  object-position: center center;
+  box-sizing: border-box;
 }
 
 @media (max-width: 900px) {
-  .product-detail .product-gallery-main,
-  .product-page .product-detail .product-gallery-main {
-    aspect-ratio: 4 / 5 !important;
+  .product-page .product-layout {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+}
+
+@media (max-width: 700px) {
+  .product-page .product-main-image {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 12px;
   }
 
-  .product-detail .product-gallery-thumbs,
-  .product-page .product-detail .product-gallery-thumbs {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+  .product-page .product-thumbnails {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 8px;
+  }
+
+  .product-page .product-thumb {
+    border-radius: 6px;
   }
 }
 
 @media (max-width: 480px) {
-  .product-detail .product-gallery-main,
-  .product-page .product-detail .product-gallery-main {
-    aspect-ratio: 4 / 5 !important;
-    border-radius: 12px !important;
-  }
-
-  .product-detail .product-gallery-thumbs,
-  .product-page .product-detail .product-gallery-thumbs {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-    gap: 6px !important;
-    margin-top: 8px !important;
-  }
-
-  .product-detail .product-gallery-thumbs button,
-  .product-page .product-detail .product-gallery-thumbs button {
-    border-radius: 6px !important;
+  .product-page .product-thumbnails {
+    gap: 6px;
   }
 }
