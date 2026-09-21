@@ -23,9 +23,9 @@
       : null;
 
 
-  /* -----------------------------
-     Helpers
-  ----------------------------- */
+  /* =========================================================
+     HELPERS
+     ========================================================= */
 
   function esc(value) {
     return String(value ?? "")
@@ -37,19 +37,31 @@
   }
 
 
+  function normalise(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
+
+
   function money(value) {
     const n = Number(value || 0);
 
-    return "NPR " + n.toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return (
+      "NPR " +
+      n.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    );
   }
 
 
   function getCode() {
     const params =
-      new URLSearchParams(window.location.search);
+      new URLSearchParams(
+        window.location.search
+      );
 
     return (
       params.get("code") ||
@@ -59,16 +71,41 @@
   }
 
 
-  function normalise(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase();
+  function uniqueValues(values) {
+    const result = [];
+
+    values.forEach(function (value) {
+      if (
+        value === null ||
+        value === undefined ||
+        String(value).trim() === ""
+      ) {
+        return;
+      }
+
+      const exists = result.some(
+        function (existing) {
+          return (
+            normalise(existing) ===
+            normalise(value)
+          );
+        }
+      );
+
+      if (!exists) {
+        result.push(
+          String(value).trim()
+        );
+      }
+    });
+
+    return result;
   }
 
 
-  /* -----------------------------
-     Load Product
-  ----------------------------- */
+  /* =========================================================
+     LOAD PRODUCT
+     ========================================================= */
 
   async function loadProduct() {
 
@@ -117,31 +154,32 @@
           pattern,
           is_active
         `)
-        .eq("product_code", code)
-        .eq("is_active", true)
+        .eq(
+          "product_code",
+          code
+        )
+        .eq(
+          "is_active",
+          true
+        )
         .maybeSingle();
 
 
-      if (productError)
+      if (productError) {
         throw productError;
+      }
 
 
       if (!product) {
-
         root.innerHTML = `
           <div class="product-loading-page">
             <h2>Product not found</h2>
             <p>This product is unavailable.</p>
           </div>
         `;
-
         return;
       }
 
-
-      /* -----------------------------
-         Images
-      ----------------------------- */
 
       const {
         data: images,
@@ -154,29 +192,26 @@
           sort_order,
           is_main
         `)
-        .eq("product_id", product.id)
-        .order("sort_order", {
-          ascending: true
-        });
+        .eq(
+          "product_id",
+          product.id
+        )
+        .order(
+          "sort_order",
+          {
+            ascending: true
+          }
+        );
 
 
-      if (imageError)
+      if (imageError) {
         throw imageError;
+      }
 
-
-      const productImages =
-        Array.isArray(images)
-          ? images
-          : [];
-
-
-      /* -----------------------------
-         Variants
-      ----------------------------- */
 
       const {
-        data: sizes,
-        error: sizeError
+        data: variants,
+        error: variantError
       } = await client
         .from("product_sizes")
         .select(`
@@ -194,26 +229,38 @@
           stock,
           is_active
         `)
-        .eq("product_id", product.id)
-        .eq("is_active", true)
-        .order("size");
+        .eq(
+          "product_id",
+          product.id
+        )
+        .eq(
+          "is_active",
+          true
+        )
+        .order(
+          "size",
+          {
+            ascending: true,
+            nullsFirst: true
+          }
+        );
 
 
-      if (sizeError)
-        throw sizeError;
-
-
-      const variants =
-        Array.isArray(sizes)
-          ? sizes
-          : [];
+      if (variantError) {
+        throw variantError;
+      }
 
 
       renderProduct(
         product,
-        productImages,
-        variants
+        Array.isArray(images)
+          ? images
+          : [],
+        Array.isArray(variants)
+          ? variants
+          : []
       );
+
 
     } catch (error) {
 
@@ -222,21 +269,27 @@
         error
       );
 
+
       root.innerHTML = `
         <div class="product-loading-page">
           <h2>Unable to load product</h2>
           <p>
-            ${esc(error?.message || "Please try again.")}
+            ${esc(
+              error?.message ||
+              "Please try again."
+            )}
           </p>
         </div>
       `;
+
     }
+
   }
 
 
-  /* -----------------------------
-     Render Product
-  ----------------------------- */
+  /* =========================================================
+     RENDER PRODUCT
+     ========================================================= */
 
   function renderProduct(
     product,
@@ -245,9 +298,11 @@
   ) {
 
     const mainImage =
-      images.find(function (img) {
-        return img.is_main;
-      }) ||
+      images.find(
+        function (img) {
+          return img.is_main;
+        }
+      ) ||
       images[0];
 
 
@@ -256,92 +311,74 @@
       "";
 
 
-    /*
-      Detect colours.
-
-      If colour is NULL on old rows,
-      use the product's main colour.
-    */
-
-    const colours = [];
-
-    variants.forEach(function (variant) {
-
-      const colour =
-        variant.color ||
-        product.color ||
-        "";
-
-      if (
-        colour &&
-        !colours.some(
-          c => normalise(c) === normalise(colour)
+    const colours =
+      uniqueValues(
+        variants.map(
+          function (variant) {
+            return variant.color;
+          }
         )
-      ) {
-        colours.push(colour);
-      }
-    });
+      );
 
 
     /*
-      If there are no variant rows but
-      product has a colour, treat it as
-      a fixed colour.
+      If variants don't contain colours but
+      product.color exists, treat it as a
+      fixed colour.
     */
 
-    if (
-      colours.length === 0 &&
+    const productColour =
       product.color
-    ) {
-      colours.push(product.color);
-    }
+        ? String(product.color).trim()
+        : "";
 
 
-    /*
-      Determine whether size selection
-      is actually required.
-    */
+    const effectiveColours =
+      colours.length
+        ? colours
+        : productColour
+          ? [productColour]
+          : [];
 
-    const sizeValues = [];
 
-    variants.forEach(function (variant) {
-
-      if (!variant.size) return;
-
-      if (
-        !sizeValues.some(
-          s =>
-            normalise(s) ===
-            normalise(variant.size)
+    const sizes =
+      uniqueValues(
+        variants.map(
+          function (variant) {
+            return variant.size;
+          }
         )
-      ) {
-        sizeValues.push(variant.size);
-      }
-    });
+      );
 
 
     const hasSizes =
-      sizeValues.length > 0;
+      sizes.length > 0;
 
 
     const hasMultipleColours =
       colours.length > 1;
 
 
-    /*
-      Single fixed colour should not force
-      the customer to choose a colour.
-    */
+    const hasAnyColour =
+      effectiveColours.length > 0;
+
 
     const showColourSelector =
       hasMultipleColours;
+
+
+    const noVariantProduct =
+      !hasSizes &&
+      !hasAnyColour;
 
 
     root.innerHTML = `
 
       <div class="product-layout">
 
-        <!-- IMAGE AREA -->
+        <!-- =================================================
+             GALLERY
+             ================================================= -->
 
         <div class="product-gallery">
 
@@ -361,31 +398,37 @@
               ? `
                 <div class="product-thumbnails">
 
-                  ${images.map(function (img, index) {
+                  ${images.map(
+                    function (img, index) {
 
-                    return `
-                      <button
-                        type="button"
-                        class="product-thumb ${
-                          index === 0
-                            ? "active"
-                            : ""
-                        }"
-                        data-image="${esc(img.image_url)}"
-                      >
-
-                        <img
-                          src="${esc(img.image_url)}"
-                          alt="${esc(
-                            img.alt_text ||
-                            product.name
+                      return `
+                        <button
+                          type="button"
+                          class="product-thumb ${
+                            index === 0
+                              ? "active"
+                              : ""
+                          }"
+                          data-image="${esc(
+                            img.image_url
                           )}"
                         >
 
-                      </button>
-                    `;
+                          <img
+                            src="${esc(
+                              img.image_url
+                            )}"
+                            alt="${esc(
+                              img.alt_text ||
+                              product.name
+                            )}"
+                          >
 
-                  }).join("")}
+                        </button>
+                      `;
+
+                    }
+                  ).join("")}
 
                 </div>
               `
@@ -395,12 +438,16 @@
         </div>
 
 
-        <!-- PRODUCT INFORMATION -->
+        <!-- =================================================
+             PRODUCT INFORMATION
+             ================================================= -->
 
         <div class="product-info">
 
           <div class="product-code">
-            ${esc(product.product_code)}
+            ${esc(
+              product.product_code
+            )}
           </div>
 
 
@@ -432,7 +479,9 @@
             product.description
               ? `
                 <div class="product-description">
-                  ${esc(product.description)}
+                  ${esc(
+                    product.description
+                  )}
                 </div>
               `
               : ""
@@ -446,7 +495,9 @@
                 ? `
                   <div>
                     <strong>Fabric:</strong>
-                    ${esc(product.fabric)}
+                    ${esc(
+                      product.fabric
+                    )}
                   </div>
                 `
                 : ""
@@ -454,12 +505,14 @@
 
 
             ${
-              product.color &&
+              productColour &&
               !showColourSelector
                 ? `
                   <div>
                     <strong>Colour:</strong>
-                    ${esc(product.color)}
+                    ${esc(
+                      productColour
+                    )}
                   </div>
                 `
                 : ""
@@ -471,22 +524,34 @@
                 ? `
                   <div>
                     <strong>Pattern:</strong>
-                    ${esc(product.pattern)}
+                    ${esc(
+                      product.pattern
+                    )}
                   </div>
                 `
                 : ""
             }
 
 
-            <div>
-              <strong>MOQ:</strong>
-              ${esc(product.moq)}
-            </div>
+            ${
+              product.moq != null
+                ? `
+                  <div>
+                    <strong>MOQ:</strong>
+                    ${esc(
+                      product.moq
+                    )}
+                  </div>
+                `
+                : ""
+            }
 
           </div>
 
 
-          <!-- COLOUR -->
+          <!-- =================================================
+               COLOUR SELECTOR
+               ================================================= -->
 
           ${
             showColourSelector
@@ -499,6 +564,7 @@
                     Colour
                   </label>
 
+
                   <select
                     id="productColor"
                     class="variant-select"
@@ -508,42 +574,54 @@
                       Select Colour
                     </option>
 
-                    ${colours.map(function (colour) {
+                    ${effectiveColours.map(
+                      function (colour) {
 
-                      const colourHasStock =
-                        variants.some(function (v) {
+                        const available =
+                          variants.some(
+                            function (variant) {
 
-                          return (
-                            normalise(
-                              v.color ||
-                              product.color
-                            ) ===
-                            normalise(colour)
-                            &&
-                            Number(v.stock) > 0
+                              return (
+                                normalise(
+                                  variant.color
+                                ) ===
+                                normalise(
+                                  colour
+                                ) &&
+                                Number(
+                                  variant.stock || 0
+                                ) > 0
+                              );
+
+                            }
                           );
 
-                        });
 
-                      return `
-                        <option
-                          value="${esc(colour)}"
-                          ${
-                            !colourHasStock
-                              ? "disabled"
-                              : ""
-                          }
-                        >
-                          ${esc(colour)}
-                          ${
-                            !colourHasStock
-                              ? " — Out of Stock"
-                              : ""
-                          }
-                        </option>
-                      `;
+                        return `
+                          <option
+                            value="${esc(
+                              colour
+                            )}"
+                            ${
+                              !available
+                                ? "disabled"
+                                : ""
+                            }
+                          >
 
-                    }).join("")}
+                            ${esc(colour)}
+
+                            ${
+                              !available
+                                ? " — Out of Stock"
+                                : ""
+                            }
+
+                          </option>
+                        `;
+
+                      }
+                    ).join("")}
 
                   </select>
 
@@ -553,7 +631,35 @@
           }
 
 
-          <!-- SIZE -->
+          <!-- =================================================
+               FIXED COLOUR
+               ================================================= -->
+
+          ${
+            !showColourSelector &&
+            effectiveColours.length === 1
+              ? `
+                <div class="variant-group">
+
+                  <label>
+                    Colour
+                  </label>
+
+                  <div class="variant-fixed">
+                    ${esc(
+                      effectiveColours[0]
+                    )}
+                  </div>
+
+                </div>
+              `
+              : ""
+          }
+
+
+          <!-- =================================================
+               SIZE SELECTOR
+               ================================================= -->
 
           ${
             hasSizes
@@ -566,6 +672,7 @@
                     Size
                   </label>
 
+
                   <select
                     id="productSize"
                     class="variant-select"
@@ -574,18 +681,6 @@
                     <option value="">
                       Select Size
                     </option>
-
-                    ${sizeValues.map(function (size) {
-
-                      return `
-                        <option
-                          value="${esc(size)}"
-                        >
-                          ${esc(size)}
-                        </option>
-                      `;
-
-                    }).join("")}
 
                   </select>
 
@@ -603,18 +698,14 @@
                 <div
                   id="variantStock"
                   class="variant-stock"
-                >
-                  ${
-                    variants.length
-                      ? "Select your options"
-                      : ""
-                  }
-                </div>
+                ></div>
               `
           }
 
 
-          <!-- QUANTITY -->
+          <!-- =================================================
+               QUANTITY
+               ================================================= -->
 
           <div class="quantity-group">
 
@@ -623,6 +714,7 @@
             >
               Quantity
             </label>
+
 
             <input
               id="productQty"
@@ -633,6 +725,7 @@
               inputmode="numeric"
             >
 
+
             <small
               id="quantityHelp"
             ></small>
@@ -640,7 +733,9 @@
           </div>
 
 
-          <!-- ACTIONS -->
+          <!-- =================================================
+               ACTIONS
+               ================================================= -->
 
           <div class="product-actions">
 
@@ -672,19 +767,18 @@
           ></div>
 
 
-          <!-- SIZE GUIDE -->
-
           ${
             hasSizes
               ? renderSizeGuide(
-                  variants,
-                  product
+                  variants
                 )
               : ""
           }
 
 
-          <!-- WHATSAPP -->
+          <!-- =================================================
+               WHATSAPP
+               ================================================= -->
 
           <div class="product-enquiry">
 
@@ -716,34 +810,52 @@
     setupVariantLogic(
       product,
       variants,
-      showColourSelector,
-      hasSizes
+      {
+        hasSizes:
+          hasSizes,
+
+        hasColours:
+          hasAnyColour,
+
+        multipleColours:
+          hasMultipleColours,
+
+        noVariantProduct:
+          noVariantProduct
+      }
     );
+
   }
 
 
-  /* -----------------------------
-     Size Guide
-  ----------------------------- */
+  /* =========================================================
+     SIZE GUIDE
+     ========================================================= */
 
   function renderSizeGuide(
-    variants,
-    product
+    variants
   ) {
 
     const guideVariants =
-      variants.filter(function (v) {
+      variants.filter(
+        function (variant) {
 
-        return (
-          v.size &&
-          v.size.toLowerCase() !== "one size"
-        );
+          return (
+            variant.size &&
+            normalise(
+              variant.size
+            ) !== "one size"
+          );
 
-      });
+        }
+      );
 
 
-    if (!guideVariants.length)
+    if (!guideVariants.length) {
+
       return "";
+
+    }
 
 
     return `
@@ -754,6 +866,7 @@
           Size Guide
         </h3>
 
+
         <div class="size-table-wrap">
 
           <table class="size-table">
@@ -761,7 +874,6 @@
             <thead>
 
               <tr>
-
                 <th>Size</th>
                 <th>Bust</th>
                 <th>Waist</th>
@@ -769,64 +881,98 @@
                 <th>Shoulder</th>
                 <th>Top Length</th>
                 <th>Stock</th>
-
               </tr>
 
             </thead>
 
+
             <tbody>
 
-              ${guideVariants.map(function (v) {
+              ${guideVariants.map(
+                function (variant) {
 
-                return `
-                  <tr>
+                  return `
 
-                    <td>
-                      ${esc(v.size)}
-                    </td>
+                    <tr>
 
-                    <td>
-                      ${v.bust != null
-                        ? esc(v.bust)
-                        : "—"}
-                    </td>
+                      <td>
+                        ${esc(
+                          variant.size
+                        )}
+                      </td>
 
-                    <td>
-                      ${v.waist != null
-                        ? esc(v.waist)
-                        : "—"}
-                    </td>
 
-                    <td>
-                      ${v.hip != null
-                        ? esc(v.hip)
-                        : "—"}
-                    </td>
+                      <td>
+                        ${
+                          variant.bust != null
+                            ? esc(
+                                variant.bust
+                              )
+                            : "—"
+                        }
+                      </td>
 
-                    <td>
-                      ${v.shoulder != null
-                        ? esc(v.shoulder)
-                        : "—"}
-                    </td>
 
-                    <td>
-                      ${v.top_length != null
-                        ? esc(v.top_length)
-                        : "—"}
-                    </td>
+                      <td>
+                        ${
+                          variant.waist != null
+                            ? esc(
+                                variant.waist
+                              )
+                            : "—"
+                        }
+                      </td>
 
-                    <td>
-                      ${
-                        Number(v.stock) > 0
-                          ? "Available"
-                          : "Out of Stock"
-                      }
-                    </td>
 
-                  </tr>
-                `;
+                      <td>
+                        ${
+                          variant.hip != null
+                            ? esc(
+                                variant.hip
+                              )
+                            : "—"
+                        }
+                      </td>
 
-              }).join("")}
+
+                      <td>
+                        ${
+                          variant.shoulder != null
+                            ? esc(
+                                variant.shoulder
+                              )
+                            : "—"
+                        }
+                      </td>
+
+
+                      <td>
+                        ${
+                          variant.top_length != null
+                            ? esc(
+                                variant.top_length
+                              )
+                            : "—"
+                        }
+                      </td>
+
+
+                      <td>
+                        ${
+                          Number(
+                            variant.stock || 0
+                          ) > 0
+                            ? "Available"
+                            : "Out of Stock"
+                        }
+                      </td>
+
+                    </tr>
+
+                  `;
+
+                }
+              ).join("")}
 
             </tbody>
 
@@ -837,12 +983,13 @@
       </div>
 
     `;
+
   }
 
 
-  /* -----------------------------
-     Gallery
-  ----------------------------- */
+  /* =========================================================
+     GALLERY
+     ========================================================= */
 
   function setupGallery() {
 
@@ -853,58 +1000,67 @@
 
 
     document
-      .querySelectorAll(".product-thumb")
-      .forEach(function (button) {
+      .querySelectorAll(
+        ".product-thumb"
+      )
+      .forEach(
+        function (button) {
 
-        button.addEventListener(
-          "click",
-          function () {
+          button.addEventListener(
+            "click",
+            function () {
 
-            const image =
-              button.dataset.image;
-
-            if (mainImage && image) {
-
-              mainImage.src =
-                image;
-
-            }
+              const image =
+                button.dataset.image;
 
 
-            document
-              .querySelectorAll(
-                ".product-thumb"
-              )
-              .forEach(function (item) {
+              if (
+                mainImage &&
+                image
+              ) {
 
-                item.classList.remove(
-                  "active"
+                mainImage.src =
+                  image;
+
+              }
+
+
+              document
+                .querySelectorAll(
+                  ".product-thumb"
+                )
+                .forEach(
+                  function (item) {
+
+                    item.classList.remove(
+                      "active"
+                    );
+
+                  }
                 );
 
-              });
 
+              button.classList.add(
+                "active"
+              );
 
-            button.classList.add(
-              "active"
-            );
+            }
+          );
 
-          }
-        );
-
-      });
+        }
+      );
 
   }
 
 
-  /* -----------------------------
-     Variant Logic
-  ----------------------------- */
+  /* =========================================================
+     VARIANT LOGIC
+     ========================================================= */
 
   function setupVariantLogic(
     product,
     variants,
-    showColourSelector,
-    hasSizes
+    config
   ) {
 
     const colourSelect =
@@ -912,35 +1068,42 @@
         "productColor"
       );
 
+
     const sizeSelect =
       document.getElementById(
         "productSize"
       );
+
 
     const qtyInput =
       document.getElementById(
         "productQty"
       );
 
+
     const stockText =
       document.getElementById(
         "variantStock"
       );
+
 
     const quantityHelp =
       document.getElementById(
         "quantityHelp"
       );
 
+
     const message =
       document.getElementById(
         "variantMessage"
       );
 
+
     const addButton =
       document.getElementById(
         "addToCartButton"
       );
+
 
     const buyNowButton =
       document.getElementById(
@@ -948,261 +1111,680 @@
       );
 
 
-    function getSelectedVariant() {
+    /*
+      Get selected colour.
+    */
+
+    function getSelectedColour() {
+
+      if (colourSelect) {
+
+        return (
+          colourSelect.value ||
+          ""
+        );
+
+      }
+
+
+      return (
+        product.color ||
+        ""
+      );
+
+    }
+
+
+    /*
+      Find exact variant.
+
+      First:
+      size + colour
+
+      Then:
+      size + fixed product colour
+
+      Then:
+      colour only
+
+      Finally:
+      no size + no colour.
+    */
+
+    function findVariant() {
 
       const selectedColour =
-        colourSelect
-          ? colourSelect.value
-          : null;
+        getSelectedColour();
 
 
       const selectedSize =
         sizeSelect
           ? sizeSelect.value
-          : null;
+          : "";
 
 
       /*
-        If there are actual variant rows,
-        always use them for stock.
+        No variants in database.
       */
 
-      if (variants.length) {
-
-        let matches =
-          variants.filter(function (v) {
-
-            const variantColour =
-              v.color ||
-              product.color ||
-              "";
-
-
-            const colourMatches =
-              !showColourSelector ||
-              !selectedColour ||
-              normalise(
-                variantColour
-              ) ===
-              normalise(
-                selectedColour
-              );
-
-
-            const sizeMatches =
-              !hasSizes ||
-              !selectedSize ||
-              normalise(
-                v.size
-              ) ===
-              normalise(
-                selectedSize
-              );
-
-
-            return (
-              colourMatches &&
-              sizeMatches
-            );
-
-          });
-
-
-        /*
-          Do not allow a selection that
-          isn't actually complete.
-        */
-
-        if (
-          showColourSelector &&
-          !selectedColour
-        ) {
-          return null;
-        }
-
-
-        if (
-          hasSizes &&
-          !selectedSize
-        ) {
-          return null;
-        }
-
-
-        /*
-          If both colour and size exist,
-          there should be exactly one row.
-        */
-
-        if (matches.length === 1)
-          return matches[0];
-
-
-        /*
-          Legacy data may have duplicate
-          colour-less rows. If only one
-          remains, use it.
-        */
-
-        if (matches.length > 0)
-          return matches[0];
-
+      if (
+        variants.length === 0
+      ) {
 
         return null;
+
       }
 
 
       /*
-        No variant rows:
-        allow a simple product only.
+        PRODUCT WITH NO SIZE
+        AND NO COLOUR
       */
 
       if (
-        !showColourSelector &&
-        !hasSizes
+        !config.hasSizes &&
+        !config.hasColours
       ) {
 
-        return {
-          id: null,
-          size: null,
-          color: product.color || null,
-          stock: 999999
-        };
+        return (
+          variants.find(
+            function (variant) {
+
+              return (
+                !variant.size &&
+                !variant.color
+              );
+
+            }
+          ) ||
+          null
+        );
+
+      }
+
+
+      /*
+        SIZE + COLOUR
+      */
+
+      if (
+        config.hasSizes &&
+        config.hasColours
+      ) {
+
+        if (
+          !selectedSize
+        ) {
+
+          return null;
+
+        }
+
+
+        if (
+          !selectedColour
+        ) {
+
+          return null;
+
+        }
+
+
+        /*
+          Exact colour match.
+        */
+
+        let match =
+          variants.find(
+            function (variant) {
+
+              return (
+                normalise(
+                  variant.size
+                ) ===
+                normalise(
+                  selectedSize
+                ) &&
+
+                normalise(
+                  variant.color
+                ) ===
+                normalise(
+                  selectedColour
+                )
+              );
+
+            }
+          );
+
+
+        if (match) {
+
+          return match;
+
+        }
+
+
+        /*
+          Legacy fixed-colour
+          product_sizes rows where
+          color is NULL.
+        */
+
+        match =
+          variants.find(
+            function (variant) {
+
+              return (
+                normalise(
+                  variant.size
+                ) ===
+                normalise(
+                  selectedSize
+                ) &&
+
+                !normalise(
+                  variant.color
+                ) &&
+
+                normalise(
+                  product.color
+                ) ===
+                normalise(
+                  selectedColour
+                )
+              );
+
+            }
+          );
+
+
+        return match || null;
+
+      }
+
+
+      /*
+        SIZE ONLY
+      */
+
+      if (
+        config.hasSizes &&
+        !config.hasColours
+      ) {
+
+        if (
+          !selectedSize
+        ) {
+
+          return null;
+
+        }
+
+
+        return (
+          variants.find(
+            function (variant) {
+
+              return (
+                normalise(
+                  variant.size
+                ) ===
+                normalise(
+                  selectedSize
+                )
+              );
+
+            }
+          ) ||
+          null
+        );
+
+      }
+
+
+      /*
+        COLOUR ONLY
+      */
+
+      if (
+        !config.hasSizes &&
+        config.hasColours
+      ) {
+
+        if (
+          !selectedColour
+        ) {
+
+          return null;
+
+        }
+
+
+        return (
+          variants.find(
+            function (variant) {
+
+              return (
+                !variant.size &&
+
+                (
+                  normalise(
+                    variant.color
+                  ) ===
+                  normalise(
+                    selectedColour
+                  ) ||
+
+                  (
+                    !variant.color &&
+                    normalise(
+                      product.color
+                    ) ===
+                    normalise(
+                      selectedColour
+                    )
+                  )
+                )
+              );
+
+            }
+          ) ||
+          null
+        );
 
       }
 
 
       return null;
+
     }
 
 
-    function updateVariantUI() {
+    /*
+      Populate size options based
+      on selected colour.
+    */
+
+    function populateSizes() {
+
+      if (!sizeSelect) {
+
+        return;
+
+      }
+
+
+      const selectedColour =
+        getSelectedColour();
+
+
+      const previousSize =
+        sizeSelect.value;
+
+
+      const sizes =
+        uniqueValues(
+          variants.map(
+            function (variant) {
+              return variant.size;
+            }
+          )
+        );
+
+
+      sizeSelect.innerHTML =
+        `
+          <option value="">
+            Select Size
+          </option>
+        `;
+
+
+      sizes.forEach(
+        function (size) {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+
+          option.value =
+            size;
+
+
+          option.textContent =
+            size;
+
+
+          /*
+            Find variants for this size.
+          */
+
+          const matching =
+            variants.filter(
+              function (variant) {
+
+                if (
+                  normalise(
+                    variant.size
+                  ) !==
+                  normalise(
+                    size
+                  )
+                ) {
+
+                  return false;
+
+                }
+
+
+                /*
+                  If colour selected,
+                  only use that colour.
+                */
+
+                if (
+                  selectedColour
+                ) {
+
+                  const variantColour =
+                    normalise(
+                      variant.color
+                    );
+
+
+                  const selected =
+                    normalise(
+                      selectedColour
+                    );
+
+
+                  /*
+                    Exact colour.
+                  */
+
+                  if (
+                    variantColour ===
+                    selected
+                  ) {
+
+                    return true;
+
+                  }
+
+
+                  /*
+                    Legacy fixed colour.
+                  */
+
+                  if (
+                    !variantColour &&
+                    normalise(
+                      product.color
+                    ) ===
+                    selected
+                  ) {
+
+                    return true;
+
+                  }
+
+
+                  return false;
+
+                }
+
+
+                return true;
+
+              }
+            );
+
+
+          const available =
+            matching.some(
+              function (variant) {
+
+                return (
+                  Number(
+                    variant.stock || 0
+                  ) > 0
+                );
+
+              }
+            );
+
+
+          if (!available) {
+
+            option.disabled =
+              true;
+
+
+            option.textContent =
+              size +
+              " — Out of Stock";
+
+          }
+
+
+          sizeSelect.appendChild(
+            option
+          );
+
+        }
+      );
+
+
+      /*
+        Restore previous size if
+        still available.
+      */
+
+      if (
+        previousSize &&
+        Array.from(
+          sizeSelect.options
+        ).some(
+          function (option) {
+
+            return (
+              option.value ===
+                previousSize &&
+              !option.disabled
+            );
+
+          }
+        )
+      ) {
+
+        sizeSelect.value =
+          previousSize;
+
+      }
+
+    }
+
+
+    /*
+      Update stock and buttons.
+    */
+
+    function updateUI() {
 
       const variant =
-        getSelectedVariant();
+        findVariant();
 
 
       if (!variant) {
 
-        if (stockText) {
+        if (
+          config.noVariantProduct
+        ) {
+
+          if (
+            variants.length === 0
+          ) {
+
+            stockText.textContent =
+              "Stock information is not configured.";
+
+            stockText.classList.add(
+              "out-of-stock"
+            );
+
+          } else {
+
+            stockText.textContent =
+              "Please select an available option.";
+
+            stockText.classList.remove(
+              "out-of-stock"
+            );
+
+          }
+
+        } else {
 
           stockText.textContent =
-            "Please select available options.";
+            "Please select an available option.";
 
-        }
-
-
-        if (quantityHelp) {
-
-          quantityHelp.textContent =
-            "";
-
-        }
-
-
-        if (addButton)
-          addButton.disabled = true;
-
-
-        if (buyNowButton)
-          buyNowButton.disabled = true;
-
-
-        return;
-      }
-
-
-      const stock =
-        Number(variant.stock || 0);
-
-
-      if (stock <= 0) {
-
-        if (stockText) {
-
-          stockText.textContent =
-            "Out of stock";
-
-          stockText.classList.add(
+          stockText.classList.remove(
             "out-of-stock"
           );
 
         }
 
 
-        if (quantityHelp) {
-
-          quantityHelp.textContent =
-            "This variant is currently out of stock.";
-
-        }
+        quantityHelp.textContent =
+          "";
 
 
-        if (addButton)
-          addButton.disabled = true;
+        addButton.disabled =
+          true;
 
 
-        if (buyNowButton)
-          buyNowButton.disabled = true;
+        buyNowButton.disabled =
+          true;
+
+
+        qtyInput.removeAttribute(
+          "max"
+        );
 
 
         return;
+
       }
 
 
-      if (stockText) {
+      const stock =
+        Number(
+          variant.stock || 0
+        );
+
+
+      if (
+        stock <= 0
+      ) {
 
         stockText.textContent =
-          stock +
-          " item(s) available";
+          "Out of Stock";
 
-        stockText.classList.remove(
+
+        stockText.classList.add(
           "out-of-stock"
         );
 
-      }
-
-
-      if (quantityHelp) {
 
         quantityHelp.textContent =
-          "Maximum available: " +
-          stock;
-
-      }
+          "This option is currently out of stock.";
 
 
-      if (qtyInput) {
+        addButton.disabled =
+          true;
 
-        qtyInput.max =
-          String(stock);
 
-        let qty =
-          parseInt(
-            qtyInput.value,
-            10
-          ) || 1;
+        buyNowButton.disabled =
+          true;
 
-        if (qty < 1)
-          qty = 1;
-
-        if (qty > stock)
-          qty = stock;
 
         qtyInput.value =
-          String(qty);
+          "1";
+
+
+        qtyInput.max =
+          "0";
+
+
+        return;
 
       }
 
 
-      if (addButton)
-        addButton.disabled = false;
+      stockText.textContent =
+        stock +
+        " item(s) available";
 
 
-      if (buyNowButton)
-        buyNowButton.disabled = false;
+      stockText.classList.remove(
+        "out-of-stock"
+      );
+
+
+      quantityHelp.textContent =
+        "Maximum available: " +
+        stock;
+
+
+      qtyInput.max =
+        String(stock);
+
+
+      let quantity =
+        parseInt(
+          qtyInput.value,
+          10
+        ) || 1;
+
+
+      if (
+        quantity < 1
+      ) {
+
+        quantity = 1;
+
+      }
+
+
+      if (
+        quantity > stock
+      ) {
+
+        quantity = stock;
+
+      }
+
+
+      qtyInput.value =
+        String(quantity);
+
+
+      addButton.disabled =
+        false;
+
+
+      buyNowButton.disabled =
+        false;
+
     }
 
+
+    /*
+      Colour changed.
+    */
 
     if (colourSelect) {
 
@@ -1211,9 +1793,16 @@
         function () {
 
           /*
-            When colour changes, reset
-            size because the available sizes
-            may be different.
+            Rebuild sizes for the
+            selected colour.
+          */
+
+          populateSizes();
+
+
+          /*
+            Do not retain a size that
+            belongs to another colour.
           */
 
           if (sizeSelect) {
@@ -1224,62 +1813,7 @@
           }
 
 
-          updateVariantUI();
-
-        }
-      );
-
-    }
-
-
-    if (sizeSelect) {
-
-      sizeSelect.addEventListener(
-        "change",
-        updateVariantUI
-      );
-
-    }
-
-
-    if (qtyInput) {
-
-      qtyInput.addEventListener(
-        "input",
-        function () {
-
-          const variant =
-            getSelectedVariant();
-
-          if (!variant)
-            return;
-
-
-          const stock =
-            Number(variant.stock || 0);
-
-
-          let qty =
-            parseInt(
-              qtyInput.value,
-              10
-            ) || 1;
-
-
-          if (qty < 1)
-            qty = 1;
-
-
-          if (
-            stock > 0 &&
-            qty > stock
-          ) {
-            qty = stock;
-          }
-
-
-          qtyInput.value =
-            String(qty);
+          updateUI();
 
         }
       );
@@ -1288,7 +1822,87 @@
 
 
     /*
-      ADD TO CART
+      Size changed.
+    */
+
+    if (sizeSelect) {
+
+      populateSizes();
+
+
+      sizeSelect.addEventListener(
+        "change",
+        updateUI
+      );
+
+    }
+
+
+    /*
+      Quantity changed.
+    */
+
+    if (qtyInput) {
+
+      qtyInput.addEventListener(
+        "input",
+        function () {
+
+          const variant =
+            findVariant();
+
+
+          if (!variant) {
+
+            return;
+
+          }
+
+
+          const stock =
+            Number(
+              variant.stock || 0
+            );
+
+
+          let quantity =
+            parseInt(
+              qtyInput.value,
+              10
+            ) || 1;
+
+
+          if (
+            quantity < 1
+          ) {
+
+            quantity = 1;
+
+          }
+
+
+          if (
+            stock > 0 &&
+            quantity > stock
+          ) {
+
+            quantity =
+              stock;
+
+          }
+
+
+          qtyInput.value =
+            String(quantity);
+
+        }
+      );
+
+    }
+
+
+    /*
+      Add to Cart.
     */
 
     if (addButton) {
@@ -1298,7 +1912,7 @@
         function () {
 
           const variant =
-            getSelectedVariant();
+            findVariant();
 
 
           if (!variant) {
@@ -1309,23 +1923,29 @@
             );
 
             return;
+
           }
 
 
           const stock =
-            Number(variant.stock || 0);
+            Number(
+              variant.stock || 0
+            );
 
 
-          let qty =
-            parseInt(
-              qtyInput?.value,
-              10
-            ) || 1;
+          const quantity =
+            Math.max(
+              1,
+              parseInt(
+                qtyInput.value,
+                10
+              ) || 1
+            );
 
 
           if (
             stock <= 0 ||
-            qty > stock
+            quantity > stock
           ) {
 
             showMessage(
@@ -1334,6 +1954,7 @@
             );
 
             return;
+
           }
 
 
@@ -1349,10 +1970,17 @@
             );
 
             return;
+
           }
 
 
-          const success =
+          const mainImage =
+            document.getElementById(
+              "productMainImage"
+            );
+
+
+          const saved =
             window.SuruShop.addToCart({
 
               code:
@@ -1362,12 +1990,12 @@
                 product.name,
 
               price:
-                Number(product.price || 0),
+                Number(
+                  product.price || 0
+                ),
 
               image:
-                document.getElementById(
-                  "productMainImage"
-                )?.src ||
+                mainImage?.src ||
                 "",
 
               size:
@@ -1380,12 +2008,14 @@
                 null,
 
               qty:
-                qty
+                quantity
 
             });
 
 
-          if (success !== false) {
+          if (
+            saved !== false
+          ) {
 
             showMessage(
               "Added to cart successfully.",
@@ -1408,7 +2038,7 @@
 
 
     /*
-      BUY NOW
+      Buy Now.
     */
 
     if (buyNowButton) {
@@ -1418,7 +2048,7 @@
         function () {
 
           const variant =
-            getSelectedVariant();
+            findVariant();
 
 
           if (!variant) {
@@ -1429,23 +2059,29 @@
             );
 
             return;
+
           }
 
 
           const stock =
-            Number(variant.stock || 0);
+            Number(
+              variant.stock || 0
+            );
 
 
-          let qty =
-            parseInt(
-              qtyInput?.value,
-              10
-            ) || 1;
+          const quantity =
+            Math.max(
+              1,
+              parseInt(
+                qtyInput.value,
+                10
+              ) || 1
+            );
 
 
           if (
             stock <= 0 ||
-            qty > stock
+            quantity > stock
           ) {
 
             showMessage(
@@ -1454,6 +2090,7 @@
             );
 
             return;
+
           }
 
 
@@ -1469,10 +2106,17 @@
             );
 
             return;
+
           }
 
 
-          const success =
+          const mainImage =
+            document.getElementById(
+              "productMainImage"
+            );
+
+
+          const saved =
             window.SuruShop.addToCart({
 
               code:
@@ -1482,12 +2126,12 @@
                 product.name,
 
               price:
-                Number(product.price || 0),
+                Number(
+                  product.price || 0
+                ),
 
               image:
-                document.getElementById(
-                  "productMainImage"
-                )?.src ||
+                mainImage?.src ||
                 "",
 
               size:
@@ -1500,24 +2144,31 @@
                 null,
 
               qty:
-                qty
+                quantity
 
             });
 
 
-          if (success !== false) {
-
-            window.location.href =
-              "../order.html";
-
-          } else {
+          if (
+            saved === false
+          ) {
 
             showMessage(
               "Unable to save your cart. Please try again.",
               true
             );
 
+            return;
+
           }
+
+
+          /*
+            Go directly to checkout.
+          */
+
+          window.location.href =
+            "../order.html";
 
         }
       );
@@ -1525,16 +2176,27 @@
     }
 
 
-    updateVariantUI();
+    /*
+      Initial state.
+    */
 
+    updateUI();
+
+
+    /* =======================================================
+       MESSAGE
+       ======================================================= */
 
     function showMessage(
       text,
-      error
+      isError
     ) {
 
-      if (!message)
+      if (!message) {
+
         return;
+
+      }
 
 
       message.textContent =
@@ -1543,7 +2205,7 @@
 
       message.classList.toggle(
         "error",
-        !!error
+        !!isError
       );
 
 
@@ -1552,25 +2214,31 @@
       );
 
 
-      window.setTimeout(
-        function () {
-
-          message.classList.remove(
-            "visible"
-          );
-
-        },
-        3000
+      clearTimeout(
+        window.__suruProductMessageTimer
       );
+
+
+      window.__suruProductMessageTimer =
+        setTimeout(
+          function () {
+
+            message.classList.remove(
+              "visible"
+            );
+
+          },
+          3000
+        );
 
     }
 
   }
 
 
-  /* -----------------------------
-     Start
-  ----------------------------- */
+  /* =========================================================
+     START
+     ========================================================= */
 
   loadProduct();
 
