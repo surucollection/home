@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Product | Suru Collection</title><meta id="metaDescription" name="description" content="Suru Collection product.">
+<link rel="stylesheet" href="styles.css"></head><body>
+<div class="topbar"><span>Elegance for Every Occasion&nbsp; | &nbsp;Gaur, Rautahat, Nepal</span><span class="top-social">Follow Us&nbsp;&nbsp; f&nbsp;&nbsp; ◎&nbsp;&nbsp; ♪&nbsp;&nbsp; ▶</span></div>
+<header class="header"><div class="header-inner">
+<a href="index.html" class="logo-link"><img src="assets/suru-logo-official.png" alt="Suru Collection"></a>
+<button class="menu-btn" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+<nav class="main-nav"><a href="index.html">Home</a><a href="index.html#about">About Us</a><a href="index.html#collection">Our Collection</a><a href="index.html#products">Products</a><a href="index.html#contact">Contact</a><a class="cta" href="index.html#contact">Enquire Now</a></nav>
+<a href="order.html" class="cart-link header-cart" aria-label="Shopping cart">Cart <span id="cartCount">0</span></a>
+</div></header>
+<main class="product-page" id="productRoot"><div class="product-loading-page">Loading product…</div></main>
+<footer class="footer"><div class="footer-grid"><div><span class="footer-logo-wrap"><img src="assets/suru-logo-official.png" class="footer-logo" alt="Suru Collection"></span></div><div><h3>Quick Links</h3><a href="index.html">Home</a><a href="index.html#about">About Us</a><a href="index.html#products">Products</a><a href="index.html#contact">Contact</a></div><div><h3>Our Location</h3><p>Gaur, Rautahat<br>Nepal</p><p>+977 9740381427</p></div><div><h3>Follow Us</h3><p>Facebook&nbsp;&nbsp; Instagram&nbsp;&nbsp; TikTok</p></div></div><div class="copyright">© <span class="year"></span> Suru Collection. All rights reserved.</div></footer>
+<script>
+const menuBtn=document.querySelector('.menu-btn'),mainNav=document.querySelector('.main-nav');menuBtn?.addEventListener('click',()=>{const open=mainNav.classList.toggle('open');menuBtn.setAttribute('aria-expanded',open?'true':'false')});mainNav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{mainNav.classList.remove('open');menuBtn?.setAttribute('aria-expanded','false')}));document.querySelector('.year').textContent=new Date().getFullYear();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="shop.js"></script>
+<script>
+(function(){
+ const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]||c));
+ const money=v=>'NPR '+Number(v||0).toLocaleString('en-IN');
+ const code=new URLSearchParams(location.search).get('code');
+ const root=document.getElementById('productRoot');
+ if(!code){root.innerHTML='<div class="product-not-found"><h1>Product not found</h1><p>Please return to the collection and choose a product.</p><a class="hero-btn" href="index.html#products">Browse Products →</a></div>';return;}
+ (async()=>{
+   const client=window.supabase.createClient(window.SURU_SUPABASE_URL,window.SURU_SUPABASE_KEY);
+   const [{data:p,error:pe},{data:sizes,error:se}]=await Promise.all([
+     client.from('products').select('id,product_code,name,slug,category,description,price,moq,fabric,color,pattern,is_active,product_images(image_url,alt_text,sort_order,is_main)').eq('product_code',code).eq('is_active',true).maybeSingle(),
+     client.from('product_sizes').select('size,bust,waist,hip,shoulder,top_length,bottom_length,dupatta_length,unit,stock,is_active').eq('product_id',new URLSearchParams(location.search).get('id')||'00000000-0000-0000-0000-000000000000').eq('is_active',true).order('created_at')
+   ]);
+   // If size lookup by id was not possible before product load, fetch sizes now.
+   let sizeRows=sizes||[];
+   if(p){ const sr=await client.from('product_sizes').select('size,bust,waist,hip,shoulder,top_length,bottom_length,dupatta_length,unit,stock,is_active').eq('product_id',p.id).eq('is_active',true).order('created_at'); sizeRows=sr.data||[]; }
+   if(pe||!p){root.innerHTML='<div class="product-not-found"><h1>Product unavailable</h1><p>We could not load this product right now.</p><a class="hero-btn" href="index.html#products">Back to Products →</a></div>';return;}
+   const imgs=(p.product_images||[]).sort((a,b)=>(a.sort_order??0)-(b.sort_order??0));
+   const main=imgs.find(x=>x.is_main)?.image_url||imgs[0]?.image_url||'';
+   const alt=imgs.find(x=>x.is_main)?.alt_text||p.name;
+   document.title=`${p.name} | Suru Collection`;
+   document.getElementById('metaDescription').content=p.description||`${p.name} from Suru Collection.`;
+   const availableSizes=sizeRows.filter(x=>Number(x.stock)>0);
+   const sizeOptions=sizeRows.length?sizeRows.map(x=>`<option value="${esc(x.size)}" ${Number(x.stock)<=0?'disabled':''}>${esc(x.size)}${Number(x.stock)<=0?' — Out of stock':''}</option>`).join(''):'<option value="">One size / contact us</option>';
+   const detail=[['Fabric',p.fabric],['Color',p.color],['Pattern',p.pattern],['MOQ',p.moq]] .filter(x=>x[1]!==null&&x[1]!==undefined&&x[1]!=='');
+   const imageHtml=main?`<img id="mainProductImage" src="${esc(main)}" alt="${esc(alt)}" onerror="this.style.display='none';this.parentElement.classList.add('image-error')">`:'<div class="image-unavailable">Product image unavailable</div>';
+   const thumbs=imgs.map((x,i)=>`<button type="button" class="thumb ${i===0?'selected':''}" data-src="${esc(x.image_url)}" aria-label="View image ${i+1}"><img src="${esc(x.image_url)}" alt="${esc(x.alt_text||p.name+' image '+(i+1))}" loading="lazy" onerror="this.style.visibility='hidden'"></button>`).join('');
+   const waText=encodeURIComponent(`Hello Suru Collection, I am interested in ${p.product_code} - ${p.name}. Please share availability and ordering details.`);
+   root.innerHTML=`<div class="breadcrumbs"><a href="index.html">Home</a><span>›</span><a href="index.html#products">${esc(p.category||'Products')}</a><span>›</span><b>${esc(p.product_code)}</b></div>
+   <section class="product-layout"><div class="gallery"><div class="main-photo">${imageHtml}</div>${imgs.length?`<div class="thumbs">${thumbs}</div>`:''}</div>
+   <div class="product-info"><p class="eyebrow">${esc(p.category||'SURU COLLECTION')}</p><h1>${esc(p.name)}</h1><div class="price">${money(p.price)}</div><p class="intro">${esc(p.description||'A thoughtfully selected piece from Suru Collection, designed for elegant occasions and effortless traditional style.')}</p>
+   <ul class="detail-list">${detail.map(x=>`<li><span>${esc(x[0])}</span><strong>${esc(x[1])}</strong></li>`).join('')}</ul>
+   <div class="buy-box">${sizeRows.length?`<label for="size">Select Size</label><select id="size" class="size-select"><option value="">Choose size</option>${sizeOptions}</select>`:''}<div class="qty-row"><label for="qty">Quantity</label><input id="qty" class="qty-input" type="number" min="1" value="1"></div>
+   <button type="button" class="buy-button" data-code="${esc(p.product_code)}" data-name="${esc(p.name)}" data-price="${Number(p.price||0)}" data-image="${esc(main)}">Add to Cart</button></div>
+   <a class="wa-button" href="https://wa.me/9779740381427?text=${waText}" target="_blank" rel="noopener">Enquire on WhatsApp <span>→</span></a><p class="small-note">Prices are in Nepalese Rupees. Availability is subject to stock.</p></div></section>
+   ${sizeRows.length?`<section class="size-section"><p class="eyebrow">SIZE GUIDE</p><h2>Measurements</h2><div class="table-wrap"><table><thead><tr><th>Size</th><th>Bust</th><th>Waist</th><th>Hip</th><th>Shoulder</th><th>Top Length</th><th>Bottom Length</th><th>Dupatta</th><th>Stock</th></tr></thead><tbody>${sizeRows.map(s=>`<tr><th>${esc(s.size)}</th><td>${s.bust??'—'} ${s.unit||''}</td><td>${s.waist??'—'} ${s.unit||''}</td><td>${s.hip??'—'} ${s.unit||''}</td><td>${s.shoulder??'—'} ${s.unit||''}</td><td>${s.top_length??'—'} ${s.unit||''}</td><td>${s.bottom_length??'—'} ${s.unit||''}</td><td>${s.dupatta_length??'—'} ${s.unit||''}</td><td>${Number(s.stock)>0?'Available':'Out of stock'}</td></tr>`).join('')}</tbody></table></div></section>`:''}`;
+   root.querySelectorAll('.thumb').forEach(b=>b.addEventListener('click',()=>{const m=root.querySelector('#mainProductImage');if(m){m.src=b.dataset.src;m.style.display='block';m.parentElement.classList.remove('image-error')}root.querySelectorAll('.thumb').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}));
+ })();
+})();
+</script></body></html>
