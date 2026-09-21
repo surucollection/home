@@ -301,13 +301,16 @@
       SHOP THE COLLECTION
     </p>
 
+
     <h2>
       Featured Pieces
     </h2>
 
+
     <div class="ornament">
       ⌁◇⌁
     </div>
+
 
     <p>
       Explore selected pieces from Suru Collection.
@@ -673,10 +676,21 @@
 
 
 <!-- =====================================================
-     CONFIG
+     SUPABASE CONFIG
+     
+     Embedded directly so the homepage does not depend
+     on another JavaScript file for configuration.
 ===================================================== -->
 
-<script src="supabase-config.js"></script>
+<script>
+
+window.SURU_SUPABASE_URL =
+  "https://vkycraymxhkqxgpcpdzw.supabase.co";
+
+window.SURU_SUPABASE_KEY =
+  "sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC";
+
+</script>
 
 
 <!-- =====================================================
@@ -839,6 +853,12 @@
       query;
 
 
+    console.log(
+      "Suru Collection API request:",
+      url
+    );
+
+
     const response =
       await fetch(
         url,
@@ -847,8 +867,10 @@
 
           headers: {
             "apikey": apiKey,
+
             "Authorization":
               "Bearer " + apiKey,
+
             "Content-Type":
               "application/json"
           },
@@ -863,10 +885,12 @@
       let message =
         "Supabase request failed.";
 
+
       try {
 
         const errorData =
           await response.json();
+
 
         if (
           errorData &&
@@ -876,6 +900,22 @@
           message =
             errorData.message;
 
+        } else if (
+          errorData &&
+          errorData.error
+        ) {
+
+          message =
+            errorData.error;
+
+        } else if (
+          errorData &&
+          errorData.hint
+        ) {
+
+          message =
+            errorData.hint;
+
         }
 
       } catch (_) {}
@@ -883,7 +923,7 @@
 
       throw new Error(
         message +
-        " (" +
+        " (HTTP " +
         response.status +
         ")"
       );
@@ -916,12 +956,12 @@
     try {
 
       console.log(
-        "Suru Collection: loading products through REST API..."
+        "Suru Collection: loading products..."
       );
 
 
       /* -------------------------------------------------
-         Get active products
+         PRODUCT QUERY
       ------------------------------------------------- */
 
       const productQuery =
@@ -955,9 +995,13 @@
       ) {
 
         grid.innerHTML = `
+
           <div class="product-loading">
+
             New collection coming soon.
+
           </div>
+
         `;
 
         return;
@@ -966,7 +1010,7 @@
 
 
       /* -------------------------------------------------
-         Product IDs
+         PRODUCT IDS
       ------------------------------------------------- */
 
       const productIds =
@@ -983,25 +1027,31 @@
 
 
       /* -------------------------------------------------
-         Get product images
+         PRODUCT IMAGES
       ------------------------------------------------- */
 
       if (
         productIds.length
       ) {
 
+        /*
+          PostgREST IN syntax:
+
+          product_id=in.(id1,id2,id3)
+        */
+
         const encodedIds =
           "(" +
           productIds
             .map(
               function (id) {
-                return '"' +
-                  String(id)
-                    .replace(
-                      /"/g,
-                      '\\"'
-                    ) +
-                  '"';
+
+                return String(id)
+                  .replace(
+                    /"/g,
+                    ""
+                  );
+
               }
             )
             .join(",") +
@@ -1042,9 +1092,10 @@
             imageError
           );
 
+
           /*
-             Products should still display even if
-             an image query fails.
+            Products will still appear even if
+            the image request fails.
           */
 
           images = [];
@@ -1055,7 +1106,7 @@
 
 
       /* -------------------------------------------------
-         Group images by product
+         GROUP IMAGES BY PRODUCT
       ------------------------------------------------- */
 
       const imagesByProduct = {};
@@ -1086,7 +1137,7 @@
 
 
       /* -------------------------------------------------
-         Render products
+         RENDER PRODUCTS
       ------------------------------------------------- */
 
       grid.innerHTML =
@@ -1261,7 +1312,7 @@
 
 
       /* -------------------------------------------------
-         Update cart count
+         UPDATE CART COUNT
       ------------------------------------------------- */
 
       if (
@@ -1275,6 +1326,11 @@
       }
 
 
+      console.log(
+        "Suru Collection: products rendered successfully."
+      );
+
+
     } catch (error) {
 
       console.error(
@@ -1283,12 +1339,34 @@
       );
 
 
+      /*
+        IMPORTANT:
+
+        Show the actual error temporarily so that if
+        Private Browsing still has a problem, we can
+        identify exactly what is failing.
+      */
+
+      const errorMessage =
+        error &&
+        error.message
+          ? error.message
+          : "Unknown error";
+
+
       grid.innerHTML = `
 
         <div class="product-loading">
 
           Products are temporarily unavailable.
-          Please refresh the page and try again.
+
+          <br><br>
+
+          <small>
+            Error: ${escapeHtml(
+              errorMessage
+            )}
+          </small>
 
         </div>
 
@@ -1381,7 +1459,9 @@
           button.textContent;
 
 
-        button.disabled = true;
+        button.disabled =
+          true;
+
 
         button.textContent =
           "Subscribing…";
@@ -1399,10 +1479,6 @@
 
 
         try {
-
-          /*
-             First check whether the email already exists.
-          */
 
           const existingQuery =
             "select=id,email&email=eq." +
@@ -1425,11 +1501,6 @@
 
           } catch (_) {
 
-            /*
-               If duplicate checking is blocked by
-               RLS, continue with the insert.
-            */
-
             existing = [];
 
           }
@@ -1450,23 +1521,15 @@
 
             }
 
+
             emailInput.value =
               "";
 
-            button.disabled =
-              false;
-
-            button.textContent =
-              originalText;
 
             return;
 
           }
 
-
-          /*
-             Insert subscriber
-          */
 
           const baseUrl =
             String(
@@ -1501,18 +1564,27 @@
                 method: "POST",
 
                 headers: {
-                  "apikey": apiKey,
+
+                  "apikey":
+                    apiKey,
+
                   "Authorization":
                     "Bearer " + apiKey,
+
                   "Content-Type":
                     "application/json",
+
                   "Prefer":
                     "return=minimal"
+
                 },
 
-                body: JSON.stringify({
-                  email: email
-                })
+                body:
+                  JSON.stringify({
+                    email:
+                      email
+                  })
+
               }
             );
 
@@ -1522,10 +1594,12 @@
             let errorMessage =
               "Unable to subscribe.";
 
+
             try {
 
               const data =
                 await response.json();
+
 
               if (
                 data &&
@@ -1539,12 +1613,6 @@
 
             } catch (_) {}
 
-
-            /*
-               A duplicate email may be rejected by
-               a UNIQUE constraint. Show a friendly
-               message instead of a technical error.
-            */
 
             if (
               response.status === 409 ||
@@ -1563,8 +1631,10 @@
 
               }
 
+
               emailInput.value =
                 "";
+
 
               return;
 
@@ -1615,6 +1685,7 @@
 
           button.disabled =
             false;
+
 
           button.textContent =
             originalText;
