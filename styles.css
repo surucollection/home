@@ -2231,10 +2231,7 @@ a {
   }
 }
 /* =========================================================
-   FINAL PRODUCT DETAIL IMAGE ALIGNMENT
-   ---------------------------------------------------------
-   Only affects individual product pages
-   Does NOT affect homepage/product cards/hero
+   FINAL PRODUCT DETAIL GALLERY — UNIFORM & NO CROPPING
    ========================================================= */
 
 .product-detail .product-gallery {
@@ -2242,47 +2239,71 @@ a {
   min-width: 0;
 }
 
-/* Main image container */
+/* Main image frame */
 .product-detail .product-gallery-main {
   width: 100%;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 14px;
-  background: var(--cream-dark);
+  background: #f8f3ed;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-/* Main image */
+/* ALL main product images get identical positioning */
 .product-detail .product-gallery-main img {
   display: block;
+
   width: 100%;
   height: 100%;
-  max-width: none;
+
+  max-width: 100%;
+  max-height: 100%;
+
   margin: 0;
-  object-fit: cover;
+  padding: 0;
+
+  object-fit: contain;
   object-position: center center;
+
+  box-sizing: border-box;
 }
 
-/* Thumbnail area */
+
+/* =========================================================
+   THUMBNAILS
+   ========================================================= */
+
 .product-detail .product-gallery-thumbs {
   width: 100%;
+
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+
   gap: 10px;
-  margin-top: 10px;
-  align-items: stretch;
+
+  margin: 10px 0 0;
+  padding: 0;
+
+  box-sizing: border-box;
 }
 
-/* Thumbnail buttons */
 .product-detail .product-gallery-thumbs button {
   width: 100%;
   aspect-ratio: 1 / 1;
+
   min-width: 0;
   min-height: 0;
 
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   padding: 0;
   margin: 0;
@@ -2290,25 +2311,33 @@ a {
   border: 1px solid var(--line);
   border-radius: 7px;
 
-  background: #fff;
+  background: #f8f3ed;
+
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* Thumbnail images */
 .product-detail .product-gallery-thumbs img {
   display: block;
+
   width: 100%;
   height: 100%;
-  max-width: none;
-  margin: 0;
 
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  object-fit: contain;
   object-position: center center;
+
+  box-sizing: border-box;
 }
 
 
 /* =========================================================
-   MOBILE PRODUCT DETAIL GALLERY
+   TABLET
    ========================================================= */
 
 @media (max-width: 900px) {
@@ -2330,14 +2359,17 @@ a {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 8px;
   }
-
 }
 
 
-/* Smaller phones */
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
 @media (max-width: 480px) {
 
   .product-detail .product-gallery-main {
+    width: 100%;
     aspect-ratio: 4 / 5;
     border-radius: 12px;
   }
@@ -2351,5 +2383,4 @@ a {
   .product-detail .product-gallery-thumbs button {
     border-radius: 6px;
   }
-
 }
