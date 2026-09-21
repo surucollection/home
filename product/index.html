@@ -1,54 +1,300 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Product | Suru Collection</title>
-  <meta id="metaDescription" name="description" content="Suru Collection product.">
-  <link rel="stylesheet" href="/styles.css">
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>Product | Suru Collection</title>
+
+<meta
+  id="metaDescription"
+  name="description"
+  content="Suru Collection product."
+>
+
+<link rel="stylesheet" href="../styles.css">
+
 </head>
+
+
 <body>
-  <div class="topbar"><span>Elegance for Every Occasion&nbsp; | &nbsp;Gaur, Rautahat, Nepal</span><span class="top-social">Follow Us&nbsp;&nbsp; f&nbsp;&nbsp; ◎&nbsp;&nbsp; ♪&nbsp;&nbsp; ▶</span></div>
-  <header class="header">
-    <div class="header-inner">
-      <a href="/index.html" class="logo-link"><img src="/assets/suru-logo-official.png" alt="Suru Collection"></a>
-      <button class="menu-btn" aria-label="Toggle navigation" aria-expanded="false">☰</button>
-      <nav class="main-nav">
-        <a href="/index.html">Home</a><a href="/index.html#about">About Us</a><a href="/index.html#collection">Our Collection</a><a href="/index.html#products">Products</a><a href="/index.html#contact">Contact</a><a class="cta" href="/index.html#contact">Enquire Now</a>
-      </nav>
-      <a href="/order.html" class="cart-link header-cart" aria-label="Shopping cart">Cart <span id="cartCount">0</span></a>
+
+
+<div class="topbar">
+
+  <span>
+    Elegance for Every Occasion&nbsp; | &nbsp;
+    Gaur, Rautahat, Nepal
+  </span>
+
+  <span class="top-social">
+    Follow Us&nbsp;&nbsp; f&nbsp;&nbsp; ◎&nbsp;&nbsp; ♪&nbsp;&nbsp; ▶
+  </span>
+
+</div>
+
+
+<header class="header">
+
+  <div class="header-inner">
+
+
+    <a
+      href="../index.html"
+      class="logo-link"
+    >
+
+      <img
+        src="../assets/suru-logo-official.png"
+        alt="Suru Collection"
+      >
+
+    </a>
+
+
+    <button
+      class="menu-btn"
+      aria-label="Toggle navigation"
+      aria-expanded="false"
+      type="button"
+    >
+      ☰
+    </button>
+
+
+    <nav class="main-nav">
+
+      <a href="../index.html">
+        Home
+      </a>
+
+      <a href="../index.html#about">
+        About Us
+      </a>
+
+      <a href="../index.html#collection">
+        Our Collection
+      </a>
+
+      <a href="../index.html#products">
+        Products
+      </a>
+
+      <a href="../index.html#contact">
+        Contact
+      </a>
+
+      <a
+        class="cta"
+        href="../index.html#contact"
+      >
+        Enquire Now
+      </a>
+
+    </nav>
+
+
+    <a
+      href="../order.html"
+      class="cart-link header-cart"
+      aria-label="Shopping cart"
+    >
+      Cart
+      <span id="cartCount">0</span>
+    </a>
+
+
+  </div>
+
+</header>
+
+
+<main
+  class="product-page"
+  id="productRoot"
+>
+
+  <div class="product-loading-page">
+    Loading product…
+  </div>
+
+</main>
+
+
+<footer class="footer">
+
+  <div class="footer-grid">
+
+
+    <div>
+
+      <span class="footer-logo-wrap">
+
+        <img
+          src="../assets/suru-logo-official.png"
+          class="footer-logo"
+          alt="Suru Collection"
+        >
+
+      </span>
+
     </div>
-  </header>
 
-  <main class="product-page" id="productRoot"><div class="product-loading-page">Loading product…</div></main>
 
-  <footer class="footer">
-    <div class="footer-grid">
-      <div><span class="footer-logo-wrap"><img src="/assets/suru-logo-official.png" class="footer-logo" alt="Suru Collection"></span></div>
-      <div><h3>Quick Links</h3><a href="/index.html">Home</a><a href="/index.html#about">About Us</a><a href="/index.html#products">Products</a><a href="/index.html#contact">Contact</a></div>
-      <div><h3>Our Location</h3><p>Gaur, Rautahat<br>Nepal</p><p>+977 9740381427</p></div>
-      <div><h3>Follow Us</h3><p>Facebook&nbsp;&nbsp; Instagram&nbsp;&nbsp; TikTok</p></div>
+    <div>
+
+      <h3>Quick Links</h3>
+
+      <a href="../index.html">
+        Home
+      </a>
+
+      <a href="../index.html#about">
+        About Us
+      </a>
+
+      <a href="../index.html#products">
+        Products
+      </a>
+
+      <a href="../index.html#contact">
+        Contact
+      </a>
+
     </div>
-    <div class="copyright">© <span class="year"></span> Suru Collection. All rights reserved.</div>
-  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabase-config.js"></script>
-  <script src="/shop.js"></script>
-  <script src="/product/product.js"></script>
-  <script>
-    const menuBtn = document.querySelector('.menu-btn');
-    const mainNav = document.querySelector('.main-nav');
-    menuBtn?.addEventListener('click', () => {
-      const open = mainNav.classList.toggle('open');
-      menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-    mainNav?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
-      mainNav.classList.remove('open');
-      menuBtn?.setAttribute('aria-expanded', 'false');
-    }));
-    const year = document.querySelector('.year');
-    if (year) year.textContent = new Date().getFullYear();
-  </script>
+
+    <div>
+
+      <h3>Our Location</h3>
+
+      <p>
+        Gaur, Rautahat<br>
+        Nepal
+      </p>
+
+      <p>
+        +977 9740381427
+      </p>
+
+    </div>
+
+
+    <div>
+
+      <h3>Follow Us</h3>
+
+      <p>
+        Facebook&nbsp;&nbsp;
+        Instagram&nbsp;&nbsp;
+        TikTok
+      </p>
+
+    </div>
+
+
+  </div>
+
+
+  <div class="copyright">
+
+    © <span class="year"></span>
+    Suru Collection.
+    All rights reserved.
+
+  </div>
+
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="../supabase-config.js"></script>
+
+<script src="../shop.js"></script>
+
+<script src="product.js"></script>
+
+
+<script>
+
+(function () {
+
+  "use strict";
+
+
+  /* Mobile navigation */
+
+  const menuButton =
+    document.querySelector(".menu-btn");
+
+  const navigation =
+    document.querySelector(".main-nav");
+
+
+  if (menuButton && navigation) {
+
+    menuButton.addEventListener(
+      "click",
+      function () {
+
+        const open =
+          navigation.classList.toggle("open");
+
+        menuButton.setAttribute(
+          "aria-expanded",
+          open ? "true" : "false"
+        );
+
+      }
+    );
+
+
+    navigation
+      .querySelectorAll("a")
+      .forEach(function (link) {
+
+        link.addEventListener(
+          "click",
+          function () {
+
+            navigation.classList.remove(
+              "open"
+            );
+
+            menuButton.setAttribute(
+              "aria-expanded",
+              "false"
+            );
+
+          }
+        );
+
+      });
+
+  }
+
+
+  const year =
+    document.querySelector(".year");
+
+  if (year) {
+
+    year.textContent =
+      new Date().getFullYear();
+
+  }
+
+})();
+
+</script>
+
+
 </body>
 </html>
