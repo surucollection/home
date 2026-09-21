@@ -1,1302 +1,1566 @@
-document.addEventListener("DOMContentLoaded", () => {
+(function () {
 
-  // ==============================
-  // SUPABASE
-  // ==============================
+  "use strict";
 
-  const client = window.supabase.createClient(
-    window.SURU_SUPABASE_URL,
-    window.SURU_SUPABASE_KEY
-  );
+  function boot() {
 
-  // ==============================
-  // HELPERS
-  // ==============================
+    console.log("Suru Admin: booting...");
 
-  const $ = (selector) => document.querySelector(selector);
-  const $$ = (selector) => document.querySelectorAll(selector);
-
-  const money = (n) =>
-    "NPR " + Number(n || 0).toLocaleString("en-IN");
-
-  const esc = (s) =>
-    String(s ?? "").replace(/[&<>'"]/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      "'": "&#39;",
-      '"': "&quot;"
-    }[c] || c));
-
-  function msg(el, text, type = "") {
-    if (!el) return;
-    el.textContent = text;
-    el.className = "message " + type;
-  }
-
-  function showLogin() {
-    const loginView = $("#loginView");
-    const appView = $("#appView");
-
-    if (loginView) loginView.classList.remove("hidden");
-    if (appView) appView.classList.add("hidden");
-  }
-
-  function showApp(session) {
-    const loginView = $("#loginView");
-    const appView = $("#appView");
-
-    if (loginView) loginView.classList.add("hidden");
-    if (appView) appView.classList.remove("hidden");
-
-    const userEmail = $("#userEmail");
-
-    if (userEmail && session?.user) {
-      userEmail.textContent = session.user.email || "";
-    }
-  }
-
-  // ==============================
-  // ADMIN CHECK
-  // ==============================
-
-  async function isAdmin(session) {
-
-    if (!session?.user) {
-      return {
-        ok: false,
-        error: "No active session."
-      };
+    if (!window.supabase) {
+      showError("Supabase library did not load.");
+      return;
     }
 
-    try {
+    if (
+      !window.SURU_SUPABASE_URL ||
+      !window.SURU_SUPABASE_KEY
+    ) {
+      showError("Supabase configuration is missing.");
+      return;
+    }
 
-      const { data, error } = await client.rpc("is_admin");
+    const supabase = window.supabase.createClient(
+      window.SURU_SUPABASE_URL,
+      window.SURU_SUPABASE_KEY
+    );
 
-      if (error) {
-        return {
-          ok: false,
-          error: "Admin check failed: " + error.message
-        };
+    const loginView =
+      document.getElementById("loginView");
+
+    const appView =
+      document.getElementById("appView");
+
+    const loginForm =
+      document.getElementById("loginForm");
+
+    const loginEmail =
+      document.getElementById("loginEmail");
+
+    const loginPassword =
+      document.getElementById("loginPassword");
+
+    const loginButton =
+      document.getElementById("loginButton");
+
+    const loginMessage =
+      document.getElementById("loginMessage");
+
+    const logoutBtn =
+      document.getElementById("logoutBtn");
+
+    console.log("Suru Admin elements:", {
+      loginView,
+      appView,
+      loginForm,
+      loginEmail,
+      loginPassword,
+      loginButton,
+      loginMessage,
+      logoutBtn
+    });
+
+
+    if (!loginView || !appView || !loginForm) {
+
+      showError(
+        "Admin HTML is incomplete. Missing login elements."
+      );
+
+      return;
+    }
+
+
+    function setMessage(text, type) {
+
+      if (!loginMessage) return;
+
+      loginMessage.textContent = text;
+
+      loginMessage.className =
+        "message " + (type || "");
+
+    }
+
+
+    function showLogin() {
+
+      loginView.classList.remove("hidden");
+
+      appView.classList.add("hidden");
+
+    }
+
+
+    function showApp(session) {
+
+      loginView.classList.add("hidden");
+
+      appView.classList.remove("hidden");
+
+      const userEmail =
+        document.getElementById("userEmail");
+
+      if (userEmail) {
+
+        userEmail.textContent =
+          session?.user?.email || "";
+
       }
 
-      if (data === true) {
+    }
+
+
+    function showError(text) {
+
+      console.error("Suru Admin:", text);
+
+      const box =
+        document.getElementById("loginMessage");
+
+      if (box) {
+
+        box.textContent = text;
+
+        box.className =
+          "message error";
+
+      } else {
+
+        alert(text);
+
+      }
+
+    }
+
+
+    async function adminCheck(session) {
+
+      if (!session?.user) {
+
+        return {
+          ok: false,
+          error: "No authenticated user."
+        };
+
+      }
+
+      console.log(
+        "Suru Admin: checking admin permission..."
+      );
+
+
+      /*
+       * Use RPC instead of directly querying
+       * admin_users. This avoids the RLS
+       * chicken-and-egg problem.
+       */
+
+      const result =
+        await Promise.race([
+
+          supabase.rpc("is_admin"),
+
+          new Promise((_, reject) => {
+
+            setTimeout(() => {
+
+              reject(
+                new Error(
+                  "Admin permission check timed out."
+                )
+              );
+
+            }, 15000);
+
+          })
+
+        ]);
+
+
+      if (result.error) {
+
+        return {
+          ok: false,
+          error:
+            "Admin check failed: " +
+            result.error.message
+        };
+
+      }
+
+
+      if (result.data === true) {
+
         return {
           ok: true
         };
+
       }
+
 
       return {
         ok: false,
-        error: "This account is not authorized for the admin panel."
-      };
-
-    } catch (err) {
-
-      return {
-        ok: false,
-        error: err?.message || String(err)
+        error:
+          "This account is not authorized for the admin panel."
       };
 
     }
-  }
 
-  // ==============================
-  // START APPLICATION
-  // ==============================
 
-  let starting = false;
-
-  async function start(sessionOverride = null) {
-
-    if (starting) return false;
-
-    starting = true;
-
-    try {
-
-      let session;
-
-      if (sessionOverride) {
-
-        session = sessionOverride;
-
-      } else {
-
-        const {
-          data,
-          error
-        } = await client.auth.getSession();
-
-        if (error) throw error;
-
-        session = data?.session || null;
-      }
-
-      // No login
-      if (!session) {
-
-        showLogin();
-
-        msg(
-          $("#loginMessage"),
-          "",
-          ""
-        );
-
-        return false;
-      }
-
-      // Check admin
-      const admin = await isAdmin(session);
-
-      if (!admin.ok) {
-
-        showLogin();
-
-        msg(
-          $("#loginMessage"),
-          admin.error || "Admin authorization failed.",
-          "error"
-        );
-
-        return false;
-      }
-
-      // Authorized
-      showApp(session);
-
-      await loadDashboard();
-
-      return true;
-
-    } catch (err) {
-
-      showLogin();
-
-      msg(
-        $("#loginMessage"),
-        "Connection error: " + (err?.message || err),
-        "error"
-      );
-
-      return false;
-
-    } finally {
-
-      starting = false;
-    }
-  }
-
-  // ==============================
-  // LOGIN
-  // ==============================
-
-  const loginForm = $("#loginForm");
-
-  if (loginForm) {
-
-    loginForm.addEventListener("submit", async (e) => {
-
-      e.preventDefault();
-
-      const emailInput = $("#loginEmail");
-      const passwordInput = $("#loginPassword");
-
-      const email = emailInput?.value.trim() || "";
-      const password = passwordInput?.value || "";
-
-      if (!email || !password) {
-
-        msg(
-          $("#loginMessage"),
-          "Please enter email and password.",
-          "error"
-        );
-
-        return;
-      }
-
-      const button = loginForm.querySelector("button[type='submit']");
-
-      if (button) {
-        button.disabled = true;
-        button.textContent = "Signing in…";
-      }
-
-      msg(
-        $("#loginMessage"),
-        "Signing in…",
-        ""
-      );
+    async function openAdmin(session) {
 
       try {
 
-        const {
-          data,
+        const admin =
+          await adminCheck(session);
+
+        if (!admin.ok) {
+
+          showLogin();
+
+          setMessage(
+            admin.error,
+            "error"
+          );
+
+          return false;
+        }
+
+
+        showApp(session);
+
+        console.log(
+          "Suru Admin: authorization successful."
+        );
+
+
+        loadDashboard();
+
+        return true;
+
+      } catch (error) {
+
+        console.error(
+          "Suru Admin authorization error:",
           error
-        } = await client.auth.signInWithPassword({
-          email,
-          password
-        });
+        );
 
-        if (error) {
+        showLogin();
 
-          msg(
-            $("#loginMessage"),
-            error.message,
-            "error"
-          );
-
-          return;
-        }
-
-        if (!data?.session) {
-
-          msg(
-            $("#loginMessage"),
-            "Login succeeded but no session was returned. Please try again.",
-            "error"
-          );
-
-          return;
-        }
-
-        const success = await start(data.session);
-
-        if (success && passwordInput) {
-          passwordInput.value = "";
-        }
-
-      } catch (err) {
-
-        msg(
-          $("#loginMessage"),
-          err?.message || String(err),
+        setMessage(
+          error.message ||
+          String(error),
           "error"
         );
 
-      } finally {
+        return false;
+      }
 
-        if (button) {
+    }
 
-          button.disabled = false;
-          button.textContent = "Sign In";
+
+    /*
+     * LOGIN
+     */
+
+    loginForm.addEventListener(
+      "submit",
+      async function (event) {
+
+        event.preventDefault();
+
+        console.log(
+          "Suru Admin: login submitted."
+        );
+
+
+        const email =
+          loginEmail.value.trim();
+
+        const password =
+          loginPassword.value;
+
+
+        if (!email || !password) {
+
+          setMessage(
+            "Please enter your email and password.",
+            "error"
+          );
+
+          return;
+        }
+
+
+        loginButton.disabled = true;
+
+        loginButton.textContent =
+          "Connecting…";
+
+        setMessage(
+          "Connecting to Supabase…",
+          ""
+        );
+
+
+        try {
+
+          console.log(
+            "Suru Admin: calling signInWithPassword..."
+          );
+
+
+          const result =
+            await Promise.race([
+
+              supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+              }),
+
+              new Promise((_, reject) => {
+
+                setTimeout(() => {
+
+                  reject(
+                    new Error(
+                      "Supabase login timed out after 15 seconds. Check your internet connection or Supabase access."
+                    )
+                  );
+
+                }, 15000);
+
+              })
+
+            ]);
+
+
+          console.log(
+            "Suru Admin: signIn result:",
+            result
+          );
+
+
+          if (result.error) {
+
+            setMessage(
+              result.error.message,
+              "error"
+            );
+
+            return;
+          }
+
+
+          if (!result.data?.session) {
+
+            setMessage(
+              "Supabase accepted the login but did not return a session.",
+              "error"
+            );
+
+            return;
+          }
+
+
+          setMessage(
+            "Login successful. Checking admin access…",
+            ""
+          );
+
+
+          const success =
+            await openAdmin(
+              result.data.session
+            );
+
+
+          if (success) {
+
+            loginPassword.value = "";
+
+          }
+
+
+        } catch (error) {
+
+          console.error(
+            "Suru Admin login error:",
+            error
+          );
+
+
+          setMessage(
+            error.message ||
+            String(error),
+            "error"
+          );
+
+        } finally {
+
+          loginButton.disabled = false;
+
+          loginButton.textContent =
+            "Sign In";
 
         }
-      }
-
-    });
-
-  }
-
-  // ==============================
-  // AUTH STATE
-  // ==============================
-
-  client.auth.onAuthStateChange((event, session) => {
-
-    if (event === "SIGNED_OUT") {
-
-      showLogin();
-
-      return;
-    }
-
-    // Do not repeatedly restart the application
-    // on TOKEN_REFRESHED.
-    if (event === "INITIAL_SESSION") {
-
-      setTimeout(() => {
-        start(session);
-      }, 0);
-
-    }
-
-  });
-
-  // ==============================
-  // LOGOUT
-  // ==============================
-
-  const logoutBtn = $("#logoutBtn");
-
-  if (logoutBtn) {
-
-    logoutBtn.addEventListener("click", async () => {
-
-      logoutBtn.disabled = true;
-      logoutBtn.textContent = "Signing out…";
-
-      await client.auth.signOut();
-
-      location.reload();
-
-    });
-
-  }
-
-  // ==============================
-  // SIDEBAR
-  // ==============================
-
-  $$(".sidebar button").forEach((button) => {
-
-    button.addEventListener("click", async () => {
-
-      $$(".sidebar button").forEach((b) =>
-        b.classList.remove("active")
-      );
-
-      button.classList.add("active");
-
-      $$(".view").forEach((view) =>
-        view.classList.remove("active")
-      );
-
-      const viewName = button.dataset.view;
-      const view = $("#" + viewName);
-
-      if (view) {
-        view.classList.add("active");
-      }
-
-      const loaders = {
-        dashboard: loadDashboard,
-        orders: loadOrders,
-        products: loadProducts,
-        inventory: loadInventory,
-        subscribers: loadSubscribers
-      };
-
-      if (loaders[viewName]) {
-        await loaders[viewName]();
-      }
-
-    });
-
-  });
-
-  // ==============================
-  // DASHBOARD
-  // ==============================
-
-  async function loadDashboard() {
-
-    try {
-
-      const [
-        ordersResult,
-        productsResult,
-        subscribersResult,
-        pendingResult
-      ] = await Promise.all([
-
-        client
-          .from("orders")
-          .select("*", {
-            count: "exact",
-            head: true
-          }),
-
-        client
-          .from("products")
-          .select("*", {
-            count: "exact",
-            head: true
-          })
-          .eq("is_active", true),
-
-        client
-          .from("newsletter_subscribers")
-          .select("*", {
-            count: "exact",
-            head: true
-          })
-          .eq("is_active", true),
-
-        client
-          .from("orders")
-          .select(
-            "id,order_number,customer_name,total,order_status,created_at"
-          )
-          .order("created_at", {
-            ascending: false
-          })
-          .limit(5)
-
-      ]);
-
-      if (ordersResult.error) {
-        console.error("Orders:", ordersResult.error);
-      }
-
-      if (productsResult.error) {
-        console.error("Products:", productsResult.error);
-      }
-
-      if (subscribersResult.error) {
-        console.error("Subscribers:", subscribersResult.error);
-      }
-
-      if (pendingResult.error) {
-        console.error("Recent orders:", pendingResult.error);
-      }
-
-      const statOrders = $("#statOrders");
-      const statProducts = $("#statProducts");
-      const statSubscribers = $("#statSubscribers");
-      const statPending = $("#statPending");
-
-      if (statOrders) {
-        statOrders.textContent = ordersResult.count ?? 0;
-      }
-
-      if (statProducts) {
-        statProducts.textContent = productsResult.count ?? 0;
-      }
-
-      if (statSubscribers) {
-        statSubscribers.textContent = subscribersResult.count ?? 0;
-      }
-
-      const pendingOrders = pendingResult.data || [];
-
-      if (statPending) {
-        statPending.textContent =
-          pendingOrders.filter(
-            (x) => x.order_status === "pending"
-          ).length;
-      }
-
-      renderOrderTable(
-        $("#recentOrders"),
-        pendingOrders,
-        false
-      );
-
-    } catch (err) {
-
-      console.error("Dashboard error:", err);
-
-    }
-
-  }
-
-  // ==============================
-  // ORDER TABLE
-  // ==============================
-
-  function renderOrderTable(el, rows, full = true) {
-
-    if (!el) return;
-
-    if (!rows.length) {
-
-      el.innerHTML =
-        '<p class="subscriber-count">No orders found.</p>';
-
-      return;
-    }
-
-    el.innerHTML = `
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Order</th>
-            <th>Customer</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Date</th>
-            ${full ? "<th>Update</th>" : ""}
-          </tr>
-        </thead>
-
-        <tbody>
-
-          ${rows.map((o) => `
-
-            <tr>
-
-              <td>
-                <b>${esc(o.order_number)}</b>
-
-                ${
-                  full
-                    ? `<div class="order-items" data-items="${esc(o.id)}"></div>`
-                    : ""
-                }
-
-              </td>
-
-              <td>
-                ${esc(o.customer_name)}
-                <br>
-                <small>${esc(o.customer_phone || "")}</small>
-              </td>
-
-              <td>
-                ${money(o.total)}
-              </td>
-
-              <td>
-                <span class="badge">
-                  ${esc(o.order_status)}
-                </span>
-              </td>
-
-              <td>
-                ${new Date(o.created_at).toLocaleString()}
-              </td>
-
-              ${
-                full
-                  ? `
-                    <td>
-                      <select
-                        class="status-select"
-                        data-id="${o.id}"
-                      >
-
-                        ${
-                          [
-                            "pending",
-                            "confirmed",
-                            "processing",
-                            "shipped",
-                            "delivered",
-                            "cancelled"
-                          ]
-                            .map(
-                              (s) =>
-                                `<option ${
-                                  s === o.order_status
-                                    ? "selected"
-                                    : ""
-                                }>${s}</option>`
-                            )
-                            .join("")
-                        }
-
-                      </select>
-                    </td>
-                  `
-                  : ""
-              }
-
-            </tr>
-
-          `).join("")}
-
-        </tbody>
-
-      </table>
-    `;
-
-    if (full) {
-      loadOrderItems(rows);
-    }
-
-  }
-
-  // ==============================
-  // ORDER ITEMS
-  // ==============================
-
-  async function loadOrderItems(rows) {
-
-    if (!rows.length) return;
-
-    const ids = rows.map((x) => x.id);
-
-    const {
-      data,
-      error
-    } = await client
-      .from("order_items")
-      .select(
-        "order_id,product_name,size,quantity"
-      )
-      .in("order_id", ids);
-
-    if (error) {
-
-      console.error("Order items:", error);
-
-      return;
-    }
-
-    (data || []).forEach((item) => {
-
-      const el = document.querySelector(
-        `[data-items="${item.order_id}"]`
-      );
-
-      if (!el) return;
-
-      const text =
-        `${item.product_name}` +
-        `${item.size ? " (" + item.size + ")" : ""}` +
-        ` × ${item.quantity}`;
-
-      el.textContent +=
-        (el.textContent ? ", " : "") + text;
-
-    });
-
-  }
-
-  // ==============================
-  // ORDERS
-  // ==============================
-
-  async function loadOrders() {
-
-    const search =
-      $("#orderSearch")?.value.trim() || "";
-
-    const status =
-      $("#orderStatusFilter")?.value || "";
-
-    let query = client
-      .from("orders")
-      .select("*")
-      .order("created_at", {
-        ascending: false
-      })
-      .limit(100);
-
-    if (status) {
-      query = query.eq(
-        "order_status",
-        status
-      );
-    }
-
-    if (search) {
-
-      query = query.or(
-        `order_number.ilike.%${search}%,customer_name.ilike.%${search}%,customer_phone.ilike.%${search}%`
-      );
-
-    }
-
-    const {
-      data,
-      error
-    } = await query;
-
-    if (error) {
-
-      const el = $("#ordersTable");
-
-      if (el) {
-
-        el.innerHTML =
-          `<p class="message error">${esc(error.message)}</p>`;
 
       }
-
-      return;
-    }
-
-    renderOrderTable(
-      $("#ordersTable"),
-      data || [],
-      true
     );
 
-  }
 
-  const orderSearch = $("#orderSearch");
+    /*
+     * LOGOUT
+     */
 
-  if (orderSearch) {
-    orderSearch.addEventListener(
-      "input",
-      loadOrders
-    );
-  }
+    if (logoutBtn) {
 
-  const orderStatusFilter =
-    $("#orderStatusFilter");
+      logoutBtn.addEventListener(
+        "click",
+        async function () {
 
-  if (orderStatusFilter) {
-    orderStatusFilter.addEventListener(
-      "change",
-      loadOrders
-    );
-  }
+          await supabase.auth.signOut();
 
-  // ==============================
-  // ORDER STATUS
-  // ==============================
+          showLogin();
 
-  document.addEventListener(
-    "change",
-    async (e) => {
-
-      if (
-        !e.target.matches(".status-select")
-      ) {
-        return;
-      }
-
-      const id = e.target.dataset.id;
-      const status = e.target.value;
-
-      e.target.disabled = true;
-
-      const {
-        error
-      } = await client
-        .from("orders")
-        .update({
-          order_status: status
-        })
-        .eq("id", id);
-
-      e.target.disabled = false;
-
-      if (error) {
-
-        alert(error.message);
-
-        return;
-      }
-
-      await loadDashboard();
+        }
+      );
 
     }
-  );
 
-  // ==============================
-  // PRODUCTS
-  // ==============================
 
-  async function loadProducts() {
+    /*
+     * SIDEBAR
+     */
 
-    const {
-      data,
-      error
-    } = await client
-      .from("products")
-      .select("*")
-      .order("created_at", {
-        ascending: false
+    document
+      .querySelectorAll(".sidebar button")
+      .forEach(function (button) {
+
+        button.addEventListener(
+          "click",
+          function () {
+
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach(function (b) {
+
+                b.classList.remove(
+                  "active"
+                );
+
+              });
+
+
+            button.classList.add(
+              "active"
+            );
+
+
+            document
+              .querySelectorAll(".view")
+              .forEach(function (view) {
+
+                view.classList.remove(
+                  "active"
+                );
+
+              });
+
+
+            const target =
+              document.getElementById(
+                button.dataset.view
+              );
+
+
+            if (target) {
+
+              target.classList.add(
+                "active"
+              );
+
+            }
+
+
+            const name =
+              button.dataset.view;
+
+
+            if (name === "dashboard")
+              loadDashboard();
+
+            if (name === "orders")
+              loadOrders();
+
+            if (name === "products")
+              loadProducts();
+
+            if (name === "inventory")
+              loadInventory();
+
+            if (name === "subscribers")
+              loadSubscribers();
+
+          }
+
+        );
+
       });
 
-    const grid = $("#productsGrid");
 
-    if (!grid) return;
+    /*
+     * INITIAL SESSION
+     */
 
-    if (error) {
+    supabase.auth
+      .getSession()
+      .then(async function (result) {
 
-      grid.innerHTML =
-        `<p class="message error">${esc(error.message)}</p>`;
-
-      return;
-    }
-
-    grid.innerHTML = `
-      <div class="product-grid">
-
-        ${(data || []).map((p) => `
-
-          <div class="product-card-admin">
-
-            <small>
-              ${esc(p.product_code)}
-              ·
-              ${esc(p.category)}
-            </small>
-
-            <h3>
-              ${esc(p.name)}
-            </h3>
-
-            <label>
-              Price
-
-              <input
-                type="number"
-                step="0.01"
-                value="${p.price}"
-                data-price="${p.id}"
-              >
-            </label>
-
-            <label>
-              MOQ
-
-              <input
-                type="number"
-                value="${p.moq}"
-                data-moq="${p.id}"
-              >
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                ${p.is_active ? "checked" : ""}
-                data-active="${p.id}"
-              >
-              Active
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                ${p.is_featured ? "checked" : ""}
-                data-featured="${p.id}"
-              >
-              Featured
-            </label>
-
-            <button
-              class="primary save-product"
-              data-id="${p.id}"
-            >
-              Save Changes
-            </button>
-
-            <span
-              class="message"
-              id="pm-${p.id}"
-            ></span>
-
-          </div>
-
-        `).join("")}
-
-      </div>
-    `;
-
-  }
-
-  // ==============================
-  // SAVE PRODUCT
-  // ==============================
-
-  document.addEventListener(
-    "click",
-    async (e) => {
-
-      const button =
-        e.target.closest(".save-product");
-
-      if (!button) return;
-
-      const id = button.dataset.id;
-
-      const get = (name) =>
-        document.querySelector(
-          `[data-${name}="${id}"]`
+        console.log(
+          "Suru Admin: initial session:",
+          result
         );
 
-      const priceInput = get("price");
-      const moqInput = get("moq");
-      const activeInput = get("active");
-      const featuredInput = get("featured");
 
-      if (
-        !priceInput ||
-        !moqInput ||
-        !activeInput ||
-        !featuredInput
-      ) {
-        return;
-      }
+        if (result.error) {
 
-      const payload = {
+          showLogin();
 
-        price:
-          Number(priceInput.value),
+          setMessage(
+            result.error.message,
+            "error"
+          );
 
-        moq:
-          Math.max(
-            0,
-            Number(moqInput.value)
-          ),
+          return;
+        }
 
-        is_active:
-          activeInput.checked,
 
-        is_featured:
-          featuredInput.checked
+        if (!result.data.session) {
 
-      };
+          showLogin();
 
-      button.disabled = true;
+          return;
+        }
 
-      const {
-        error
-      } = await client
-        .from("products")
-        .update(payload)
-        .eq("id", id);
 
-      button.disabled = false;
+        await openAdmin(
+          result.data.session
+        );
 
-      const message =
-        $("#pm-" + id);
+      })
+      .catch(function (error) {
 
-      if (error) {
+        showLogin();
 
-        msg(
-          message,
-          "Save failed: " + error.message,
+        setMessage(
+          error.message ||
+          String(error),
           "error"
         );
 
-      } else {
+      });
 
-        msg(
-          message,
-          "Saved",
-          "success"
+
+    /*
+     * IMPORTANT:
+     * We deliberately do NOT call openAdmin()
+     * on every TOKEN_REFRESHED event.
+     */
+
+    supabase.auth.onAuthStateChange(
+      function (event, session) {
+
+        console.log(
+          "Suru Admin auth event:",
+          event
+        );
+
+
+        if (event === "SIGNED_OUT") {
+
+          showLogin();
+
+        }
+
+      }
+    );
+
+
+    /*
+     * DASHBOARD
+     */
+
+    async function loadDashboard() {
+
+      try {
+
+        const results =
+          await Promise.all([
+
+            supabase
+              .from("orders")
+              .select("*", {
+                count: "exact",
+                head: true
+              }),
+
+            supabase
+              .from("products")
+              .select("*", {
+                count: "exact",
+                head: true
+              })
+              .eq("is_active", true),
+
+            supabase
+              .from("newsletter_subscribers")
+              .select("*", {
+                count: "exact",
+                head: true
+              })
+              .eq("is_active", true),
+
+            supabase
+              .from("orders")
+              .select(
+                "id,order_number,customer_name,total,order_status,created_at"
+              )
+              .order(
+                "created_at",
+                {
+                  ascending: false
+                }
+              )
+              .limit(5)
+
+          ]);
+
+
+        const statOrders =
+          document.getElementById(
+            "statOrders"
+          );
+
+        const statProducts =
+          document.getElementById(
+            "statProducts"
+          );
+
+        const statSubscribers =
+          document.getElementById(
+            "statSubscribers"
+          );
+
+        const statPending =
+          document.getElementById(
+            "statPending"
+          );
+
+
+        if (statOrders)
+          statOrders.textContent =
+            results[0].count ?? 0;
+
+        if (statProducts)
+          statProducts.textContent =
+            results[1].count ?? 0;
+
+        if (statSubscribers)
+          statSubscribers.textContent =
+            results[2].count ?? 0;
+
+
+        const recent =
+          results[3].data || [];
+
+
+        if (statPending) {
+
+          statPending.textContent =
+            recent.filter(
+              x =>
+                x.order_status ===
+                "pending"
+            ).length;
+
+        }
+
+
+        const recentOrders =
+          document.getElementById(
+            "recentOrders"
+          );
+
+
+        if (recentOrders) {
+
+          if (!recent.length) {
+
+            recentOrders.innerHTML =
+              "<p>No orders yet.</p>";
+
+          } else {
+
+            recentOrders.innerHTML =
+              recent
+                .map(function (o) {
+
+                  return `
+                    <div style="
+                      padding:12px 0;
+                      border-bottom:1px solid #eee
+                    ">
+
+                      <strong>
+                        ${escapeHtml(
+                          o.order_number
+                        )}
+                      </strong>
+
+                      <br>
+
+                      ${escapeHtml(
+                        o.customer_name
+                      )}
+
+                      ·
+
+                      NPR ${Number(
+                        o.total || 0
+                      ).toLocaleString("en-IN")}
+
+                      <br>
+
+                      <small>
+                        ${escapeHtml(
+                          o.order_status
+                        )}
+                      </small>
+
+                    </div>
+                  `;
+
+                })
+                .join("");
+
+          }
+
+        }
+
+
+      } catch (error) {
+
+        console.error(
+          "Dashboard:",
+          error
         );
 
       }
 
     }
-  );
 
-  // ==============================
-  // INVENTORY
-  // ==============================
 
-  async function loadInventory() {
+    /*
+     * ORDERS
+     */
 
-    const {
-      data,
-      error
-    } = await client
-      .from("products")
-      .select(
-        "id,product_code,name,product_sizes(id,size,stock,is_active)"
-      )
-      .order("product_code");
+    async function loadOrders() {
 
-    const grid = $("#inventoryGrid");
+      const table =
+        document.getElementById(
+          "ordersTable"
+        );
 
-    if (!grid) return;
+      if (!table) return;
 
-    if (error) {
 
-      grid.innerHTML = `
-        <div class="card">
-          <p class="message error">
-            ${esc(error.message)}
-          </p>
-        </div>
+      const search =
+        document
+          .getElementById(
+            "orderSearch"
+          )
+          ?.value
+          ?.trim() || "";
+
+
+      const status =
+        document
+          .getElementById(
+            "orderStatusFilter"
+          )
+          ?.value || "";
+
+
+      let query =
+        supabase
+          .from("orders")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          )
+          .limit(100);
+
+
+      if (status) {
+
+        query =
+          query.eq(
+            "order_status",
+            status
+          );
+
+      }
+
+
+      if (search) {
+
+        query =
+          query.or(
+            `order_number.ilike.%${search}%,customer_name.ilike.%${search}%,customer_phone.ilike.%${search}%`
+          );
+
+      }
+
+
+      const {
+        data,
+        error
+      } = await query;
+
+
+      if (error) {
+
+        table.innerHTML =
+          `<p class="message error">
+            ${escapeHtml(error.message)}
+          </p>`;
+
+        return;
+      }
+
+
+      if (!data?.length) {
+
+        table.innerHTML =
+          "<p>No orders found.</p>";
+
+        return;
+      }
+
+
+      table.innerHTML = `
+
+        <table class="table">
+
+          <thead>
+
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            ${data.map(function (o) {
+
+              return `
+
+                <tr>
+
+                  <td>
+                    <strong>
+                      ${escapeHtml(
+                        o.order_number
+                      )}
+                    </strong>
+                  </td>
+
+                  <td>
+                    ${escapeHtml(
+                      o.customer_name
+                    )}
+
+                    <br>
+
+                    <small>
+                      ${escapeHtml(
+                        o.customer_phone ||
+                        ""
+                      )}
+                    </small>
+                  </td>
+
+                  <td>
+                    NPR ${Number(
+                      o.total || 0
+                    ).toLocaleString("en-IN")}
+                  </td>
+
+                  <td>
+                    ${escapeHtml(
+                      o.order_status
+                    )}
+                  </td>
+
+                  <td>
+                    ${new Date(
+                      o.created_at
+                    ).toLocaleString()}
+                  </td>
+
+                </tr>
+
+              `;
+
+            }).join("")}
+
+          </tbody>
+
+        </table>
+
       `;
 
-      return;
     }
 
-    grid.innerHTML =
-      (data || [])
-        .map(
-          (p) => `
 
-            <div class="card">
+    /*
+     * PRODUCTS
+     */
 
-              <h3>
-                ${esc(p.product_code)}
-                —
-                ${esc(p.name)}
-              </h3>
+    async function loadProducts() {
 
-              <div class="stock-list">
+      const grid =
+        document.getElementById(
+          "productsGrid"
+        );
+
+      if (!grid) return;
+
+
+      const {
+        data,
+        error
+      } = await supabase
+        .from("products")
+        .select("*")
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        );
+
+
+      if (error) {
+
+        grid.innerHTML =
+          `<p class="message error">
+            ${escapeHtml(error.message)}
+          </p>`;
+
+        return;
+      }
+
+
+      grid.innerHTML = `
+
+        <div class="product-grid">
+
+          ${(data || [])
+            .map(function (p) {
+
+              return `
+
+                <div class="product-card-admin">
+
+                  <small>
+                    ${escapeHtml(
+                      p.product_code
+                    )}
+                    ·
+                    ${escapeHtml(
+                      p.category
+                    )}
+                  </small>
+
+                  <h3>
+                    ${escapeHtml(
+                      p.name
+                    )}
+                  </h3>
+
+                  <label>
+                    Price
+
+                    <input
+                      type="number"
+                      step="0.01"
+                      value="${p.price}"
+                      data-price="${p.id}"
+                    >
+
+                  </label>
+
+                  <label>
+                    MOQ
+
+                    <input
+                      type="number"
+                      value="${p.moq}"
+                      data-moq="${p.id}"
+                    >
+
+                  </label>
+
+                  <label>
+
+                    <input
+                      type="checkbox"
+                      ${
+                        p.is_active
+                          ? "checked"
+                          : ""
+                      }
+                      data-active="${p.id}"
+                    >
+
+                    Active
+
+                  </label>
+
+                  <label>
+
+                    <input
+                      type="checkbox"
+                      ${
+                        p.is_featured
+                          ? "checked"
+                          : ""
+                      }
+                      data-featured="${p.id}"
+                    >
+
+                    Featured
+
+                  </label>
+
+                  <button
+                    class="primary save-product"
+                    data-id="${p.id}"
+                  >
+                    Save Changes
+                  </button>
+
+                </div>
+
+              `;
+
+            })
+            .join("")}
+
+        </div>
+
+      `;
+
+    }
+
+
+    /*
+     * INVENTORY
+     */
+
+    async function loadInventory() {
+
+      const grid =
+        document.getElementById(
+          "inventoryGrid"
+        );
+
+      if (!grid) return;
+
+
+      const {
+        data,
+        error
+      } = await supabase
+        .from("products")
+        .select(
+          "id,product_code,name,product_sizes(id,size,stock,is_active)"
+        )
+        .order(
+          "product_code"
+        );
+
+
+      if (error) {
+
+        grid.innerHTML =
+          `<div class="card">
+            <p class="message error">
+              ${escapeHtml(
+                error.message
+              )}
+            </p>
+          </div>`;
+
+        return;
+      }
+
+
+      grid.innerHTML =
+        (data || [])
+          .map(function (p) {
+
+            return `
+
+              <div class="card">
+
+                <h3>
+                  ${escapeHtml(
+                    p.product_code
+                  )}
+                  —
+                  ${escapeHtml(
+                    p.name
+                  )}
+                </h3>
 
                 ${
                   (p.product_sizes || [])
-                    .map(
-                      (s) => `
+                    .map(function (s) {
 
-                        <div class="stock-row">
+                      return `
 
-                          <span>
-                            <b>
-                              ${esc(s.size)}
-                            </b>
-                          </span>
+                        <div
+                          style="
+                            display:flex;
+                            gap:10px;
+                            align-items:center;
+                            margin:10px 0
+                          "
+                        >
+
+                          <strong>
+                            ${escapeHtml(
+                              s.size
+                            )}
+                          </strong>
 
                           <input
                             type="number"
                             min="0"
                             value="${s.stock}"
                             data-stock="${s.id}"
-                            data-old="${s.stock}"
                           >
 
                           <button
                             class="primary save-stock"
                             data-id="${s.id}"
-                            data-product="${p.id}"
                           >
                             Save
                           </button>
 
                         </div>
 
-                      `
-                    )
+                      `;
+
+                    })
                     .join("")
-                  ||
-                  '<p class="subscriber-count">No sizes configured.</p>'
                 }
 
               </div>
 
-            </div>
+            `;
 
-          `
-        )
-        .join("");
+          })
+          .join("");
 
-  }
+    }
 
-  // ==============================
-  // SAVE INVENTORY
-  // ==============================
 
-  document.addEventListener(
-    "click",
-    async (e) => {
+    /*
+     * SUBSCRIBERS
+     */
 
-      const button =
-        e.target.closest(".save-stock");
+    async function loadSubscribers() {
 
-      if (!button) return;
-
-      const input =
-        document.querySelector(
-          `[data-stock="${button.dataset.id}"]`
+      const table =
+        document.getElementById(
+          "subscribersTable"
         );
 
-      if (!input) return;
+      if (!table) return;
 
-      const oldStock =
-        Number(input.dataset.old || 0);
-
-      const newStock =
-        Math.max(
-          0,
-          parseInt(input.value || 0, 10)
-        );
-
-      button.disabled = true;
 
       const {
+        data,
         error
-      } = await client
-        .from("product_sizes")
-        .update({
-          stock: newStock
-        })
-        .eq("id", button.dataset.id);
+      } = await supabase
+        .from(
+          "newsletter_subscribers"
+        )
+        .select("*")
+        .order(
+          "subscribed_at",
+          {
+            ascending: false
+          }
+        );
+
 
       if (error) {
+
+        table.innerHTML =
+          `<p class="message error">
+            ${escapeHtml(
+              error.message
+            )}
+          </p>`;
+
+        return;
+      }
+
+
+      const subscribers =
+        data || [];
+
+
+      const count =
+        document.getElementById(
+          "subscriberCount"
+        );
+
+
+      if (count) {
+
+        count.textContent =
+          `${subscribers.length} subscriber${
+            subscribers.length === 1
+              ? ""
+              : "s"
+          }`;
+
+      }
+
+
+      if (!subscribers.length) {
+
+        table.innerHTML =
+          "<p>No subscribers yet.</p>";
+
+        return;
+      }
+
+
+      table.innerHTML = `
+
+        <table class="table">
+
+          <thead>
+
+            <tr>
+              <th>Email</th>
+              <th>Subscribed</th>
+              <th>Status</th>
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            ${subscribers
+              .map(function (s) {
+
+                return `
+
+                  <tr>
+
+                    <td>
+                      ${escapeHtml(
+                        s.email
+                      )}
+                    </td>
+
+                    <td>
+                      ${new Date(
+                        s.subscribed_at
+                      ).toLocaleString()}
+                    </td>
+
+                    <td>
+                      ${
+                        s.is_active
+                          ? "Active"
+                          : "Inactive"
+                      }
+                    </td>
+
+                  </tr>
+
+                `;
+
+              })
+              .join("")}
+
+          </tbody>
+
+        </table>
+
+      `;
+
+    }
+
+
+    /*
+     * SEARCH EVENTS
+     */
+
+    const orderSearch =
+      document.getElementById(
+        "orderSearch"
+      );
+
+    if (orderSearch) {
+
+      orderSearch.addEventListener(
+        "input",
+        loadOrders
+      );
+
+    }
+
+
+    const orderStatus =
+      document.getElementById(
+        "orderStatusFilter"
+      );
+
+    if (orderStatus) {
+
+      orderStatus.addEventListener(
+        "change",
+        loadOrders
+      );
+
+    }
+
+
+    /*
+     * PRODUCT SAVE
+     */
+
+    document.addEventListener(
+      "click",
+      async function (event) {
+
+        const button =
+          event.target.closest(
+            ".save-product"
+          );
+
+        if (!button) return;
+
+
+        const id =
+          button.dataset.id;
+
+
+        const price =
+          document.querySelector(
+            `[data-price="${id}"]`
+          );
+
+        const moq =
+          document.querySelector(
+            `[data-moq="${id}"]`
+          );
+
+        const active =
+          document.querySelector(
+            `[data-active="${id}"]`
+          );
+
+        const featured =
+          document.querySelector(
+            `[data-featured="${id}"]`
+          );
+
+
+        button.disabled = true;
+
+
+        const {
+          error
+        } = await supabase
+          .from("products")
+          .update({
+
+            price:
+              Number(
+                price.value
+              ),
+
+            moq:
+              Number(
+                moq.value
+              ),
+
+            is_active:
+              active.checked,
+
+            is_featured:
+              featured.checked
+
+          })
+          .eq(
+            "id",
+            id
+          );
+
 
         button.disabled = false;
 
-        alert(error.message);
 
-        return;
-      }
+        if (error) {
 
-      const difference =
-        newStock - oldStock;
+          alert(
+            "Save failed: " +
+            error.message
+          );
 
-      if (difference !== 0) {
+        } else {
 
-        await client
-          .from("inventory_movements")
-          .insert({
+          button.textContent =
+            "Saved";
 
-            product_id:
-              button.dataset.product,
+          setTimeout(
+            function () {
 
-            size_id:
-              button.dataset.id,
+              button.textContent =
+                "Save Changes";
 
-            quantity_change:
-              difference,
+            },
+            1200
+          );
 
-            reason:
-              "admin_stock_adjustment"
-
-          });
+        }
 
       }
+    );
 
-      input.dataset.old = newStock;
 
-      button.disabled = false;
-      button.textContent = "Saved";
+    /*
+     * INVENTORY SAVE
+     */
 
-      setTimeout(() => {
-        button.textContent = "Save";
-      }, 1000);
+    document.addEventListener(
+      "click",
+      async function (event) {
 
-    }
-  );
+        const button =
+          event.target.closest(
+            ".save-stock"
+          );
 
-  // ==============================
-  // NEWSLETTER SUBSCRIBERS
-  // ==============================
+        if (!button) return;
 
-  async function loadSubscribers() {
 
-    const {
-      data,
-      error
-    } = await client
-      .from("newsletter_subscribers")
-      .select("*")
-      .order("subscribed_at", {
-        ascending: false
-      });
+        const id =
+          button.dataset.id;
 
-    const table =
-      $("#subscribersTable");
 
-    if (!table) return;
+        const input =
+          document.querySelector(
+            `[data-stock="${id}"]`
+          );
 
-    if (error) {
 
-      table.innerHTML =
-        `<p class="message error">${esc(error.message)}</p>`;
+        if (!input) return;
 
-      return;
-    }
 
-    const subscribers =
-      data || [];
+        button.disabled = true;
 
-    const count =
-      subscribers.length;
 
-    const countEl =
-      $("#subscriberCount");
+        const stock =
+          Math.max(
+            0,
+            parseInt(
+              input.value || 0,
+              10
+            )
+          );
 
-    if (countEl) {
 
-      countEl.textContent =
-        `${count} subscriber${count === 1 ? "" : "s"}`;
+        const {
+          error
+        } = await supabase
+          .from("product_sizes")
+          .update({
+            stock: stock
+          })
+          .eq(
+            "id",
+            id
+          );
 
-    }
 
-    table.innerHTML = `
+        button.disabled = false;
 
-      <table class="table">
 
-        <thead>
+        if (error) {
 
-          <tr>
-            <th>Email</th>
-            <th>Subscribed</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
+          alert(
+            error.message
+          );
 
-        </thead>
+          return;
+        }
 
-        <tbody>
 
-          ${subscribers.map((s) => `
+        button.textContent =
+          "Saved";
 
-            <tr>
 
-              <td>
-                ${esc(s.email)}
-              </td>
+        setTimeout(
+          function () {
 
-              <td>
-                ${new Date(
-                  s.subscribed_at
-                ).toLocaleString()}
-              </td>
+            button.textContent =
+              "Save";
 
-              <td>
-                ${s.is_active ? "Active" : "Inactive"}
-              </td>
+          },
+          1000
+        );
 
-              <td>
-
-                <button
-                  class="${
-                    s.is_active
-                      ? "danger"
-                      : "secondary"
-                  } toggle-sub"
-                  data-id="${s.id}"
-                  data-active="${s.is_active}"
-                >
-                  ${
-                    s.is_active
-                      ? "Deactivate"
-                      : "Activate"
-                  }
-                </button>
-
-              </td>
-
-            </tr>
-
-          `).join("")}
-
-        </tbody>
-
-      </table>
-
-    `;
+      }
+    );
 
   }
 
-  // ==============================
-  // TOGGLE SUBSCRIBER
-  // ==============================
 
-  document.addEventListener(
-    "click",
-    async (e) => {
+  if (
+    document.readyState ===
+    "loading"
+  ) {
 
-      const button =
-        e.target.closest(".toggle-sub");
+    document.addEventListener(
+      "DOMContentLoaded",
+      boot
+    );
 
-      if (!button) return;
+  } else {
 
-      const active =
-        button.dataset.active !== "true";
+    boot();
 
-      const {
-        error
-      } = await client
-        .from("newsletter_subscribers")
-        .update({
-          is_active: active
-        })
-        .eq("id", button.dataset.id);
+  }
 
-      if (error) {
 
-        alert(error.message);
-
-        return;
-      }
-
-      await loadSubscribers();
-
-    }
-  );
-
-  // ==============================
-  // INITIAL LOAD
-  // ==============================
-
-  start();
-
-});
+})();
