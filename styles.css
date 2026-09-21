@@ -1910,3 +1910,17 @@ a {
 .contact-card form { display:flex; gap:10px; margin-top:20px; }
 .contact-card input { flex:1; min-width:0; }
 @media (max-width:700px) { .contact-grid { grid-template-columns:1fr; } .contact-card form { flex-direction:column; } }
+
+/* Final mobile product-card alignment fix */
+.product-card-content > .add-cart,
+.product-card-content > .variant-aware-add {
+  margin-top: auto;
+}
+
+@media (max-width: 700px) {
+  .product-card-content > .add-cart,
+  .product-card-content > .variant-aware-add {
+    width: 100%;
+    margin-top: auto;
+  }
+}
