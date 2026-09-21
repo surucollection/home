@@ -2563,67 +2563,118 @@ document.addEventListener("DOMContentLoaded", function () {
           const rows =
             sizeRows
               .map(
-                r => ({
+                r => {
 
-                  product_id:
-                    product.id,
+                  /*
+                   * 10-column variant format:
+                   * size,color,bust,waist,hip,shoulder,
+                   * top_length,bottom_length,dupatta_length,stock
+                   *
+                   * 9-column legacy format:
+                   * size,bust,waist,hip,shoulder,top_length,
+                   * bottom_length,dupatta_length,stock
+                   */
 
-                  size:
-                    r[0],
+                  const variantFormat =
+                    r.length >= 10;
 
-                  bust:
-                    numOrNull(r[1]),
+                  const offset =
+                    variantFormat
+                      ? 2
+                      : 1;
 
-                  waist:
-                    numOrNull(r[2]),
+                  const stockIndex =
+                    variantFormat
+                      ? 9
+                      : 8;
 
-                  hip:
-                    numOrNull(r[3]),
+                  return {
 
-                  shoulder:
-                    numOrNull(r[4]),
+                    product_id:
+                      product.id,
 
-                  top_length:
-                    numOrNull(r[5]),
+                    size:
+                      r[0] || null,
 
-                  bottom_length:
-                    numOrNull(r[6]),
+                    color:
+                      variantFormat
+                        ? (r[1] || null)
+                        : null,
 
-                  dupatta_length:
-                    numOrNull(r[7]),
+                    bust:
+                      numOrNull(
+                        r[offset]
+                      ),
 
-                  unit:
-                    "in",
+                    waist:
+                      numOrNull(
+                        r[offset + 1]
+                      ),
 
-                  stock:
-                    Math.max(
-                      0,
-                      parseInt(
-                        r[8] || 0,
-                        10
-                      )
-                    ),
+                    hip:
+                      numOrNull(
+                        r[offset + 2]
+                      ),
 
-                  is_active:
-                    true
-                })
+                    shoulder:
+                      numOrNull(
+                        r[offset + 3]
+                      ),
+
+                    top_length:
+                      numOrNull(
+                        r[offset + 4]
+                      ),
+
+                    bottom_length:
+                      numOrNull(
+                        r[offset + 5]
+                      ),
+
+                    dupatta_length:
+                      numOrNull(
+                        r[offset + 6]
+                      ),
+
+                    unit:
+                      "in",
+
+                    stock:
+                      Math.max(
+                        0,
+                        parseInt(
+                          r[stockIndex] || 0,
+                          10
+                        )
+                      ),
+
+                    is_active:
+                      true
+                  };
+                }
               )
               .filter(
-                r => r.size
+                r =>
+                  Boolean(r.size) ||
+                  Boolean(r.color) ||
+                  r.stock > 0
               );
 
-          const {
-            error:
-              sizeError
-          } =
-            await client
-              .from(
-                "product_sizes"
-              )
-              .insert(rows);
+          if (rows.length) {
 
-          if (sizeError) {
-            throw sizeError;
+            const {
+              error:
+                sizeError
+            } =
+              await client
+                .from(
+                  "product_sizes"
+                )
+                .insert(rows);
+
+            if (sizeError) {
+              throw sizeError;
+            }
           }
         }
 
@@ -2678,7 +2729,7 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadInventory(){
   const {data,error}=await client
     .from('products')
-    .select('id,product_code,name,product_sizes(id,size,stock,is_active)')
+    .select('id,product_code,name,product_sizes(id,size,color,stock,is_active)')
     .order('product_code');
 
   if(error){
@@ -2721,7 +2772,12 @@ document.addEventListener("DOMContentLoaded", function () {
               <div class="stock-row">
 
                 <span>
-                  <b>${esc(s.size)}</b>
+                  <b>${esc(s.size || '—')}</b>
+                  ${
+                    s.color
+                      ? `<small class="stock-color">${esc(s.color)}</small>`
+                      : ""
+                  }
                 </span>
 
                 <input

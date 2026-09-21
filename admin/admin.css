@@ -742,3 +742,32 @@ tr:last-child td {
     font-size: 12px;
   }
 }
+
+/* =========================================================
+   PRODUCT / VARIANT / INVENTORY ADDITIONS
+   ========================================================= */
+:root {
+  --line: #e5d9d2;
+  --muted: #766868;
+}
+.page-title { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+#addProductCard[hidden] { display:none !important; }
+.admin-form label { display:block; margin:0 0 14px; font-size:13px; font-weight:600; }
+.admin-form input:not([type="checkbox"]), .admin-form textarea, .admin-form select {
+  width:100%; margin-top:6px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; box-sizing:border-box;
+}
+.admin-form textarea { resize:vertical; min-height:80px; }
+.form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 15px; }
+.form-help,.form-help-inline { color:var(--muted); font-size:12px; font-weight:400; line-height:1.5; }
+.form-help { margin:-5px 0 20px; }
+.check-row { display:flex; gap:25px; align-items:center; margin:10px 0 18px; }
+.check-row label { margin:0; font-weight:600; }
+.check-row input { margin-right:6px; }
+.form-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.stock-row > span { flex-direction:column; align-items:flex-start; justify-content:center; }
+.stock-color { display:block; margin-top:2px; color:var(--muted); font-size:11px; font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+@media(max-width:650px){
+  .page-title { flex-direction:column; }
+  .form-grid { grid-template-columns:1fr; }
+  .stock-color { max-width:120px; }
+}

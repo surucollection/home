@@ -263,6 +263,43 @@
 
     </div>
 
+    <button id="toggleAddProduct" class="primary" type="button">
+      + Add Product
+    </button>
+
+  </div>
+
+
+  <div class="card hidden" id="addProductCard">
+    <h3>Add Product</h3>
+    <p class="form-help">Enter one product. Put the main image URL first. For variants, use one row per size/colour combination.</p>
+    <form id="addProductForm" class="admin-form">
+      <div class="form-grid">
+        <label>Product Code<input id="newCode" required placeholder="SC005"></label>
+        <label>Product Name<input id="newName" required></label>
+        <label>Category<input id="newCategory" required></label>
+        <label>Price (NPR)<input id="newPrice" type="number" min="0" step="0.01" required></label>
+        <label>MOQ<input id="newMoq" type="number" min="0" value="1"></label>
+        <label>Fabric<input id="newFabric"></label>
+        <label>Fixed / Descriptive Colour<input id="newColor" placeholder="Leave blank for colour variants"></label>
+        <label>Pattern<input id="newPattern"></label>
+      </div>
+      <label>Description<textarea id="newDescription" rows="7" placeholder="Product description"></textarea></label>
+      <label>Image URLs <span class="form-help-inline">(one URL per line; first is main image)</span><textarea id="newImages" rows="5" placeholder="https://.../main.jpg&#10;https://.../detail.jpg"></textarea></label>
+      <label>Variants / Stock
+        <span class="form-help-inline">One row per line: size,color,bust,waist,hip,shoulder,top_length,bottom_length,dupatta_length,stock. Leave size or color blank when not applicable. For a product with neither, use: ,,,,,,,,10</span>
+        <textarea id="newSizes" rows="7" placeholder="S,Red,34,32,36,13,52,39,1.95,5&#10;M,Red,36,33,38,13,52,39,1.95,4&#10;,Red,,,,,,,,10&#10;,,,,,,,,,10"></textarea>
+      </label>
+      <div class="check-row">
+        <label><input id="newActive" type="checkbox" checked> Active</label>
+        <label><input id="newFeatured" type="checkbox"> Featured</label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="primary">Add Product</button>
+        <button type="button" id="cancelAddProduct" class="secondary">Cancel</button>
+      </div>
+      <div id="addProductMessage" class="message"></div>
+    </form>
   </div>
 
 
