@@ -531,6 +531,14 @@
                 <p>
 
                   ${
+                    item.color
+                      ? "Colour: " +
+                        item.color +
+                        " · "
+                      : ""
+                  }
+
+                  ${
                     item.size
                       ? "Size: " +
                         item.size +
@@ -814,6 +822,12 @@
                 item.code +
                 " — " +
                 item.name +
+                (
+                  item.color
+                    ? " | Colour: " +
+                      item.color
+                    : ""
+                ) +
                 (
                   item.size
                     ? " | Size: " +
