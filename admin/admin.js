@@ -278,15 +278,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function isAdmin(session) {
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return {
         ok: false,
         error: "No active session."
       };
     }
 
+    /*
+      Check the signed-in user's own admin_users row directly.
+      This avoids an auth-state/RPC timing issue that can send a
+      valid admin back to the login screen. The RLS policy permits
+      an authenticated user to read only their own admin record.
+    */
     const { data, error } =
-      await client.rpc("is_admin");
+      await client
+        .from("admin_users")
+        .select("id,role,is_active")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
     if (error) {
       return {
@@ -297,10 +307,15 @@ document.addEventListener("DOMContentLoaded", function () {
       };
     }
 
+    const allowed =
+      !!data &&
+      data.is_active === true &&
+      (data.role === "admin" || data.role === "manager");
+
     return {
-      ok: data === true,
+      ok: allowed,
       error:
-        data === true
+        allowed
           ? ""
           : "This account is not authorized for the admin panel."
     };
