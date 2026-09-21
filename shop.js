@@ -2,11 +2,7 @@
   "use strict";
 
   const CART_KEY = "suruCart";
-  const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
-
-  /* -----------------------------
-     Storage helpers
-  ----------------------------- */
+  const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
   function readCookie(name) {
     const prefix = encodeURIComponent(name) + "=";
@@ -19,7 +15,13 @@
 
     if (!row) return null;
 
-    return decodeURIComponent(row.substring(prefix.length));
+    try {
+      return decodeURIComponent(
+        row.substring(prefix.length)
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   function writeCookie(name, value) {
@@ -39,48 +41,47 @@
   }
 
   function readStorage() {
-    let localValue = null;
-
-    /* Try localStorage first */
     try {
-      localValue = localStorage.getItem(CART_KEY);
+      const value = localStorage.getItem(CART_KEY);
+
+      if (value !== null) {
+        return value;
+      }
     } catch (error) {
-      console.warn("Suru Collection: localStorage unavailable.", error);
+      console.warn(
+        "Suru Collection: localStorage unavailable.",
+        error
+      );
     }
 
-    /* If localStorage has data, use it */
-    if (localValue !== null) {
-      return localValue;
-    }
-
-    /* Otherwise use cookie fallback */
     return readCookie(CART_KEY);
   }
 
   function writeStorage(value) {
     let localSaved = false;
 
-    /* Try localStorage */
     try {
       localStorage.setItem(CART_KEY, value);
 
-      /* Verify that it actually saved */
-      localSaved = localStorage.getItem(CART_KEY) === value;
+      localSaved =
+        localStorage.getItem(CART_KEY) === value;
     } catch (error) {
-      console.warn("Suru Collection: localStorage save failed.", error);
+      console.warn(
+        "Suru Collection: localStorage save failed.",
+        error
+      );
     }
 
-    /* Always keep cookie synchronized */
     try {
       writeCookie(CART_KEY, value);
     } catch (error) {
-      console.warn("Suru Collection: cookie save failed.", error);
+      console.warn(
+        "Suru Collection: cookie save failed.",
+        error
+      );
     }
 
-    /* Verify at least one storage method worked */
-    if (localSaved) {
-      return true;
-    }
+    if (localSaved) return true;
 
     try {
       return readCookie(CART_KEY) === value;
@@ -90,39 +91,49 @@
   }
 
   function removeStorage() {
-    let success = false;
-
     try {
       localStorage.removeItem(CART_KEY);
-      success = true;
-    } catch (error) {
-      console.warn("Suru Collection: localStorage remove failed.", error);
-    }
+    } catch (error) {}
 
     try {
       removeCookie(CART_KEY);
-    } catch (error) {
-      console.warn("Suru Collection: cookie remove failed.", error);
-    }
-
-    return success;
+    } catch (error) {}
   }
 
-  /* -----------------------------
-     Cart
-  ----------------------------- */
+  function normalise(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
 
   function getCart() {
     try {
       const saved = readStorage();
 
-      if (!saved) {
-        return [];
-      }
+      if (!saved) return [];
 
       const cart = JSON.parse(saved);
 
-      return Array.isArray(cart) ? cart : [];
+      if (!Array.isArray(cart)) return [];
+
+      return cart.map(function (item) {
+        return {
+          code: String(item.code || ""),
+          name: String(item.name || ""),
+          price: Number(item.price || 0),
+          image: String(item.image || ""),
+          size: item.size
+            ? String(item.size)
+            : "",
+          color: item.color
+            ? String(item.color)
+            : "",
+          qty: Math.max(
+            1,
+            parseInt(item.qty, 10) || 1
+          )
+        };
+      });
     } catch (error) {
       console.error(
         "Suru Collection: Unable to read cart.",
@@ -151,69 +162,64 @@
     }
   }
 
-  function updateCartCount() {
-    const cart = getCart();
-
-    const count = cart.reduce(function (total, item) {
-      return total + Number(item.qty || 0);
-    }, 0);
-
-    document
-      .querySelectorAll("#cartCount")
-      .forEach(function (element) {
-        element.textContent = count;
-      });
+  function sameVariant(a, b) {
+    return (
+      normalise(a.code) === normalise(b.code) &&
+      normalise(a.size) === normalise(b.size) &&
+      normalise(a.color) === normalise(b.color)
+    );
   }
 
   function addToCart(item) {
-    const cart = getCart();
-
-    const code = String(item.code || "");
-    const size = String(item.size || "");
+    const code = String(item.code || "").trim();
 
     if (!code) {
-      console.error("Suru Collection: Product code missing.");
       showCartMessage(
-        "Unable to add this product. Product code is missing."
+        "Unable to add this product."
       );
+
       return false;
     }
 
-    const quantity = Math.max(
-      1,
-      parseInt(item.qty, 10) || 1
-    );
+    const cart = getCart();
+
+    const newItem = {
+      code: code,
+      name: String(item.name || ""),
+      price: Number(item.price || 0),
+      image: String(item.image || ""),
+      size: item.size
+        ? String(item.size)
+        : "",
+      color: item.color
+        ? String(item.color)
+        : "",
+      qty: Math.max(
+        1,
+        parseInt(item.qty, 10) || 1
+      )
+    };
 
     const existing = cart.find(function (product) {
-      return (
-        String(product.code) === code &&
-        String(product.size || "") === size
-      );
+      return sameVariant(product, newItem);
     });
 
     if (existing) {
       existing.qty =
-        Number(existing.qty || 0) + quantity;
+        Number(existing.qty || 0) +
+        newItem.qty;
     } else {
-      cart.push({
-        code: code,
-        name: String(item.name || ""),
-        price: Number(item.price || 0),
-        image: String(item.image || ""),
-        size: size,
-        qty: quantity
-      });
+      cart.push(newItem);
     }
 
     const saved = saveCart(cart);
 
-    /* IMPORTANT:
-       Only show "added" if storage actually succeeded. */
     if (saved) {
       showCartMessage(
-        String(item.name || "Product") +
+        newItem.name +
         " added to your cart."
       );
+
       return true;
     }
 
@@ -231,12 +237,12 @@
       index < 0 ||
       index >= cart.length
     ) {
-      return;
+      return false;
     }
 
     cart.splice(index, 1);
 
-    saveCart(cart);
+    return saveCart(cart);
   }
 
   function updateQuantity(index, quantity) {
@@ -246,17 +252,17 @@
       index < 0 ||
       index >= cart.length
     ) {
-      return;
+      return false;
     }
 
-    const newQuantity = Math.max(
+    const qty = Math.max(
       1,
       parseInt(quantity, 10) || 1
     );
 
-    cart[index].qty = newQuantity;
+    cart[index].qty = qty;
 
-    saveCart(cart);
+    return saveCart(cart);
   }
 
   function clearCart() {
@@ -264,40 +270,82 @@
     updateCartCount();
   }
 
-  /* -----------------------------
-     Message
-  ----------------------------- */
+  function updateCartCount() {
+    const cart = getCart();
+
+    const count = cart.reduce(
+      function (total, item) {
+        return (
+          total +
+          Number(item.qty || 0)
+        );
+      },
+      0
+    );
+
+    document
+      .querySelectorAll("#cartCount")
+      .forEach(function (element) {
+        element.textContent = count;
+      });
+  }
 
   function showCartMessage(message) {
-    let messageBox =
-      document.getElementById("suruCartMessage");
+    let box =
+      document.getElementById(
+        "suruCartMessage"
+      );
 
-    if (!messageBox) {
-      messageBox = document.createElement("div");
+    if (!box) {
+      box = document.createElement("div");
 
-      messageBox.id = "suruCartMessage";
+      box.id =
+        "suruCartMessage";
 
-      messageBox.style.position = "fixed";
-      messageBox.style.left = "50%";
-      messageBox.style.bottom = "25px";
-      messageBox.style.transform =
+      box.style.position =
+        "fixed";
+
+      box.style.left =
+        "50%";
+
+      box.style.bottom =
+        "25px";
+
+      box.style.transform =
         "translateX(-50%)";
-      messageBox.style.zIndex = "99999";
-      messageBox.style.background = "#5b0f24";
-      messageBox.style.color = "#fff";
-      messageBox.style.padding = "12px 20px";
-      messageBox.style.borderRadius = "8px";
-      messageBox.style.fontSize = "14px";
-      messageBox.style.boxShadow =
-        "0 8px 30px rgba(0,0,0,.18)";
-      messageBox.style.maxWidth = "90%";
-      messageBox.style.textAlign = "center";
 
-      document.body.appendChild(messageBox);
+      box.style.zIndex =
+        "99999";
+
+      box.style.background =
+        "#5b0f24";
+
+      box.style.color =
+        "#fff";
+
+      box.style.padding =
+        "12px 20px";
+
+      box.style.borderRadius =
+        "8px";
+
+      box.style.fontSize =
+        "14px";
+
+      box.style.boxShadow =
+        "0 8px 30px rgba(0,0,0,.18)";
+
+      box.style.maxWidth =
+        "90%";
+
+      box.style.textAlign =
+        "center";
+
+      document.body.appendChild(box);
     }
 
-    messageBox.textContent = message;
-    messageBox.style.display = "block";
+    box.textContent = message;
+    box.style.display = "block";
 
     clearTimeout(
       window.__suruCartMessageTimer
@@ -305,118 +353,123 @@
 
     window.__suruCartMessageTimer =
       setTimeout(function () {
-        messageBox.style.display = "none";
+        box.style.display =
+          "none";
       }, 2200);
   }
 
-  /* -----------------------------
-     Add-to-cart click handler
-  ----------------------------- */
+  /*
+   * Legacy click support.
+   *
+   * Product pages that explicitly call
+   * SuruShop.addToCart() will use the
+   * full variant-aware system above.
+   */
 
-  document.addEventListener("click", function (event) {
-    const button = event.target.closest(
-      ".add-cart, .buy-button, [data-add-to-cart]"
-    );
+  document.addEventListener(
+    "click",
+    function (event) {
+      const button =
+        event.target.closest(
+          ".add-cart, [data-add-to-cart]"
+        );
 
-    if (!button) return;
+      if (!button) return;
 
-    event.preventDefault();
-    event.stopPropagation();
+      /*
+       * Variant-aware product page buttons
+       * handle themselves.
+       */
+      if (
+        button.dataset.variantAware ===
+        "true"
+      ) {
+        return;
+      }
 
-    const code =
-      button.dataset.code ||
-      document.body.dataset.productCode ||
-      "";
+      event.preventDefault();
 
-    const name =
-      button.dataset.name ||
-      document
-        .querySelector("[data-product-name]")
-        ?.textContent ||
-      "";
+      const code =
+        button.dataset.code || "";
 
-    const price = Number(
-      button.dataset.price ||
-      document.body.dataset.productPrice ||
-      0
-    );
+      const name =
+        button.dataset.name || "";
 
-    const image =
-      button.dataset.image ||
-      document.querySelector(
-        ".product-main-image img"
-      )?.src ||
-      document.querySelector(
-        ".product-img img"
-      )?.src ||
-      "";
+      const price =
+        Number(
+          button.dataset.price || 0
+        );
 
-    const sizeElement =
-      document.querySelector("#size") ||
-      document.querySelector(
-        "[name='size']"
-      );
+      const image =
+        button.dataset.image || "";
 
-    const quantityElement =
-      document.querySelector("#qty") ||
-      document.querySelector(
-        "[name='quantity']"
-      );
+      const sizeElement =
+        document.querySelector(
+          "#size, [name='size']"
+        );
 
-    const size = sizeElement
-      ? String(sizeElement.value || "")
-      : "";
+      const colorElement =
+        document.querySelector(
+          "#color, #productColor, [name='color']"
+        );
 
-    const quantity = quantityElement
-      ? Math.max(
-          1,
-          parseInt(
-            quantityElement.value,
-            10
-          ) || 1
-        )
-      : 1;
+      const qtyElement =
+        document.querySelector(
+          "#qty, #productQty, [name='quantity']"
+        );
 
-    if (
-      sizeElement &&
-      sizeElement.options &&
-      sizeElement.options.length > 0 &&
-      !size
-    ) {
-      alert("Please select a size first.");
-      return;
+      const size =
+        sizeElement
+          ? String(
+              sizeElement.value || ""
+            )
+          : "";
+
+      const color =
+        colorElement
+          ? String(
+              colorElement.value || ""
+            )
+          : "";
+
+      const qty =
+        qtyElement
+          ? Math.max(
+              1,
+              parseInt(
+                qtyElement.value,
+                10
+              ) || 1
+            )
+          : 1;
+
+      addToCart({
+        code: code,
+        name: name,
+        price: price,
+        image: image,
+        size: size,
+        color: color,
+        qty: qty
+      });
     }
-
-    addToCart({
-      code: code,
-      name: name,
-      price: price,
-      image: image,
-      size: size,
-      qty: quantity
-    });
-  });
-
-  /* -----------------------------
-     Public API
-  ----------------------------- */
+  );
 
   window.SuruShop = {
     getCart: getCart,
     saveCart: saveCart,
+    addToCart: addToCart,
     add: addToCart,
     remove: removeFromCart,
     updateQuantity: updateQuantity,
     clear: clearCart,
-    updateCount: updateCartCount
+    updateCount: updateCartCount,
+    showMessage: showCartMessage
   };
 
-  /* -----------------------------
-     Initial cart count
-  ----------------------------- */
-
   if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
   ) {
     document.addEventListener(
       "DOMContentLoaded",
