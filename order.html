@@ -387,10 +387,6 @@
   "use strict";
 
 
-  const KEY =
-    "suruCart";
-
-
   const WHATSAPP =
     "9779740381427";
 
@@ -399,20 +395,30 @@
      HELPERS
   ===================================================== */
 
+  /*
+     IMPORTANT:
+     The cart is now controlled by shop.js.
+
+     This means order.html uses the exact same
+     storage system as the product pages.
+
+     shop.js will use localStorage when available
+     and automatically fall back to cookies when
+     localStorage is blocked or unavailable.
+  */
+
   function getCart() {
 
-    try {
+    if (
+      window.SuruShop &&
+      typeof window.SuruShop.getCart === "function"
+    ) {
 
-      return JSON.parse(
-        localStorage.getItem(KEY) ||
-        "[]"
-      );
-
-    } catch (error) {
-
-      return [];
+      return window.SuruShop.getCart();
 
     }
+
+    return [];
 
   }
 
@@ -593,6 +599,10 @@
     function (event) {
 
 
+      /* -----------------------------
+         REMOVE ITEM
+      ----------------------------- */
+
       const remove =
         event.target.closest(
           ".remove-item"
@@ -613,17 +623,29 @@
         );
 
 
-        localStorage.setItem(
-          KEY,
-          JSON.stringify(cart)
-        );
+        /*
+           Save through shop.js so the same
+           localStorage/cookie system is used.
+        */
+
+        if (
+          window.SuruShop &&
+          typeof window.SuruShop.saveCart ===
+            "function"
+        ) {
+
+          window.SuruShop.saveCart(cart);
+
+        }
 
 
         renderCart();
 
 
         if (
-          window.SuruShop
+          window.SuruShop &&
+          typeof window.SuruShop.updateCount ===
+            "function"
         ) {
 
           window.SuruShop.updateCount();
@@ -635,20 +657,34 @@
       }
 
 
+      /* -----------------------------
+         CLEAR CART
+      ----------------------------- */
+
       if (
         event.target.id ===
         "clearCart"
       ) {
 
-        localStorage.removeItem(
-          KEY
-        );
+
+        if (
+          window.SuruShop &&
+          typeof window.SuruShop.clear ===
+            "function"
+        ) {
+
+          window.SuruShop.clear();
+
+        }
+
 
         renderCart();
 
 
         if (
-          window.SuruShop
+          window.SuruShop &&
+          typeof window.SuruShop.updateCount ===
+            "function"
         ) {
 
           window.SuruShop.updateCount();
@@ -896,7 +932,12 @@
   }
 
 
+  /* =====================================================
+     INITIAL CART LOAD
+  ===================================================== */
+
   renderCart();
+
 
 })();
 
