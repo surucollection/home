@@ -664,3 +664,81 @@ tr:last-child td {
     overflow-x: auto;
   }
 }
+/* ================================
+   INVENTORY STOCK ROW FIX
+   ================================ */
+
+.stock-list {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.stock-row {
+  display: grid;
+  grid-template-columns: 55px minmax(120px, 180px) 78px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  min-height: 62px;
+  border-bottom: 1px solid var(--line);
+  box-sizing: border-box;
+}
+
+.stock-row > span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.stock-row > span b {
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.stock-row input {
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.stock-row button {
+  width: 78px;
+  height: 42px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Mobile inventory */
+@media (max-width: 650px) {
+
+  .stock-row {
+    grid-template-columns: 48px minmax(0, 1fr) 72px;
+    gap: 8px;
+    min-height: 58px;
+    padding: 9px 0;
+  }
+
+  .stock-row > span b {
+    font-size: 17px;
+  }
+
+  .stock-row input {
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .stock-row button {
+    width: 72px;
+    height: 40px;
+    font-size: 12px;
+  }
+}
