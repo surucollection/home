@@ -2675,99 +2675,80 @@ document.addEventListener("DOMContentLoaded", function () {
      INVENTORY
   ========================================================= */
 
-  async function loadInventory() {
+  async function loadInventory(){
+  const {data,error}=await client
+    .from('products')
+    .select('id,product_code,name,product_sizes(id,size,stock,is_active)')
+    .order('product_code');
 
-    const {
-      data,
-      error
-    } =
-      await client
-        .from("products")
-        .select(
-          "id,product_code,name,product_sizes(id,size,stock,is_active)"
-        )
-        .order(
-          "product_code"
-        );
+  if(error){
+    $('#inventoryGrid').innerHTML=
+      `<div class="card">
+        <p class="message error">${esc(error.message)}</p>
+      </div>`;
+    return;
+  }
 
-    if (error) {
+  const sizeOrder={
+    'XS':1,
+    'S':2,
+    'M':3,
+    'L':4,
+    'XL':5,
+    'XXL':6,
+    'XXXL':7,
+    'XXXXL':8
+  };
 
-      $("#inventoryGrid").innerHTML =
-        `<div class="card">
-          <p class="message error">
-            ${esc(error.message)}
-          </p>
-        </div>`;
+  $('#inventoryGrid').innerHTML=(data||[]).map(p=>{
 
-      return;
-    }
+    const sizes=(p.product_sizes||[])
+      .sort((a,b)=>{
+        const aSize=String(a.size||'').trim().toUpperCase();
+        const bSize=String(b.size||'').trim().toUpperCase();
 
-    $("#inventoryGrid").innerHTML =
-      (data || [])
-        .map(
-          p => `
+        return (sizeOrder[aSize]||999)-(sizeOrder[bSize]||999);
+      });
 
-            <div class="card">
+    return `
+      <div class="card">
+        <h3>${esc(p.product_code)} — ${esc(p.name)}</h3>
 
-              <h3>
-                ${esc(
-                  p.product_code
-                )}
-                —
-                ${esc(
-                  p.name
-                )}
-              </h3>
+        <div class="stock-list">
 
-              <div class="stock-list">
+          ${
+            sizes.map(s=>`
+              <div class="stock-row">
 
-                ${
-                  (p.product_sizes || [])
-                    .map(
-                      s => `
+                <span>
+                  <b>${esc(s.size)}</b>
+                </span>
 
-                        <div class="stock-row">
+                <input
+                  type="number"
+                  min="0"
+                  value="${s.stock}"
+                  data-stock="${s.id}"
+                  data-old="${s.stock}"
+                >
 
-                          <span>
-                            <b>
-                              ${esc(
-                                s.size
-                              )}
-                            </b>
-                          </span>
-
-                          <input
-                            type="number"
-                            min="0"
-                            value="${s.stock}"
-                            data-stock="${s.id}"
-                            data-old="${s.stock}">
-
-                          <button
-                            class="primary save-stock"
-                            data-id="${s.id}"
-                            data-product="${p.id}">
-                            Save
-                          </button>
-
-                        </div>
-                      `
-                    )
-                    .join("") ||
-                  `
-                    <p class="subscriber-count">
-                      No sizes configured.
-                    </p>
-                  `
-                }
+                <button
+                  class="primary save-stock"
+                  data-id="${s.id}"
+                  data-product="${p.id}"
+                >
+                  Save
+                </button>
 
               </div>
+            `).join('')
+          || '<p class="subscriber-count">No sizes configured.</p>'}
 
-            </div>
-          `
-        )
-        .join("");
-  }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
 
   /* =========================================================
