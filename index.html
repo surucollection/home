@@ -4,328 +4,463 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Suru Collection | Women's Ethnic & Traditional Wear</title>
+<title>Suru Collection — Traditional Wear</title>
 
-<meta name="description" content="Suru Collection — women's sarees, gowns, lehengas, suits, kurtis and traditional wear in Gaur, Rautahat, Nepal.">
+<meta name="description"
+      content="Suru Collection — elegant sarees, suits, gowns, lehengas, kurtis and traditional wear.">
 
-<meta name="theme-color" content="#76292d">
+<link rel="stylesheet" href="/styles.css">
 
-<link rel="stylesheet" href="styles.css">
+<style>
+/* =========================================================
+   HOMEPAGE PRODUCT VARIANT MODAL
+   ========================================================= */
+
+.variant-modal {
+  width: min(480px, calc(100% - 30px));
+  max-width: 480px;
+  border: 0;
+  border-radius: 16px;
+  padding: 0;
+  background: #fff;
+  color: #2d2020;
+  box-shadow: 0 20px 70px rgba(0,0,0,.25);
+}
+
+.variant-modal::backdrop {
+  background: rgba(35, 10, 15, .58);
+  backdrop-filter: blur(3px);
+}
+
+.variant-modal-inner {
+  padding: 25px;
+}
+
+.variant-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.variant-modal-header h2 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.25;
+}
+
+.variant-modal-code {
+  margin-top: 5px;
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: #8a7070;
+}
+
+.variant-close {
+  border: 0;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6d4141;
+  flex: 0 0 auto;
+}
+
+.variant-close:hover {
+  background: #f6eeee;
+}
+
+.variant-modal-product {
+  display: flex;
+  gap: 15px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eadede;
+}
+
+.variant-modal-product img {
+  width: 76px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 9px;
+  background: #f7f0eb;
+}
+
+.variant-modal-price {
+  font-size: 19px;
+  font-weight: 700;
+  color: #76292d;
+  margin-top: 7px;
+}
+
+.variant-field {
+  margin-bottom: 18px;
+}
+
+.variant-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+
+.variant-field select,
+.variant-field input {
+  width: 100%;
+  height: 46px;
+  border: 1px solid #d9caca;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 12px;
+  font-size: 15px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.variant-field select:focus,
+.variant-field input:focus {
+  border-color: #9a6262;
+  box-shadow: 0 0 0 3px rgba(118,41,45,.08);
+}
+
+.variant-fixed-value {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid #e1d5d5;
+  border-radius: 8px;
+  background: #faf7f5;
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+.variant-stock {
+  min-height: 20px;
+  margin-top: -5px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #53744e;
+}
+
+.variant-stock.out {
+  color: #a32929;
+}
+
+.variant-stock.warning {
+  color: #936d25;
+}
+
+.variant-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.variant-modal-actions button {
+  width: 100%;
+  min-height: 47px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.variant-add-button {
+  background: #76292d;
+  color: #fff;
+}
+
+.variant-add-button:hover:not(:disabled) {
+  background: #632126;
+}
+
+.variant-add-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.variant-cancel-button {
+  background: #f3eaea;
+  color: #6c3033;
+}
+
+.variant-cancel-button:hover {
+  background: #eadcdc;
+}
+
+.variant-modal-message {
+  display: none;
+  margin-top: 13px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #f1f7ee;
+  color: #3d6737;
+  font-size: 13px;
+}
+
+.variant-modal-message.show {
+  display: block;
+}
+
+.variant-modal-message.error {
+  background: #fff0f0;
+  color: #a32929;
+}
+
+@media (max-width: 600px) {
+  .variant-modal-inner {
+    padding: 20px;
+  }
+
+  .variant-modal-header h2 {
+    font-size: 20px;
+  }
+
+  .variant-modal-product img {
+    width: 68px;
+    height: 82px;
+  }
+}
+</style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <span>Elegance for Every Occasion&nbsp; | &nbsp;Gaur, Rautahat, Nepal</span>
-  <span class="top-social">Follow Us&nbsp;&nbsp; f&nbsp;&nbsp; ◎&nbsp;&nbsp; ♪&nbsp;&nbsp; ▶</span>
-</div>
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
 
+<header class="nav">
+  <div class="nav-inner">
 
-<header class="header">
-
-  <div class="header-inner">
-
-    <a href="#home" class="logo-link">
+    <a class="brand" href="/">
       <img
-        src="assets/suru-logo-official.png"
+        src="/assets/suru-logo-official.png"
         alt="Suru Collection"
       >
     </a>
 
-
     <button
-      class="menu-btn"
-      aria-label="Toggle navigation"
-      aria-expanded="false"
+      class="menu-toggle"
+      id="menuToggle"
       type="button"
+      aria-label="Open menu"
+      aria-expanded="false"
     >
       ☰
     </button>
 
-
-    <nav class="main-nav">
-
-      <a class="active" href="#home">Home</a>
-
-      <a href="#about">About Us</a>
-
-      <a href="#collection">Our Collection</a>
-
-      <a href="#products">Products</a>
-
+    <nav id="mainNav">
+      <a href="#home">Home</a>
+      <a href="#collections">Collections</a>
+      <a href="#shop">Shop</a>
+      <a href="#story">Our Story</a>
       <a href="#contact">Contact</a>
-
-      <a
-        class="search"
-        href="#products"
-        aria-label="Search"
-      >
-        ⌕
-      </a>
-
-      <a class="cta" href="#contact">
-        Enquire Now
-      </a>
-
     </nav>
 
-
     <a
-      href="order.html"
-      class="cart-link header-cart"
+      class="cart-link"
+      href="/order.html"
       aria-label="Shopping cart"
     >
-      Cart <span id="cartCount">0</span>
+      🛍
+      <span id="cartCount">0</span>
     </a>
 
   </div>
-
 </header>
 
 
-<main id="home">
-
-
-<!-- =====================================================
+<!-- =========================================================
      HERO
-===================================================== -->
+     ========================================================= -->
 
-<section class="hero">
+<main>
 
-  <div class="hero-copy">
+<section
+  class="hero"
+  id="home"
+>
+
+  <div class="hero-content">
 
     <p class="eyebrow">
-      WOMEN'S ETHNIC &amp; TRADITIONAL WEAR
+      SURU COLLECTION
     </p>
-
 
     <h1>
-      Tradition<br>
-      Looks Beautiful<br>
-      on You
+      More Than Fashion.<br>
+      <em>It’s a Feeling.</em>
     </h1>
 
-
-    <div class="gold-line"></div>
-
-
-    <p class="hero-text">
-      Sarees, Gowns, Lehengas, Suits, Kurtis and More<br>
-      — for Every Occasion.
-    </p>
-
-
-    <a
-      class="hero-btn"
-      href="#collection"
-    >
-      Explore Our Collection
-      <span>→</span>
-    </a>
-
-
-    <div class="trust">
-
-      <div>
-        <b>♢</b>
-        <span>
-          <strong>Quality</strong>
-          You Can Trust
-        </span>
-      </div>
-
-
-      <div>
-        <b>♧</b>
-        <span>
-          <strong>Serving</strong>
-          Across Nepal
-        </span>
-      </div>
-
-
-      <div>
-        <b>♡</b>
-        <span>
-          <strong>Fashion</strong>
-          Every Occasion
-        </span>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="hero-image">
-
-    <img
-      src="assets/hero.jpg"
-      alt="Suru Collection fashion"
-    >
-
-  </div>
-
-</section>
-
-
-<!-- =====================================================
-     COLLECTIONS
-===================================================== -->
-
-<section
-  class="collections"
-  id="collection"
->
-
-  <div class="section-title">
-
-    <h2>Our Collections</h2>
-
-    <div class="ornament">
-      ⌁◇⌁
-    </div>
-
     <p>
-      A beautiful range for every woman, every occasion.
+      Discover elegant traditional wear designed
+      for celebrations, occasions and everyday beauty.
     </p>
 
-  </div>
-
-
-  <div class="category-row">
-
-
     <a
-      href="#products"
-      class="category"
+      class="hero-button"
+      href="#shop"
     >
-      <img
-        src="assets/cat-sarees.jpg"
-        alt="Sarees"
-      >
-      <b>Sarees</b>
+      Explore Collection
     </a>
-
-
-    <a
-      href="#products"
-      class="category"
-    >
-      <img
-        src="assets/cat-gowns.jpg"
-        alt="Ready-made Gowns"
-      >
-      <b>Ready-made Gowns</b>
-    </a>
-
-
-    <a
-      href="#products"
-      class="category"
-    >
-      <img
-        src="assets/cat-lehengas.jpg"
-        alt="Lehengas"
-      >
-      <b>Lehengas</b>
-    </a>
-
-
-    <a
-      href="#products"
-      class="category"
-    >
-      <img
-        src="assets/cat-suits.jpg"
-        alt="Suits and Salwar Kameez"
-      >
-      <b>Suits &amp; Salwar Kameez</b>
-    </a>
-
-
-    <a
-      href="#products"
-      class="category"
-    >
-      <img
-        src="assets/cat-kurtis.jpg"
-        alt="Kurtis"
-      >
-      <b>Kurtis</b>
-    </a>
-
-
-    <a
-      href="#products"
-      class="category"
-    >
-      <img
-        src="assets/cat-dupatta.jpg"
-        alt="Dupattas and Blouses"
-      >
-      <b>Dupattas &amp; Blouses</b>
-    </a>
-
-
-    <a
-      href="#contact"
-      class="category"
-    >
-      <img
-        src="assets/cat-accessories.jpg"
-        alt="Accessories"
-      >
-      <b>Accessories</b>
-      <small>(Coming Soon)</small>
-    </a>
-
 
   </div>
 
 </section>
 
 
-<!-- =====================================================
-     PRODUCTS
-===================================================== -->
+<!-- =========================================================
+     COLLECTIONS
+     ========================================================= -->
 
 <section
-  class="products-section"
-  id="products"
+  class="section"
+  id="collections"
 >
 
-  <div class="section-title">
+  <div class="section-heading">
 
     <p class="eyebrow">
-      SHOP THE COLLECTION
+      OUR COLLECTIONS
     </p>
 
-
     <h2>
-      Featured Pieces
+      Made for Every Occasion
     </h2>
 
+    <p>
+      Traditional elegance with a modern touch.
+    </p>
 
-    <div class="ornament">
-      ⌁◇⌁
-    </div>
+  </div>
 
+  <div class="collection-grid">
+
+    <a
+      class="collection-card"
+      href="#shop"
+    >
+      <div class="collection-image">
+        <img
+          src="/assets/collection-sarees.jpg"
+          alt="Sarees"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+      </div>
+
+      <div class="collection-content">
+        <h3>Sarees</h3>
+        <p>Timeless elegance for every celebration.</p>
+      </div>
+    </a>
+
+
+    <a
+      class="collection-card"
+      href="#shop"
+    >
+      <div class="collection-image">
+        <img
+          src="/assets/collection-suits.jpg"
+          alt="Suits"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+      </div>
+
+      <div class="collection-content">
+        <h3>Suits &amp; Sets</h3>
+        <p>Graceful styles for every occasion.</p>
+      </div>
+    </a>
+
+
+    <a
+      class="collection-card"
+      href="#shop"
+    >
+      <div class="collection-image">
+        <img
+          src="/assets/collection-lehengas.jpg"
+          alt="Lehengas"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+      </div>
+
+      <div class="collection-content">
+        <h3>Lehengas</h3>
+        <p>Statement pieces for special moments.</p>
+      </div>
+    </a>
+
+
+    <a
+      class="collection-card"
+      href="#shop"
+    >
+      <div class="collection-image">
+        <img
+          src="/assets/collection-kurtis.jpg"
+          alt="Kurtis"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+      </div>
+
+      <div class="collection-content">
+        <h3>Kurtis</h3>
+        <p>Beautiful everyday traditional wear.</p>
+      </div>
+    </a>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     SHOP / PRODUCTS
+     ========================================================= -->
+
+<section
+  class="section shop-section"
+  id="shop"
+>
+
+  <div class="section-heading">
+
+    <p class="eyebrow">
+      SHOP SURU
+    </p>
+
+    <h2>
+      Our Products
+    </h2>
 
     <p>
-      Explore selected pieces from Suru Collection.
+      Discover our latest collection.
     </p>
 
   </div>
 
 
   <div
-    id="productsGrid"
-    class="product-grid dynamic-products"
+    id="productGrid"
+    class="product-grid"
   >
 
     <div class="product-loading">
-      Loading our collection…
+      Loading products…
     </div>
 
   </div>
@@ -333,96 +468,56 @@
 </section>
 
 
-<!-- =====================================================
+<!-- =========================================================
      STORY
-===================================================== -->
+     ========================================================= -->
 
 <section
-  class="story"
-  id="about"
+  class="story-section section"
+  id="story"
 >
 
-  <div class="story-copy">
-
-    <p class="script-heading">
-      Our Story
-    </p>
-
-
-    <h2>
-      Inspired by
-      <em>Suruchi Sahani</em>
-    </h2>
-
-
-    <div class="gold-line"></div>
-
-
-    <p>
-      Suru Collection was born from a simple belief —
-      every woman deserves to feel beautiful, confident,
-      and connected to her culture.
-    </p>
-
-
-    <p>
-      What started as a dream has now become a journey
-      to bring timeless traditional wear, modern styles,
-      and heartfelt service to women across Nepal.
-    </p>
-
-
-    <a
-      class="hero-btn"
-      href="#contact"
-    >
-      Know More About Us
-      <span>→</span>
-    </a>
-
-  </div>
-
-
-  <div class="values">
-
-    <div class="value-grid">
-
-      <div>
-        <b>♢</b>
-        <strong>Authentic Designs</strong>
-        <span>Curated with Care</span>
-      </div>
-
-
-      <div>
-        <b>♧</b>
-        <strong>Wide Variety</strong>
-        <span>for Every Occasion</span>
-      </div>
-
-
-      <div>
-        <b>♧</b>
-        <strong>Customer First</strong>
-        <span>Always</span>
-      </div>
-
-
-      <div>
-        <b>♡</b>
-        <strong>From Gaur</strong>
-        <span>To All of Nepal</span>
-      </div>
-
-    </div>
-
+  <div class="story-grid">
 
     <div class="story-image">
-
       <img
-        src="assets/story.jpg"
-        alt="Traditional fashion at Suru Collection"
+        src="/assets/story.jpg"
+        alt="Suru Collection"
+        loading="lazy"
+        onerror="this.style.display='none'"
       >
+    </div>
+
+    <div class="story-content">
+
+      <p class="eyebrow">
+        OUR STORY
+      </p>
+
+      <h2>
+        Inspired by Suruchi
+      </h2>
+
+      <p>
+        Suru Collection was created with a love for
+        traditional Indian and Nepali fashion.
+      </p>
+
+      <p>
+        Every piece is selected to bring together
+        timeless craftsmanship, beautiful fabrics
+        and contemporary elegance.
+      </p>
+
+      <p>
+        From festive celebrations to everyday
+        occasions, we believe every woman deserves
+        to feel beautiful in what she wears.
+      </p>
+
+      <p class="story-signature">
+        Inspired by Suruchi Sahani
+      </p>
 
     </div>
 
@@ -431,451 +526,456 @@
 </section>
 
 
-<!-- =====================================================
+<!-- =========================================================
      NEWSLETTER
-===================================================== -->
+     ========================================================= -->
 
-<section class="newsletter">
+<section
+  class="newsletter-section section"
+>
 
-  <div class="mail-icon">
-    ✉
-  </div>
+  <div class="newsletter-inner">
 
-
-  <div class="newsletter-copy">
-
-    <h3>
-      Stay in Touch
-    </h3>
-
-
-    <p>
-      Be the first to discover new collections,
-      festive styles, special offers &amp; exclusive
-      updates from Suru Collection.
+    <p class="eyebrow">
+      STAY CONNECTED
     </p>
 
+    <h2>
+      Stay in Touch
+    </h2>
 
-    <small>
-      We will only use your email for Suru Collection updates.
-    </small>
+    <p>
+      Be the first to know about new collections,
+      festive styles and special offers.
+    </p>
+
+    <form id="newsletterForm">
+
+      <input
+        id="newsletterEmail"
+        type="email"
+        placeholder="Enter your email address"
+        autocomplete="email"
+        required
+      >
+
+      <button
+        type="submit"
+      >
+        Subscribe
+      </button>
+
+    </form>
+
+    <div
+      id="newsletterMessage"
+      class="newsletter-message"
+    ></div>
 
   </div>
-
-
-  <form
-    id="newsletterForm"
-    novalidate
-  >
-
-    <input
-      id="newsletterEmail"
-      type="email"
-      autocomplete="email"
-      placeholder="Enter your email address"
-      aria-label="Email address"
-      required
-    >
-
-
-    <button
-      id="newsletterButton"
-      type="submit"
-    >
-      Subscribe
-    </button>
-
-
-    <p
-      id="newsletterStatus"
-      class="newsletter-status"
-      role="status"
-      aria-live="polite"
-    ></p>
-
-  </form>
 
 </section>
 
 
-<!-- =====================================================
+<!-- =========================================================
      CONTACT
-===================================================== -->
+     ========================================================= -->
 
 <section
-  class="contact"
+  class="section contact-section"
   id="contact"
 >
 
-  <div>
+  <div class="section-heading">
 
     <p class="eyebrow">
-      GET IN TOUCH
+      CONTACT US
     </p>
-
 
     <h2>
-      Let’s find something beautiful for you.
+      We'd Love to Hear From You
     </h2>
-
-
-    <p>
-      For product availability, sizes, orders and new
-      collection enquiries, contact Suru Collection directly.
-    </p>
 
   </div>
 
+  <div class="contact-grid">
 
-  <div class="contact-box">
+    <div class="contact-card">
 
-    <p>
-      <b>WhatsApp</b><br>
+      <h3>WhatsApp</h3>
+
+      <p>
+        Chat with us about products,
+        availability and orders.
+      </p>
 
       <a
         href="https://wa.me/9779740381427"
         target="_blank"
         rel="noopener"
       >
-        +977 9740381427
+        Chat on WhatsApp
       </a>
 
-    </p>
+    </div>
 
 
-    <p>
-      <b>Location</b><br>
-      Gaur, Rautahat, Nepal
-    </p>
+    <div class="contact-card">
 
+      <h3>Visit Us</h3>
 
-    <p>
-      <b>Instagram</b><br>
+      <p>
+        Suru Collection<br>
+        Gaur, Rautahat, Nepal
+      </p>
 
-      <a
-        href="https://www.instagram.com/surucollectionofficial"
-        target="_blank"
-        rel="noopener"
-      >
-        @surucollectionofficial
-      </a>
-
-    </p>
+    </div>
 
   </div>
 
 </section>
 
-
 </main>
 
 
-<!-- =====================================================
+<!-- =========================================================
      FOOTER
-===================================================== -->
+     ========================================================= -->
 
 <footer class="footer">
 
-  <div class="footer-grid">
-
+  <div class="footer-inner">
 
     <div>
+      <img
+        src="/assets/suru-logo-official.png"
+        alt="Suru Collection"
+        class="footer-logo"
+      >
 
-      <span class="footer-logo-wrap">
-
-        <img
-          src="assets/suru-logo-official.png"
-          class="footer-logo"
-          alt="Suru Collection"
-        >
-
-      </span>
-
+      <p>
+        Traditional elegance, thoughtfully selected.
+      </p>
     </div>
 
 
-    <div>
-
-      <h3>
-        Quick Links
-      </h3>
+    <div class="footer-links">
 
       <a href="#home">Home</a>
-
-      <a href="#about">About Us</a>
-
-      <a href="#collection">Our Collection</a>
-
-      <a href="#products">Products</a>
-
+      <a href="#collections">Collections</a>
+      <a href="#shop">Shop</a>
+      <a href="#story">Our Story</a>
       <a href="#contact">Contact</a>
 
     </div>
 
-
-    <div>
-
-      <h3>
-        Our Location
-      </h3>
-
-
-      <p>
-        ⌖ &nbsp; Gaur, Rautahat<br>
-        &nbsp;&nbsp;&nbsp;&nbsp; Nepal
-      </p>
-
-
-      <p>
-        ☎ &nbsp; +977 9740381427
-      </p>
-
-
-      <p>
-        ✉ &nbsp; info@suru.com.np
-      </p>
-
-    </div>
-
-
-    <div>
-
-      <h3>
-        Follow Us
-      </h3>
-
-
-      <p>
-        f &nbsp; ◎ &nbsp; ♪ &nbsp; ▶
-      </p>
-
-
-      <p class="footer-script">
-        Thank you for being<br>
-        a part of our journey ♡
-      </p>
-
-    </div>
-
-
   </div>
 
 
-  <div class="copyright">
+  <div class="footer-bottom">
 
-    © <span class="year"></span>
-    Suru Collection. All rights reserved.
-
-    <span>
-      Designed with ♥ for every beautiful woman.
-    </span>
+    <p>
+      © <span id="year"></span>
+      Suru Collection. All rights reserved.
+    </p>
 
   </div>
 
 </footer>
 
 
-<!-- =====================================================
+<!-- =========================================================
+     PRODUCT VARIANT MODAL
+     ========================================================= -->
+
+<dialog
+  id="variantModal"
+  class="variant-modal"
+>
+
+  <div class="variant-modal-inner">
+
+    <div class="variant-modal-header">
+
+      <div>
+        <h2 id="variantProductName">
+          Select Options
+        </h2>
+
+        <div
+          id="variantProductCode"
+          class="variant-modal-code"
+        ></div>
+      </div>
+
+      <button
+        type="button"
+        class="variant-close"
+        id="variantClose"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="variant-modal-product">
+
+      <img
+        id="variantProductImage"
+        src=""
+        alt=""
+      >
+
+      <div>
+
+        <div
+          id="variantProductCategory"
+        ></div>
+
+        <div
+          id="variantProductPrice"
+          class="variant-modal-price"
+        ></div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="variantColourField"
+      class="variant-field"
+      style="display:none"
+    >
+
+      <label for="variantColour">
+        Colour
+      </label>
+
+      <select id="variantColour">
+        <option value="">
+          Select Colour
+        </option>
+      </select>
+
+    </div>
+
+
+    <div
+      id="variantFixedColourField"
+      class="variant-field"
+      style="display:none"
+    >
+
+      <label>
+        Colour
+      </label>
+
+      <div
+        id="variantFixedColour"
+        class="variant-fixed-value"
+      ></div>
+
+    </div>
+
+
+    <div
+      id="variantSizeField"
+      class="variant-field"
+      style="display:none"
+    >
+
+      <label for="variantSize">
+        Size
+      </label>
+
+      <select id="variantSize">
+        <option value="">
+          Select Size
+        </option>
+      </select>
+
+    </div>
+
+
+    <div
+      id="variantFixedOptionField"
+      class="variant-field"
+      style="display:none"
+    >
+
+      <label>
+        Available Option
+      </label>
+
+      <div
+        id="variantFixedOption"
+        class="variant-fixed-value"
+      ></div>
+
+    </div>
+
+
+    <div
+      id="variantStock"
+      class="variant-stock"
+    ></div>
+
+
+    <div class="variant-field">
+
+      <label for="variantQuantity">
+        Quantity
+      </label>
+
+      <input
+        id="variantQuantity"
+        type="number"
+        min="1"
+        value="1"
+        inputmode="numeric"
+      >
+
+    </div>
+
+
+    <div
+      id="variantModalMessage"
+      class="variant-modal-message"
+    ></div>
+
+
+    <div class="variant-modal-actions">
+
+      <button
+        type="button"
+        id="variantAddButton"
+        class="variant-add-button"
+      >
+        Add to Cart
+      </button>
+
+      <button
+        type="button"
+        id="variantCancelButton"
+        class="variant-cancel-button"
+      >
+        Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</dialog>
+
+
+<!-- =========================================================
      SUPABASE CONFIG
-     
-     Embedded directly so the homepage does not depend
-     on another JavaScript file for configuration.
-===================================================== -->
+     ========================================================= -->
 
 <script>
-
 window.SURU_SUPABASE_URL =
   "https://vkycraymxhkqxgpcpdzw.supabase.co";
 
 window.SURU_SUPABASE_KEY =
   "sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC";
-
 </script>
 
 
-<!-- =====================================================
-     SHOPPING CART
-===================================================== -->
+<!-- =========================================================
+     CART
+     ========================================================= -->
 
-<script src="shop.js"></script>
+<script src="/shop.js"></script>
 
 
-<!-- =====================================================
-     MAIN PAGE SCRIPT
-===================================================== -->
+<!-- =========================================================
+     HOMEPAGE JAVASCRIPT
+     ========================================================= -->
 
 <script>
-
 (function () {
 
   "use strict";
 
 
-  /* =====================================================
-     MOBILE NAVIGATION
-  ===================================================== */
+  /* ---------------------------------------------------------
+     BASIC HELPERS
+     --------------------------------------------------------- */
 
-  const menuButton =
-    document.querySelector(".menu-btn");
+  const SUPABASE_URL =
+    window.SURU_SUPABASE_URL;
 
-  const navigation =
-    document.querySelector(".main-nav");
-
-
-  if (
-    menuButton &&
-    navigation
-  ) {
-
-    menuButton.addEventListener(
-      "click",
-      function () {
-
-        const isOpen =
-          navigation.classList.toggle("open");
+  const SUPABASE_KEY =
+    window.SURU_SUPABASE_KEY;
 
 
-        menuButton.setAttribute(
-          "aria-expanded",
-          isOpen ? "true" : "false"
-        );
+  function escapeHtml(value) {
 
-      }
-    );
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
 
 
-    navigation
-      .querySelectorAll("a")
-      .forEach(
-        function (link) {
+  function normalise(value) {
 
-          link.addEventListener(
-            "click",
-            function () {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
 
-              navigation.classList.remove("open");
+  }
 
-              menuButton.setAttribute(
-                "aria-expanded",
-                "false"
-              );
 
-            }
-          );
+  function money(value) {
 
+    const number =
+      Number(value || 0);
+
+    return "NPR " +
+      number.toLocaleString(
+        "en-IN",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
         }
       );
 
   }
 
 
-  /* =====================================================
-     FOOTER YEAR
-  ===================================================== */
-
-  const year =
-    document.querySelector(".year");
-
-
-  if (year) {
-
-    year.textContent =
-      new Date().getFullYear();
-
-  }
-
-
-  /* =====================================================
-     HTML ESCAPE
-  ===================================================== */
-
-  function escapeHtml(value) {
-
-    return String(
-      value ?? ""
-    ).replace(
-      /[&<>'"]/g,
-      function (char) {
-
-        return {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          "'": "&#39;",
-          '"': "&quot;"
-        }[char];
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     SUPABASE REST REQUEST
-  ===================================================== */
-
   async function supabaseRequest(
     table,
     query
   ) {
 
-    const baseUrl =
-      String(
-        window.SURU_SUPABASE_URL || ""
-      ).replace(
-        /\/+$/,
-        ""
-      );
-
-
-    const apiKey =
-      window.SURU_SUPABASE_KEY;
-
-
-    if (
-      !baseUrl ||
-      !apiKey
-    ) {
-
-      throw new Error(
-        "Supabase configuration is missing."
-      );
-
-    }
-
-
-    const url =
-      baseUrl +
-      "/rest/v1/" +
-      table +
-      "?" +
-      query;
-
-
-    console.log(
-      "Suru Collection API request:",
-      url
-    );
-
-
     const response =
       await fetch(
-        url,
+        SUPABASE_URL +
+        "/rest/v1/" +
+        table +
+        "?" +
+        query,
         {
           method: "GET",
-
           headers: {
-            "apikey": apiKey,
+            apikey:
+              SUPABASE_KEY,
 
-            "Authorization":
-              "Bearer " + apiKey,
+            Authorization:
+              "Bearer " +
+              SUPABASE_KEY,
 
-            "Content-Type":
+            Accept:
               "application/json"
-          },
-
-          cache: "no-store"
+          }
         }
       );
 
@@ -883,43 +983,19 @@ window.SURU_SUPABASE_KEY =
     if (!response.ok) {
 
       let message =
-        "Supabase request failed.";
-
+        "Request failed";
 
       try {
 
-        const errorData =
+        const error =
           await response.json();
 
+        message =
+          error.message ||
+          error.hint ||
+          message;
 
-        if (
-          errorData &&
-          errorData.message
-        ) {
-
-          message =
-            errorData.message;
-
-        } else if (
-          errorData &&
-          errorData.error
-        ) {
-
-          message =
-            errorData.error;
-
-        } else if (
-          errorData &&
-          errorData.hint
-        ) {
-
-          message =
-            errorData.hint;
-
-        }
-
-      } catch (_) {}
-
+      } catch (e) {}
 
       throw new Error(
         message +
@@ -936,199 +1012,151 @@ window.SURU_SUPABASE_KEY =
   }
 
 
-  /* =====================================================
+  /* ---------------------------------------------------------
+     MOBILE MENU
+     --------------------------------------------------------- */
+
+  const menuToggle =
+    document.getElementById(
+      "menuToggle"
+    );
+
+  const mainNav =
+    document.getElementById(
+      "mainNav"
+    );
+
+
+  if (menuToggle && mainNav) {
+
+    menuToggle.addEventListener(
+      "click",
+      function () {
+
+        const open =
+          mainNav.classList.toggle(
+            "open"
+          );
+
+        menuToggle.setAttribute(
+          "aria-expanded",
+          String(open)
+        );
+
+      }
+    );
+
+
+    mainNav
+      .querySelectorAll("a")
+      .forEach(function (link) {
+
+        link.addEventListener(
+          "click",
+          function () {
+
+            mainNav.classList.remove(
+              "open"
+            );
+
+            menuToggle.setAttribute(
+              "aria-expanded",
+              "false"
+            );
+
+          }
+        );
+
+      });
+
+  }
+
+
+  /* ---------------------------------------------------------
+     YEAR
+     --------------------------------------------------------- */
+
+  const year =
+    document.getElementById(
+      "year"
+    );
+
+  if (year) {
+
+    year.textContent =
+      new Date().getFullYear();
+
+  }
+
+
+  /* ---------------------------------------------------------
+     PRODUCT DATA
+     --------------------------------------------------------- */
+
+  let products = [];
+
+  let productImages = [];
+
+  let productVariants = [];
+
+
+  let currentProduct = null;
+
+  let currentVariants = [];
+
+
+  /* ---------------------------------------------------------
      LOAD PRODUCTS
-  ===================================================== */
+     --------------------------------------------------------- */
 
   async function loadProducts() {
 
     const grid =
       document.getElementById(
-        "productsGrid"
+        "productGrid"
       );
 
 
-    if (!grid) {
-      return;
-    }
+    if (!grid) return;
 
 
     try {
 
-      console.log(
-        "Suru Collection: loading products..."
-      );
-
-
-      /* -------------------------------------------------
-         PRODUCT QUERY
-      ------------------------------------------------- */
-
-      const productQuery =
-        [
-          "select=id,product_code,name,slug,category,description,price,moq,fabric,color,pattern,is_featured,created_at",
-
-          "is_active=eq.true",
-
-          "order=is_featured.desc",
-
-          "order=created_at.desc"
-        ].join("&");
-
-
-      const products =
+      products =
         await supabaseRequest(
           "products",
-          productQuery
+          "select=id,product_code,name,slug,category,description,price,compare_at_price,moq,fabric,color,pattern,is_active&is_active=eq.true&order=created_at.desc"
         );
 
 
-      console.log(
-        "Suru Collection products:",
-        products
-      );
+      productImages =
+        await supabaseRequest(
+          "product_images",
+          "select=product_id,image_url,alt_text,sort_order,is_main&order=sort_order.asc"
+        );
 
 
-      if (
-        !Array.isArray(products) ||
-        !products.length
-      ) {
-
-        grid.innerHTML = `
-
-          <div class="product-loading">
-
-            New collection coming soon.
-
-          </div>
-
-        `;
-
-        return;
-
-      }
+      productVariants =
+        await supabaseRequest(
+          "product_sizes",
+          "select=id,product_id,size,color,stock,is_active&is_active=eq.true&order=size.asc"
+        );
 
 
-      /* -------------------------------------------------
-         PRODUCT IDS
-      ------------------------------------------------- */
-
-      const productIds =
-        products
-          .map(
-            function (product) {
-              return product.id;
-            }
-          )
-          .filter(Boolean);
+      const imageMap = {};
 
 
-      let images = [];
-
-
-      /* -------------------------------------------------
-         PRODUCT IMAGES
-      ------------------------------------------------- */
-
-      if (
-        productIds.length
-      ) {
-
-        /*
-          PostgREST IN syntax:
-
-          product_id=in.(id1,id2,id3)
-        */
-
-        const encodedIds =
-          "(" +
-          productIds
-            .map(
-              function (id) {
-
-                return String(id)
-                  .replace(
-                    /"/g,
-                    ""
-                  );
-
-              }
-            )
-            .join(",") +
-          ")";
-
-
-        const imageQuery =
-          [
-            "select=product_id,image_url,alt_text,sort_order,is_main",
-
-            "product_id=in." +
-              encodeURIComponent(
-                encodedIds
-              ),
-
-            "order=sort_order.asc"
-          ].join("&");
-
-
-        try {
-
-          images =
-            await supabaseRequest(
-              "product_images",
-              imageQuery
-            );
-
-
-          console.log(
-            "Suru Collection images:",
-            images
-          );
-
-        } catch (imageError) {
-
-          console.warn(
-            "Suru Collection image query failed:",
-            imageError
-          );
-
-
-          /*
-            Products will still appear even if
-            the image request fails.
-          */
-
-          images = [];
-
-        }
-
-      }
-
-
-      /* -------------------------------------------------
-         GROUP IMAGES BY PRODUCT
-      ------------------------------------------------- */
-
-      const imagesByProduct = {};
-
-
-      images.forEach(
+      productImages.forEach(
         function (image) {
 
-          if (
-            !imagesByProduct[
-              image.product_id
-            ]
-          ) {
+          if (!imageMap[image.product_id]) {
 
-            imagesByProduct[
-              image.product_id
-            ] = [];
+            imageMap[image.product_id] =
+              [];
 
           }
 
-
-          imagesByProduct[
+          imageMap[
             image.product_id
           ].push(image);
 
@@ -1136,184 +1164,169 @@ window.SURU_SUPABASE_KEY =
       );
 
 
-      /* -------------------------------------------------
-         RENDER PRODUCTS
-      ------------------------------------------------- */
+      if (
+        !Array.isArray(products) ||
+        products.length === 0
+      ) {
+
+        grid.innerHTML = `
+          <div class="product-loading">
+            No products are currently available.
+          </div>
+        `;
+
+        return;
+
+      }
+
 
       grid.innerHTML =
-        products
-          .map(
-            function (product) {
+        products.map(
+          function (product) {
 
-              const productImages =
-                imagesByProduct[
-                  product.id
-                ] || [];
-
-
-              const mainImageObject =
-                productImages.find(
-                  function (image) {
-
-                    return (
-                      image.is_main === true
-                    );
-
-                  }
-                ) ||
-                productImages[0];
+            const images =
+              imageMap[
+                product.id
+              ] || [];
 
 
-              const mainImage =
-                mainImageObject &&
-                mainImageObject.image_url
-                  ? mainImageObject.image_url
-                  : "";
+            const mainImage =
+              images.find(
+                function (image) {
+                  return image.is_main;
+                }
+              ) ||
+              images[0];
 
 
-              const imageAlt =
-                mainImageObject &&
-                mainImageObject.alt_text
-                  ? mainImageObject.alt_text
-                  : product.name;
+            const imageUrl =
+              mainImage?.image_url ||
+              "";
 
 
-              const price =
-                Number(
-                  product.price || 0
-                ).toLocaleString(
-                  "en-IN"
-                );
+            return `
+              <article
+                class="product-card"
+              >
 
-
-              return `
-
-                <article
-                  class="product-card dynamic-product-card"
+                <a
+                  class="product-image"
+                  href="/product/?code=${encodeURIComponent(product.product_code)}"
                 >
 
+                  ${
+                    imageUrl
+                      ? `
+                        <img
+                          src="${escapeHtml(imageUrl)}"
+                          alt="${escapeHtml(
+                            mainImage?.alt_text ||
+                            product.name
+                          )}"
+                          loading="lazy"
+                        >
+                      `
+                      : `
+                        <div class="product-image-placeholder">
+                          Suru Collection
+                        </div>
+                      `
+                  }
 
-                  <a
-                    class="product-card-link"
-                    href="product/?code=${encodeURIComponent(
-                      product.product_code
-                    )}"
-                    aria-label="View ${escapeHtml(
-                      product.name
-                    )}"
-                  >
-
-
-                    <div class="product-img">
-
-
-                      ${
-                        mainImage
-
-                          ? `
-
-                            <img
-                              src="${escapeHtml(
-                                mainImage
-                              )}"
-                              alt="${escapeHtml(
-                                imageAlt
-                              )}"
-                              loading="lazy"
-                              onerror="
-                                this.style.display='none';
-                                this.parentElement.classList.add('image-error');
-                              "
-                            >
-
-                          `
-
-                          : `
-
-                            <div class="image-unavailable">
-                              Image unavailable
-                            </div>
-
-                          `
-                      }
+                </a>
 
 
-                      <span>
-                        ${escapeHtml(
-                          product.product_code
-                        )}
-                      </span>
+                <div class="product-card-content">
+
+                  ${
+                    product.category
+                      ? `
+                        <div class="product-category">
+                          ${escapeHtml(
+                            product.category
+                          )}
+                        </div>
+                      `
+                      : ""
+                  }
 
 
-                    </div>
+                  <h3>
+                    <a
+                      href="/product/?code=${encodeURIComponent(product.product_code)}"
+                    >
+                      ${escapeHtml(
+                        product.name
+                      )}
+                    </a>
+                  </h3>
 
 
-                    <div class="product-card-body">
+                  <div class="product-price">
 
+                    ${money(
+                      product.price
+                    )}
 
-                      <small>
-                        ${escapeHtml(
-                          product.category ||
-                          "COLLECTION"
-                        )}
-                      </small>
+                    ${
+                      product.compare_at_price
+                        ? `
+                          <span class="compare-price">
+                            ${money(
+                              product.compare_at_price
+                            )}
+                          </span>
+                        `
+                        : ""
+                    }
 
-
-                      <h3>
-                        ${escapeHtml(
-                          product.name
-                        )}
-                      </h3>
-
-
-                      <strong>
-                        NPR ${price}
-                      </strong>
-
-
-                      <em>
-                        View Product →
-                      </em>
-
-
-                    </div>
-
-
-                  </a>
+                  </div>
 
 
                   <button
                     type="button"
-                    class="add-cart"
+                    class="add-cart variant-aware-add"
+                    data-variant-aware="true"
                     data-code="${escapeHtml(
                       product.product_code
-                    )}"
-                    data-name="${escapeHtml(
-                      product.name
-                    )}"
-                    data-price="${Number(
-                      product.price || 0
-                    )}"
-                    data-image="${escapeHtml(
-                      mainImage
                     )}"
                   >
                     Add to Cart
                   </button>
 
+                </div>
 
-                </article>
+              </article>
+            `;
 
-              `;
-
-            }
-          )
-          .join("");
+          }
+        ).join("");
 
 
-      /* -------------------------------------------------
-         UPDATE CART COUNT
-      ------------------------------------------------- */
+      grid
+        .querySelectorAll(
+          ".variant-aware-add"
+        )
+        .forEach(
+          function (button) {
+
+            button.addEventListener(
+              "click",
+              function () {
+
+                const code =
+                  button.dataset.code;
+
+                openVariantModal(
+                  code
+                );
+
+              }
+            );
+
+          }
+        );
+
 
       if (
         window.SuruShop &&
@@ -1325,51 +1338,19 @@ window.SURU_SUPABASE_KEY =
 
       }
 
-
-      console.log(
-        "Suru Collection: products rendered successfully."
-      );
-
-
     } catch (error) {
 
       console.error(
-        "Suru Collection product loading failed:",
+        "Products loading error:",
         error
       );
 
 
-      /*
-        IMPORTANT:
-
-        Show the actual error temporarily so that if
-        Private Browsing still has a problem, we can
-        identify exactly what is failing.
-      */
-
-      const errorMessage =
-        error &&
-        error.message
-          ? error.message
-          : "Unknown error";
-
-
       grid.innerHTML = `
-
         <div class="product-loading">
-
           Products are temporarily unavailable.
-
-          <br><br>
-
-          <small>
-            Error: ${escapeHtml(
-              errorMessage
-            )}
-          </small>
-
+          Please refresh the page and try again.
         </div>
-
       `;
 
     }
@@ -1377,318 +1358,1504 @@ window.SURU_SUPABASE_KEY =
   }
 
 
-  /* =====================================================
-     NEWSLETTER
-  ===================================================== */
+  /* ---------------------------------------------------------
+     VARIANT HELPERS
+     --------------------------------------------------------- */
 
-  async function setupNewsletter() {
+  function getProductVariants(
+    product
+  ) {
 
-    const form =
-      document.getElementById(
-        "newsletterForm"
-      );
+    return productVariants.filter(
+      function (variant) {
 
+        return (
+          variant.product_id ===
+          product.id
+        );
 
-    const emailInput =
-      document.getElementById(
-        "newsletterEmail"
-      );
+      }
+    );
 
-
-    const button =
-      document.getElementById(
-        "newsletterButton"
-      );
+  }
 
 
-    const status =
-      document.getElementById(
-        "newsletterStatus"
+  function uniqueValues(
+    values
+  ) {
+
+    const result = [];
+
+
+    values.forEach(
+      function (value) {
+
+        if (
+          value === null ||
+          value === undefined ||
+          String(value).trim() === ""
+        ) {
+          return;
+        }
+
+
+        const exists =
+          result.some(
+            function (existing) {
+
+              return (
+                normalise(existing) ===
+                normalise(value)
+              );
+
+            }
+          );
+
+
+        if (!exists) {
+
+          result.push(
+            String(value).trim()
+          );
+
+        }
+
+      }
+    );
+
+
+    return result;
+
+  }
+
+
+  function getColours(
+    product,
+    variants
+  ) {
+
+    const variantColours =
+      uniqueValues(
+        variants.map(
+          function (variant) {
+            return variant.color;
+          }
+        )
       );
 
 
     if (
-      !form ||
-      !emailInput ||
-      !button
+      variantColours.length
     ) {
+
+      return variantColours;
+
+    }
+
+
+    if (product.color) {
+
+      return [
+        String(product.color)
+          .trim()
+      ];
+
+    }
+
+
+    return [];
+
+  }
+
+
+  function getSizes(
+    variants
+  ) {
+
+    return uniqueValues(
+      variants.map(
+        function (variant) {
+          return variant.size;
+        }
+      )
+    );
+
+  }
+
+
+  function findVariant(
+    product,
+    variants,
+    size,
+    color
+  ) {
+
+    const selectedSize =
+      normalise(size);
+
+    const selectedColor =
+      normalise(color);
+
+
+    /*
+      First try an exact combination.
+    */
+
+    let match =
+      variants.find(
+        function (variant) {
+
+          const variantSize =
+            normalise(
+              variant.size
+            );
+
+          const variantColor =
+            normalise(
+              variant.color
+            );
+
+
+          return (
+            variantSize ===
+              selectedSize &&
+            variantColor ===
+              selectedColor
+          );
+
+        }
+      );
+
+
+    if (match) {
+
+      return match;
+
+    }
+
+
+    /*
+      For fixed-colour legacy products:
+      product.color may exist while
+      product_sizes.color is NULL.
+    */
+
+    match =
+      variants.find(
+        function (variant) {
+
+          const variantSize =
+            normalise(
+              variant.size
+            );
+
+          const variantColor =
+            normalise(
+              variant.color
+            );
+
+
+          const productColor =
+            normalise(
+              product.color
+            );
+
+
+          return (
+            variantSize ===
+              selectedSize &&
+            !variantColor &&
+            productColor ===
+              selectedColor
+          );
+
+        }
+      );
+
+
+    if (match) {
+
+      return match;
+
+    }
+
+
+    /*
+      For products without size:
+      match colour only.
+    */
+
+    match =
+      variants.find(
+        function (variant) {
+
+          const variantSize =
+            normalise(
+              variant.size
+            );
+
+          const variantColor =
+            normalise(
+              variant.color
+            );
+
+
+          return (
+            !selectedSize &&
+            variantSize === "" &&
+            variantColor ===
+              selectedColor
+          );
+
+        }
+      );
+
+
+    return match || null;
+
+  }
+
+
+  function getVariantForSelection() {
+
+    if (!currentProduct) {
+
+      return null;
+
+    }
+
+
+    const variants =
+      currentVariants;
+
+
+    const colourSelect =
+      document.getElementById(
+        "variantColour"
+      );
+
+
+    const sizeSelect =
+      document.getElementById(
+        "variantSize"
+      );
+
+
+    const selectedColour =
+      colourSelect
+        ? colourSelect.value
+        : "";
+
+
+    const selectedSize =
+      sizeSelect
+        ? sizeSelect.value
+        : "";
+
+
+    const colours =
+      getColours(
+        currentProduct,
+        variants
+      );
+
+
+    const sizes =
+      getSizes(
+        variants
+      );
+
+
+    /*
+      If no size and no colour exist,
+      use the null/null inventory row.
+    */
+
+    if (
+      sizes.length === 0 &&
+      colours.length === 0
+    ) {
+
+      return (
+        variants.find(
+          function (variant) {
+
+            return (
+              !variant.size &&
+              !variant.color
+            );
+
+          }
+        ) ||
+        null
+      );
+
+    }
+
+
+    /*
+      If only a fixed product colour exists
+      and there are no colour variants,
+      use that colour automatically.
+    */
+
+    const effectiveColour =
+      selectedColour ||
+      (
+        colours.length === 1
+          ? colours[0]
+          : ""
+      );
+
+
+    /*
+      Size-only product.
+    */
+
+    if (
+      sizes.length > 0 &&
+      colours.length === 0
+    ) {
+
+      if (!selectedSize) {
+
+        return null;
+
+      }
+
+
+      return findVariant(
+        currentProduct,
+        variants,
+        selectedSize,
+        ""
+      );
+
+    }
+
+
+    /*
+      Colour-only product.
+    */
+
+    if (
+      sizes.length === 0 &&
+      colours.length > 0
+    ) {
+
+      if (
+        colours.length > 1 &&
+        !selectedColour
+      ) {
+
+        return null;
+
+      }
+
+
+      return findVariant(
+        currentProduct,
+        variants,
+        "",
+        effectiveColour
+      );
+
+    }
+
+
+    /*
+      Size + colour product.
+    */
+
+    if (
+      sizes.length > 0 &&
+      colours.length > 0
+    ) {
+
+      if (
+        colours.length > 1 &&
+        !selectedColour
+      ) {
+
+        return null;
+
+      }
+
+
+      if (!selectedSize) {
+
+        return null;
+
+      }
+
+
+      return findVariant(
+        currentProduct,
+        variants,
+        selectedSize,
+        effectiveColour
+      );
+
+    }
+
+
+    return null;
+
+  }
+
+
+  /* ---------------------------------------------------------
+     OPEN VARIANT MODAL
+     --------------------------------------------------------- */
+
+  function openVariantModal(
+    productCode
+  ) {
+
+    const product =
+      products.find(
+        function (item) {
+
+          return (
+            normalise(
+              item.product_code
+            ) ===
+            normalise(
+              productCode
+            )
+          );
+
+        }
+      );
+
+
+    if (!product) {
 
       return;
 
     }
 
 
-    form.addEventListener(
-      "submit",
-      async function (event) {
-
-        event.preventDefault();
+    currentProduct =
+      product;
 
 
-        const email =
-          emailInput.value
-            .trim()
-            .toLowerCase();
+    currentVariants =
+      getProductVariants(
+        product
+      );
 
 
-        if (
-          !email ||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-            email
-          )
-        ) {
+    const modal =
+      document.getElementById(
+        "variantModal"
+      );
 
-          if (status) {
 
-            status.textContent =
-              "Please enter a valid email address.";
+    if (!modal) {
 
-            status.className =
-              "newsletter-status error";
+      return;
+
+    }
+
+
+    const name =
+      document.getElementById(
+        "variantProductName"
+      );
+
+
+    const code =
+      document.getElementById(
+        "variantProductCode"
+      );
+
+
+    const image =
+      document.getElementById(
+        "variantProductImage"
+      );
+
+
+    const category =
+      document.getElementById(
+        "variantProductCategory"
+      );
+
+
+    const price =
+      document.getElementById(
+        "variantProductPrice"
+      );
+
+
+    const colourField =
+      document.getElementById(
+        "variantColourField"
+      );
+
+
+    const colourSelect =
+      document.getElementById(
+        "variantColour"
+      );
+
+
+    const fixedColourField =
+      document.getElementById(
+        "variantFixedColourField"
+      );
+
+
+    const fixedColour =
+      document.getElementById(
+        "variantFixedColour"
+      );
+
+
+    const sizeField =
+      document.getElementById(
+        "variantSizeField"
+      );
+
+
+    const sizeSelect =
+      document.getElementById(
+        "variantSize"
+      );
+
+
+    const fixedOptionField =
+      document.getElementById(
+        "variantFixedOptionField"
+      );
+
+
+    const fixedOption =
+      document.getElementById(
+        "variantFixedOption"
+      );
+
+
+    const quantity =
+      document.getElementById(
+        "variantQuantity"
+      );
+
+
+    const message =
+      document.getElementById(
+        "variantModalMessage"
+      );
+
+
+    const addButton =
+      document.getElementById(
+        "variantAddButton"
+      );
+
+
+    const stock =
+      document.getElementById(
+        "variantStock"
+      );
+
+
+    name.textContent =
+      product.name || "";
+
+
+    code.textContent =
+      product.product_code || "";
+
+
+    category.textContent =
+      product.category || "";
+
+
+    price.textContent =
+      money(product.price);
+
+
+    const images =
+      productImages.filter(
+        function (item) {
+
+          return (
+            item.product_id ===
+            product.id
+          );
+
+        }
+      );
+
+
+    const mainImage =
+      images.find(
+        function (item) {
+          return item.is_main;
+        }
+      ) ||
+      images[0];
+
+
+    image.src =
+      mainImage?.image_url ||
+      "";
+
+
+    image.alt =
+      product.name || "";
+
+
+    const variants =
+      currentVariants;
+
+
+    const colours =
+      getColours(
+        product,
+        variants
+      );
+
+
+    const sizes =
+      getSizes(
+        variants
+      );
+
+
+    /*
+      Reset.
+    */
+
+    colourSelect.innerHTML =
+      `<option value="">
+        Select Colour
+      </option>`;
+
+
+    sizeSelect.innerHTML =
+      `<option value="">
+        Select Size
+      </option>`;
+
+
+    colourField.style.display =
+      "none";
+
+
+    fixedColourField.style.display =
+      "none";
+
+
+    sizeField.style.display =
+      "none";
+
+
+    fixedOptionField.style.display =
+      "none";
+
+
+    fixedColour.textContent =
+      "";
+
+
+    fixedOption.textContent =
+      "";
+
+
+    quantity.value =
+      "1";
+
+
+    quantity.max =
+      "";
+
+
+    message.textContent =
+      "";
+
+
+    message.className =
+      "variant-modal-message";
+
+
+    addButton.disabled =
+      true;
+
+
+    /*
+      MULTIPLE COLOURS
+    */
+
+    if (
+      colours.length > 1
+    ) {
+
+      colourField.style.display =
+        "block";
+
+
+      colours.forEach(
+        function (colour) {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+
+          option.value =
+            colour;
+
+
+          option.textContent =
+            colour;
+
+
+          /*
+            Disable colour if every
+            corresponding variant is
+            out of stock.
+          */
+
+          const available =
+            variants.some(
+              function (variant) {
+
+                const variantColour =
+                  normalise(
+                    variant.color ||
+                    product.color
+                  );
+
+
+                return (
+                  variantColour ===
+                    normalise(colour) &&
+                  Number(
+                    variant.stock || 0
+                  ) > 0
+                );
+
+              }
+            );
+
+
+          if (!available) {
+
+            option.disabled =
+              true;
+
+            option.textContent =
+              colour +
+              " — Out of Stock";
 
           }
 
-          emailInput.focus();
+
+          colourSelect.appendChild(
+            option
+          );
+
+        }
+      );
+
+    }
+
+
+    /*
+      ONE FIXED COLOUR
+    */
+
+    else if (
+      colours.length === 1
+    ) {
+
+      fixedColourField.style.display =
+        "block";
+
+
+      fixedColour.textContent =
+        colours[0];
+
+    }
+
+
+    /*
+      SIZES
+    */
+
+    if (
+      sizes.length > 0
+    ) {
+
+      sizeField.style.display =
+        "block";
+
+
+      populateSizeOptions();
+
+    }
+
+
+    /*
+      NO SIZE + NO COLOUR
+    */
+
+    if (
+      sizes.length === 0 &&
+      colours.length === 0
+    ) {
+
+      const noVariant =
+        variants.find(
+          function (variant) {
+
+            return (
+              !variant.size &&
+              !variant.color
+            );
+
+          }
+        );
+
+
+      if (noVariant) {
+
+        fixedOptionField.style.display =
+          "block";
+
+
+        fixedOption.textContent =
+          "Standard";
+
+      }
+
+    }
+
+
+    updateModalVariant();
+
+
+    if (
+      typeof modal.showModal ===
+      "function"
+    ) {
+
+      modal.showModal();
+
+    } else {
+
+      modal.setAttribute(
+        "open",
+        ""
+      );
+
+    }
+
+  }
+
+
+  /* ---------------------------------------------------------
+     POPULATE SIZE OPTIONS
+     --------------------------------------------------------- */
+
+  function populateSizeOptions() {
+
+    if (!currentProduct) {
+
+      return;
+
+    }
+
+
+    const sizeSelect =
+      document.getElementById(
+        "variantSize"
+      );
+
+
+    const colourSelect =
+      document.getElementById(
+        "variantColour"
+      );
+
+
+    if (!sizeSelect) {
+
+      return;
+
+    }
+
+
+    const variants =
+      currentVariants;
+
+
+    const sizes =
+      getSizes(
+        variants
+      );
+
+
+    const selectedColour =
+      colourSelect
+        ? colourSelect.value
+        : "";
+
+
+    const previousSize =
+      sizeSelect.value;
+
+
+    sizeSelect.innerHTML =
+      `<option value="">
+        Select Size
+      </option>`;
+
+
+    sizes.forEach(
+      function (size) {
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+
+        option.value =
+          size;
+
+
+        option.textContent =
+          size;
+
+
+        let matchingVariants =
+          variants.filter(
+            function (variant) {
+
+              const variantSize =
+                normalise(
+                  variant.size
+                );
+
+
+              if (
+                variantSize !==
+                normalise(size)
+              ) {
+
+                return false;
+
+              }
+
+
+              /*
+                If multiple colours exist,
+                only consider the selected colour.
+              */
+
+              if (
+                selectedColour
+              ) {
+
+                const variantColour =
+                  normalise(
+                    variant.color ||
+                    currentProduct.color
+                  );
+
+
+                return (
+                  variantColour ===
+                  normalise(
+                    selectedColour
+                  )
+                );
+
+              }
+
+
+              return true;
+
+            }
+          );
+
+
+        const available =
+          matchingVariants.some(
+            function (variant) {
+
+              return (
+                Number(
+                  variant.stock || 0
+                ) > 0
+              );
+
+            }
+          );
+
+
+        if (!available) {
+
+          option.disabled =
+            true;
+
+          option.textContent =
+            size +
+            " — Out of Stock";
+
+        }
+
+
+        sizeSelect.appendChild(
+          option
+        );
+
+      }
+    );
+
+
+    /*
+      Restore previous size only
+      when still available.
+    */
+
+    if (
+      previousSize &&
+      Array.from(
+        sizeSelect.options
+      ).some(
+        function (option) {
+
+          return (
+            option.value ===
+              previousSize &&
+            !option.disabled
+          );
+
+        }
+      )
+    ) {
+
+      sizeSelect.value =
+        previousSize;
+
+    }
+
+  }
+
+
+  /* ---------------------------------------------------------
+     UPDATE MODAL
+     --------------------------------------------------------- */
+
+  function updateModalVariant() {
+
+    const stockText =
+      document.getElementById(
+        "variantStock"
+      );
+
+
+    const addButton =
+      document.getElementById(
+        "variantAddButton"
+      );
+
+
+    const quantity =
+      document.getElementById(
+        "variantQuantity"
+      );
+
+
+    const variant =
+      getVariantForSelection();
+
+
+    if (!variant) {
+
+      if (
+        currentVariants.length === 0
+      ) {
+
+        stockText.textContent =
+          "Stock information is not configured.";
+
+        stockText.className =
+          "variant-stock warning";
+
+      } else {
+
+        stockText.textContent =
+          "Please select an available option.";
+
+        stockText.className =
+          "variant-stock warning";
+
+      }
+
+
+      addButton.disabled =
+        true;
+
+
+      quantity.max =
+        "";
+
+
+      return;
+
+    }
+
+
+    const availableStock =
+      Number(
+        variant.stock || 0
+      );
+
+
+    if (
+      availableStock <= 0
+    ) {
+
+      stockText.textContent =
+        "Out of Stock";
+
+      stockText.className =
+        "variant-stock out";
+
+
+      addButton.disabled =
+        true;
+
+
+      quantity.max =
+        "0";
+
+
+      return;
+
+    }
+
+
+    stockText.textContent =
+      availableStock +
+      " item(s) available";
+
+
+    stockText.className =
+      "variant-stock";
+
+
+    quantity.max =
+      String(
+        availableStock
+      );
+
+
+    let qty =
+      parseInt(
+        quantity.value,
+        10
+      ) || 1;
+
+
+    if (qty < 1) {
+
+      qty = 1;
+
+    }
+
+
+    if (
+      qty > availableStock
+    ) {
+
+      qty =
+        availableStock;
+
+    }
+
+
+    quantity.value =
+      String(qty);
+
+
+    addButton.disabled =
+      false;
+
+  }
+
+
+  /* ---------------------------------------------------------
+     MODAL EVENTS
+     --------------------------------------------------------- */
+
+  const colourSelect =
+    document.getElementById(
+      "variantColour"
+    );
+
+
+  const sizeSelect =
+    document.getElementById(
+      "variantSize"
+    );
+
+
+  const quantity =
+    document.getElementById(
+      "variantQuantity"
+    );
+
+
+  if (colourSelect) {
+
+    colourSelect.addEventListener(
+      "change",
+      function () {
+
+        populateSizeOptions();
+
+        /*
+          When colour changes, reset
+          size because previous size may
+          not exist in the selected colour.
+        */
+
+        if (sizeSelect) {
+
+          sizeSelect.value =
+            "";
+
+        }
+
+
+        updateModalVariant();
+
+      }
+    );
+
+  }
+
+
+  if (sizeSelect) {
+
+    sizeSelect.addEventListener(
+      "change",
+      updateModalVariant
+    );
+
+  }
+
+
+  if (quantity) {
+
+    quantity.addEventListener(
+      "input",
+      function () {
+
+        const variant =
+          getVariantForSelection();
+
+
+        if (!variant) {
 
           return;
 
         }
 
 
-        const originalText =
-          button.textContent;
+        const stock =
+          Number(
+            variant.stock || 0
+          );
 
 
-        button.disabled =
-          true;
+        let qty =
+          parseInt(
+            quantity.value,
+            10
+          ) || 1;
 
 
-        button.textContent =
-          "Subscribing…";
+        if (qty < 1) {
 
-
-        if (status) {
-
-          status.textContent =
-            "";
-
-          status.className =
-            "newsletter-status";
+          qty = 1;
 
         }
 
 
-        try {
+        if (
+          stock > 0 &&
+          qty > stock
+        ) {
 
-          const existingQuery =
-            "select=id,email&email=eq." +
-            encodeURIComponent(
-              email
-            ) +
-            "&limit=1";
+          qty =
+            stock;
 
+        }
 
-          let existing = [];
 
+        quantity.value =
+          String(qty);
 
-          try {
+      }
+    );
 
-            existing =
-              await supabaseRequest(
-                "newsletter_subscribers",
-                existingQuery
-              );
+  }
 
-          } catch (_) {
 
-            existing = [];
+  /* ---------------------------------------------------------
+     ADD TO CART FROM MODAL
+     --------------------------------------------------------- */
 
-          }
+  const addButton =
+    document.getElementById(
+      "variantAddButton"
+    );
 
 
-          if (
-            Array.isArray(existing) &&
-            existing.length
-          ) {
+  if (addButton) {
 
-            if (status) {
+    addButton.addEventListener(
+      "click",
+      function () {
 
-              status.textContent =
-                "You’re already subscribed. Thank you!";
+        if (!currentProduct) {
 
-              status.className =
-                "newsletter-status success";
+          return;
 
-            }
+        }
 
 
-            emailInput.value =
-              "";
+        const variant =
+          getVariantForSelection();
 
 
-            return;
+        if (!variant) {
 
-          }
+          showVariantMessage(
+            "Please select an available option.",
+            true
+          );
 
+          return;
 
-          const baseUrl =
-            String(
-              window.SURU_SUPABASE_URL || ""
-            ).replace(
-              /\/+$/,
-              ""
-            );
+        }
 
 
-          const apiKey =
-            window.SURU_SUPABASE_KEY;
-
-
-          if (
-            !baseUrl ||
-            !apiKey
-          ) {
-
-            throw new Error(
-              "Subscription service is unavailable."
-            );
-
-          }
-
-
-          const response =
-            await fetch(
-              baseUrl +
-              "/rest/v1/newsletter_subscribers",
-              {
-                method: "POST",
-
-                headers: {
-
-                  "apikey":
-                    apiKey,
-
-                  "Authorization":
-                    "Bearer " + apiKey,
-
-                  "Content-Type":
-                    "application/json",
-
-                  "Prefer":
-                    "return=minimal"
-
-                },
-
-                body:
-                  JSON.stringify({
-                    email:
-                      email
-                  })
-
-              }
-            );
-
-
-          if (!response.ok) {
-
-            let errorMessage =
-              "Unable to subscribe.";
-
-
-            try {
-
-              const data =
-                await response.json();
-
-
-              if (
-                data &&
-                data.message
-              ) {
-
-                errorMessage =
-                  data.message;
-
-              }
-
-            } catch (_) {}
-
-
-            if (
-              response.status === 409 ||
-              /duplicate|unique/i.test(
-                errorMessage
-              )
-            ) {
-
-              if (status) {
-
-                status.textContent =
-                  "You’re already subscribed. Thank you!";
-
-                status.className =
-                  "newsletter-status success";
-
-              }
-
-
-              emailInput.value =
-                "";
-
-
-              return;
-
-            }
-
-
-            throw new Error(
-              errorMessage
-            );
-
-          }
-
-
-          emailInput.value =
-            "";
-
-
-          if (status) {
-
-            status.textContent =
-              "Thank you for subscribing to Suru Collection!";
-
-            status.className =
-              "newsletter-status success";
-
-          }
-
-
-        } catch (error) {
-
-          console.error(
-            "Suru Collection newsletter error:",
-            error
+        const stock =
+          Number(
+            variant.stock || 0
           );
 
 
-          if (status) {
-
-            status.textContent =
-              "Unable to subscribe right now. Please try again.";
-
-            status.className =
-              "newsletter-status error";
-
-          }
-
-        } finally {
-
-          button.disabled =
-            false;
+        let qty =
+          parseInt(
+            quantity.value,
+            10
+          ) || 1;
 
 
-          button.textContent =
-            originalText;
+        if (
+          stock <= 0 ||
+          qty > stock
+        ) {
+
+          showVariantMessage(
+            "Selected quantity is not available.",
+            true
+          );
+
+          return;
+
+        }
+
+
+        if (
+          !window.SuruShop ||
+          typeof window.SuruShop.addToCart !==
+            "function"
+        ) {
+
+          showVariantMessage(
+            "Shopping cart is unavailable. Please refresh the page.",
+            true
+          );
+
+          return;
+
+        }
+
+
+        const mainImage =
+          document.getElementById(
+            "variantProductImage"
+          );
+
+
+        const success =
+          window.SuruShop.addToCart({
+
+            code:
+              currentProduct.product_code,
+
+            name:
+              currentProduct.name,
+
+            price:
+              Number(
+                currentProduct.price || 0
+              ),
+
+            image:
+              mainImage?.src ||
+              "",
+
+            size:
+              variant.size ||
+              null,
+
+            color:
+              variant.color ||
+              currentProduct.color ||
+              null,
+
+            qty:
+              qty
+
+          });
+
+
+        if (success !== false) {
+
+          showVariantMessage(
+            "Added to cart successfully.",
+            false
+          );
+
+
+          setTimeout(
+            function () {
+
+              closeVariantModal();
+
+            },
+            700
+          );
+
+        } else {
+
+          showVariantMessage(
+            "Unable to save your cart. Please try again.",
+            true
+          );
 
         }
 
@@ -1698,19 +2865,319 @@ window.SURU_SUPABASE_KEY =
   }
 
 
-  /* =====================================================
+  /* ---------------------------------------------------------
+     MODAL CLOSE
+     --------------------------------------------------------- */
+
+  function closeVariantModal() {
+
+    const modal =
+      document.getElementById(
+        "variantModal"
+      );
+
+
+    if (!modal) {
+
+      return;
+
+    }
+
+
+    if (
+      typeof modal.close ===
+      "function"
+    ) {
+
+      modal.close();
+
+    } else {
+
+      modal.removeAttribute(
+        "open"
+      );
+
+    }
+
+
+    currentProduct =
+      null;
+
+    currentVariants =
+      [];
+
+  }
+
+
+  const closeButton =
+    document.getElementById(
+      "variantClose"
+    );
+
+
+  const cancelButton =
+    document.getElementById(
+      "variantCancelButton"
+    );
+
+
+  if (closeButton) {
+
+    closeButton.addEventListener(
+      "click",
+      closeVariantModal
+    );
+
+  }
+
+
+  if (cancelButton) {
+
+    cancelButton.addEventListener(
+      "click",
+      closeVariantModal
+    );
+
+  }
+
+
+  const modal =
+    document.getElementById(
+      "variantModal"
+    );
+
+
+  if (modal) {
+
+    modal.addEventListener(
+      "click",
+      function (event) {
+
+        /*
+          Close when clicking outside
+          the white modal content.
+        */
+
+        if (
+          event.target ===
+          modal
+        ) {
+
+          closeVariantModal();
+
+        }
+
+      }
+    );
+
+  }
+
+
+  /* ---------------------------------------------------------
+     MODAL MESSAGE
+     --------------------------------------------------------- */
+
+  function showVariantMessage(
+    text,
+    isError
+  ) {
+
+    const message =
+      document.getElementById(
+        "variantModalMessage"
+      );
+
+
+    if (!message) {
+
+      return;
+
+    }
+
+
+    message.textContent =
+      text;
+
+
+    message.className =
+      "variant-modal-message show";
+
+
+    if (isError) {
+
+      message.classList.add(
+        "error"
+      );
+
+    }
+
+
+    clearTimeout(
+      window.__suruVariantMessageTimer
+    );
+
+
+    window.__suruVariantMessageTimer =
+      setTimeout(
+        function () {
+
+          message.classList.remove(
+            "show"
+          );
+
+        },
+        3000
+      );
+
+  }
+
+
+  /* ---------------------------------------------------------
+     NEWSLETTER
+     --------------------------------------------------------- */
+
+  const newsletterForm =
+    document.getElementById(
+      "newsletterForm"
+    );
+
+
+  if (newsletterForm) {
+
+    newsletterForm.addEventListener(
+      "submit",
+      async function (event) {
+
+        event.preventDefault();
+
+
+        const emailInput =
+          document.getElementById(
+            "newsletterEmail"
+          );
+
+
+        const message =
+          document.getElementById(
+            "newsletterMessage"
+          );
+
+
+        const email =
+          String(
+            emailInput.value || ""
+          )
+          .trim()
+          .toLowerCase();
+
+
+        if (!email) {
+
+          return;
+
+        }
+
+
+        try {
+
+          const response =
+            await fetch(
+              SUPABASE_URL +
+              "/rest/v1/newsletter_subscribers",
+              {
+                method: "POST",
+
+                headers: {
+                  apikey:
+                    SUPABASE_KEY,
+
+                  Authorization:
+                    "Bearer " +
+                    SUPABASE_KEY,
+
+                  "Content-Type":
+                    "application/json",
+
+                  Prefer:
+                    "return=minimal"
+                },
+
+                body:
+                  JSON.stringify({
+                    email: email
+                  })
+              }
+            );
+
+
+          if (!response.ok) {
+
+            let errorText =
+              "Unable to subscribe.";
+
+
+            try {
+
+              const error =
+                await response.json();
+
+              errorText =
+                error.message ||
+                error.hint ||
+                errorText;
+
+            } catch (e) {}
+
+
+            throw new Error(
+              errorText
+            );
+
+          }
+
+
+          message.textContent =
+            "Thank you for subscribing!";
+
+
+          message.className =
+            "newsletter-message success";
+
+
+          emailInput.value =
+            "";
+
+        } catch (error) {
+
+          console.error(
+            "Newsletter error:",
+            error
+          );
+
+
+          message.textContent =
+            "Unable to subscribe right now. Please try again.";
+
+
+          message.className =
+            "newsletter-message error";
+
+        }
+
+      }
+    );
+
+  }
+
+
+  /* ---------------------------------------------------------
      START
-  ===================================================== */
+     --------------------------------------------------------- */
 
   loadProducts();
 
-  setupNewsletter();
-
-
 })();
-
 </script>
-
 
 </body>
 </html>
