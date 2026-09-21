@@ -1,1982 +1,1215 @@
-(function () {
+/* =========================================================
+   SURU COLLECTION — ADMIN PANEL
+   Supabase Authentication + Admin Dashboard
+   ========================================================= */
 
-  "use strict";
+const client = window.supabase.createClient(
+  window.SURU_SUPABASE_URL,
+  window.SURU_SUPABASE_KEY
+);
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+const money = (n) =>
+  "NPR " + Number(n || 0).toLocaleString("en-IN");
+
+const esc = (s) =>
+  String(s ?? "").replace(/[&<>'"]/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;"
+  }[c] || c));
+
+function msg(el, text, type = "") {
+  if (!el) return;
+  el.textContent = text;
+  el.className = "message " + type;
+}
 
 
-  /* =====================================================
-     CONFIGURATION
-  ===================================================== */
+/* =========================================================
+   AUTHENTICATION
+   ========================================================= */
 
-  if (
-    !window.supabase ||
-    !window.SURU_SUPABASE_URL ||
-    !window.SURU_SUPABASE_KEY
-  ) {
-
-    console.error(
-      "Admin: Supabase configuration unavailable."
-    );
-
-    return;
-
+async function checkAdmin(user) {
+  if (!user) {
+    return {
+      ok: false,
+      error: "No active session."
+    };
   }
 
+  /*
+    IMPORTANT:
+    Check admin_users directly instead of relying on the
+    is_admin RPC for the browser login flow.
+  */
 
-  const client =
-    window.supabase.createClient(
-      window.SURU_SUPABASE_URL,
-      window.SURU_SUPABASE_KEY
-    );
+  const { data, error } = await client
+    .from("admin_users")
+    .select("id, role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
 
+  if (error) {
+    console.error("Admin check error:", error);
 
-  /* =====================================================
-     HELPERS
-  ===================================================== */
-
-  function escapeHtml(value) {
-
-    return String(value ?? "")
-      .replace(
-        /[&<>'"]/g,
-        function (char) {
-
-          return {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            "'": "&#39;",
-            '"': "&quot;"
-          }[char];
-
-        }
-      );
-
+    return {
+      ok: false,
+      error: error.message
+    };
   }
 
-
-  function money(value) {
-
-    return (
-      "NPR " +
-      Number(value || 0)
-        .toLocaleString("en-IN")
-    );
-
+  if (!data) {
+    return {
+      ok: false,
+      error: "This account is not registered as an admin."
+    };
   }
 
-
-  function showToast(message) {
-
-    const toast =
-      document.getElementById(
-        "toast"
-      );
-
-
-    if (!toast) return;
-
-
-    toast.textContent =
-      message;
-
-
-    toast.classList.add(
-      "show"
-    );
-
-
-    clearTimeout(
-      window.__toastTimer
-    );
-
-
-    window.__toastTimer =
-      setTimeout(
-        function () {
-
-          toast.classList.remove(
-            "show"
-          );
-
-        },
-        2500
-      );
-
+  if (!data.is_active) {
+    return {
+      ok: false,
+      error: "This admin account is inactive."
+    };
   }
 
+  if (data.role !== "admin" && data.role !== "manager") {
+    return {
+      ok: false,
+      error: "This account does not have admin access."
+    };
+  }
 
-  /* =====================================================
-     ELEMENTS
-  ===================================================== */
-
-  const loginScreen =
-    document.getElementById(
-      "loginScreen"
-    );
-
-
-  const adminApp =
-    document.getElementById(
-      "adminApp"
-    );
+  return {
+    ok: true,
+    admin: data
+  };
+}
 
 
-  const loginForm =
-    document.getElementById(
-      "loginForm"
-    );
+/* =========================================================
+   SHOW / HIDE VIEWS
+   ========================================================= */
+
+function showLogin(message = "", type = "") {
+  const login = $("#loginView");
+  const app = $("#appView");
+
+  if (login) login.classList.remove("hidden");
+  if (app) app.classList.add("hidden");
+
+  if (message && $("#loginMessage")) {
+    msg($("#loginMessage"), message, type);
+  }
+}
+
+function showApp(user) {
+  const login = $("#loginView");
+  const app = $("#appView");
+
+  if (login) login.classList.add("hidden");
+  if (app) app.classList.remove("hidden");
+
+  if ($("#userEmail")) {
+    $("#userEmail").textContent = user?.email || "";
+  }
+}
 
 
-  const loginMessage =
-    document.getElementById(
-      "loginMessage"
-    );
+/* =========================================================
+   START APPLICATION
+   ========================================================= */
 
+let starting = false;
 
-  const loginButton =
-    document.getElementById(
-      "loginButton"
-    );
+async function start() {
 
+  /*
+    Prevent multiple simultaneous authentication checks.
+    This is important because Supabase can fire auth events
+    while sign-in is still completing.
+  */
+  if (starting) return;
 
-  /* =====================================================
-     CHECK ADMIN
-  ===================================================== */
+  starting = true;
 
-  async function checkAdmin() {
+  try {
 
     const {
-      data: {
-        user
-      }
-    } =
-      await client.auth.getUser();
+      data: { session },
+      error
+    } = await client.auth.getSession();
 
-
-    if (!user) {
-
-      showLogin();
-
-      return false;
-
+    if (error) {
+      console.error("Session error:", error);
+      showLogin("Unable to check login session: " + error.message, "error");
+      return;
     }
 
-
-    const result =
-      await client
-        .from("admin_users")
-        .select(
-          "id,role,is_active"
-        )
-        .eq(
-          "id",
-          user.id
-        )
-        .maybeSingle();
-
-
-    if (
-      result.error ||
-      !result.data ||
-      !result.data.is_active ||
-      ![
-        "admin",
-        "manager"
-      ].includes(
-        result.data.role
-      )
-    ) {
-
-      await client.auth.signOut();
-
+    if (!session || !session.user) {
       showLogin();
-
-      return false;
-
+      return;
     }
 
+    console.log("Logged in user:", session.user.email);
+    console.log("User ID:", session.user.id);
 
-    showAdmin();
+    const admin = await checkAdmin(session.user);
 
-    return true;
+    if (!admin.ok) {
 
-  }
+      console.error("Admin authorization failed:", admin.error);
 
+      /*
+        DO NOT repeatedly call signOut here.
+        That can create a login loop when the database/RLS
+        temporarily rejects the admin check.
+      */
 
-  /* =====================================================
-     SHOW LOGIN
-  ===================================================== */
+      showLogin(admin.error, "error");
+      return;
+    }
 
-  function showLogin() {
+    console.log("Admin authorization successful:", admin.admin);
 
-    loginScreen.hidden =
-      false;
-
-    adminApp.hidden =
-      true;
-
-  }
-
-
-  /* =====================================================
-     SHOW ADMIN
-  ===================================================== */
-
-  async function showAdmin() {
-
-    loginScreen.hidden =
-      true;
-
-    adminApp.hidden =
-      false;
-
+    showApp(session.user);
 
     await loadDashboard();
 
-  }
+  } catch (err) {
 
+    console.error("Admin startup error:", err);
 
-  /* =====================================================
-     LOGIN
-  ===================================================== */
-
-  if (loginForm) {
-
-    loginForm.addEventListener(
-      "submit",
-      async function (event) {
-
-        event.preventDefault();
-
-
-        loginMessage.textContent =
-          "";
-
-
-        loginButton.disabled =
-          true;
-
-
-        loginButton.textContent =
-          "Signing in…";
-
-
-        const email =
-          document
-            .getElementById(
-              "loginEmail"
-            )
-            .value
-            .trim();
-
-
-        const password =
-          document
-            .getElementById(
-              "loginPassword"
-            )
-            .value;
-
-
-        try {
-
-
-          const result =
-            await client.auth
-              .signInWithPassword({
-                email,
-                password
-              });
-
-
-          if (result.error) {
-
-            throw result.error;
-
-          }
-
-
-          const user =
-            result.data.user;
-
-
-          const adminResult =
-            await client
-              .from("admin_users")
-              .select(
-                "id,role,is_active"
-              )
-              .eq(
-                "id",
-                user.id
-              )
-              .maybeSingle();
-
-
-          if (
-            adminResult.error ||
-            !adminResult.data ||
-            !adminResult.data.is_active ||
-            ![
-              "admin",
-              "manager"
-            ].includes(
-              adminResult.data.role
-            )
-          ) {
-
-            await client.auth.signOut();
-
-            throw new Error(
-              "This account is not authorized to access the admin panel."
-            );
-
-          }
-
-
-          loginForm.reset();
-
-          await showAdmin();
-
-
-        } catch (error) {
-
-
-          console.error(
-            "Admin login failed:",
-            error
-          );
-
-
-          loginMessage.textContent =
-            error.message ||
-            "Unable to sign in.";
-
-        } finally {
-
-
-          loginButton.disabled =
-            false;
-
-
-          loginButton.textContent =
-            "Sign In";
-
-        }
-
-      }
+    showLogin(
+      "Connection error: " + (err?.message || err),
+      "error"
     );
+
+  } finally {
+
+    starting = false;
 
   }
+}
 
 
-  /* =====================================================
-     LOGOUT
-  ===================================================== */
+/* =========================================================
+   LOGIN
+   ========================================================= */
 
-  const logoutButton =
-    document.getElementById(
-      "logoutButton"
-    );
+const loginForm = $("#loginForm");
 
+if (loginForm) {
 
-  if (logoutButton) {
+  loginForm.addEventListener("submit", async (e) => {
 
-    logoutButton.addEventListener(
-      "click",
-      async function () {
+    e.preventDefault();
 
-        await client.auth.signOut();
+    const email = $("#loginEmail")?.value.trim();
+    const password = $("#loginPassword")?.value;
 
-        showLogin();
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     NAVIGATION
-  ===================================================== */
-
-  document
-    .querySelectorAll(
-      ".side-link"
-    )
-    .forEach(
-      function (button) {
-
-        button.addEventListener(
-          "click",
-          function () {
-
-            const section =
-              button.dataset.section;
-
-
-            document
-              .querySelectorAll(
-                ".side-link"
-              )
-              .forEach(
-                function (item) {
-
-                  item.classList.remove(
-                    "active"
-                  );
-
-                }
-              );
-
-
-            button.classList.add(
-              "active"
-            );
-
-
-            document
-              .querySelectorAll(
-                ".admin-section"
-              )
-              .forEach(
-                function (item) {
-
-                  item.hidden =
-                    true;
-
-                  item.classList.remove(
-                    "active"
-                  );
-
-                }
-              );
-
-
-            const target =
-              document.getElementById(
-                "section-" +
-                section
-              );
-
-
-            if (target) {
-
-              target.hidden =
-                false;
-
-              target.classList.add(
-                "active"
-              );
-
-            }
-
-
-            if (
-              section ===
-              "dashboard"
-            ) {
-
-              loadDashboard();
-
-            } else if (
-              section ===
-              "orders"
-            ) {
-
-              loadOrders();
-
-            } else if (
-              section ===
-              "products"
-            ) {
-
-              loadProducts();
-
-            } else if (
-              section ===
-              "inventory"
-            ) {
-
-              loadInventory();
-
-            } else if (
-              section ===
-              "subscribers"
-            ) {
-
-              loadSubscribers();
-
-            }
-
-          }
-        );
-
-      }
-    );
-
-
-  /* =====================================================
-     DASHBOARD
-  ===================================================== */
-
-  async function loadDashboard() {
-
-    try {
-
-
-      const [
-        orders,
-        pending,
-        products,
-        subscribers
-      ] =
-        await Promise.all([
-
-
-          client
-            .from("orders")
-            .select(
-              "id",
-              {
-                count: "exact",
-                head: true
-              }
-            ),
-
-
-          client
-            .from("orders")
-            .select(
-              "id",
-              {
-                count: "exact",
-                head: true
-              }
-            )
-            .eq(
-              "status",
-              "pending"
-            ),
-
-
-          client
-            .from("products")
-            .select(
-              "id",
-              {
-                count: "exact",
-                head: true
-              }
-            )
-            .eq(
-              "is_active",
-              true
-            ),
-
-
-          client
-            .from(
-              "newsletter_subscribers"
-            )
-            .select(
-              "id",
-              {
-                count: "exact",
-                head: true
-              }
-            )
-            .eq(
-              "is_active",
-              true
-            )
-
-        ]);
-
-
-      document.getElementById(
-        "statOrders"
-      ).textContent =
-        orders.count ?? "0";
-
-
-      document.getElementById(
-        "statPending"
-      ).textContent =
-        pending.count ?? "0";
-
-
-      document.getElementById(
-        "statProducts"
-      ).textContent =
-        products.count ?? "0";
-
-
-      document.getElementById(
-        "statSubscribers"
-      ).textContent =
-        subscribers.count ?? "0";
-
-
-      await loadRecentOrders();
-
-
-    } catch (error) {
-
-      console.error(
-        "Dashboard error:",
-        error
+    if (!email || !password) {
+      msg(
+        $("#loginMessage"),
+        "Please enter your email and password.",
+        "error"
       );
-
+      return;
     }
 
-  }
+    msg($("#loginMessage"), "Signing in…");
 
+    const { data, error } =
+      await client.auth.signInWithPassword({
+        email,
+        password
+      });
 
-  /* =====================================================
-     RECENT ORDERS
-  ===================================================== */
+    if (error) {
 
-  async function loadRecentOrders() {
+      console.error("Login error:", error);
 
-    const container =
-      document.getElementById(
-        "recentOrders"
+      msg(
+        $("#loginMessage"),
+        error.message,
+        "error"
       );
 
+      return;
+    }
 
-    const result =
-      await client
+    console.log(
+      "Supabase login successful:",
+      data?.user?.email
+    );
+
+    /*
+      Give Supabase a moment to persist the session,
+      then perform exactly one startup check.
+    */
+
+    setTimeout(() => {
+      start();
+    }, 300);
+
+  });
+
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+const logoutBtn = $("#logoutBtn");
+
+if (logoutBtn) {
+
+  logoutBtn.addEventListener("click", async () => {
+
+    logoutBtn.disabled = true;
+
+    const { error } = await client.auth.signOut();
+
+    if (error) {
+      console.error("Logout error:", error);
+      logoutBtn.disabled = false;
+      alert(error.message);
+      return;
+    }
+
+    window.location.reload();
+
+  });
+
+}
+
+
+/* =========================================================
+   AUTH STATE LISTENER
+   ========================================================= */
+
+client.auth.onAuthStateChange((event, session) => {
+
+  console.log(
+    "Auth event:",
+    event,
+    session?.user?.email || "no user"
+  );
+
+  /*
+    Do not immediately run multiple start() calls for every
+    auth event. SIGNED_IN is handled after login and INITIAL_SESSION
+    is handled during initial page load.
+  */
+
+  if (event === "INITIAL_SESSION") {
+    start();
+  }
+
+});
+
+
+/* =========================================================
+   SIDEBAR NAVIGATION
+   ========================================================= */
+
+$$(".sidebar button").forEach((button) => {
+
+  button.addEventListener("click", () => {
+
+    $$(".sidebar button").forEach((b) =>
+      b.classList.remove("active")
+    );
+
+    button.classList.add("active");
+
+    $$(".view").forEach((view) =>
+      view.classList.remove("active")
+    );
+
+    const viewId = button.dataset.view;
+    const view = $("#" + viewId);
+
+    if (view) {
+      view.classList.add("active");
+    }
+
+    const loaders = {
+      dashboard: loadDashboard,
+      orders: loadOrders,
+      products: loadProducts,
+      inventory: loadInventory,
+      subscribers: loadSubscribers
+    };
+
+    if (loaders[viewId]) {
+      loaders[viewId]();
+    }
+
+  });
+
+});
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+async function loadDashboard() {
+
+  try {
+
+    const [
+      ordersResult,
+      productsResult,
+      subscribersResult,
+      pendingResult
+    ] = await Promise.all([
+
+      client
         .from("orders")
-        .select(`
-          id,
-          order_number,
-          customer_name,
-          total,
-          status,
-          created_at
-        `)
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
+        .select("*", {
+          count: "exact",
+          head: true
+        }),
+
+      client
+        .from("products")
+        .select("*", {
+          count: "exact",
+          head: true
+        })
+        .eq("is_active", true),
+
+      client
+        .from("newsletter_subscribers")
+        .select("*", {
+          count: "exact",
+          head: true
+        })
+        .eq("is_active", true),
+
+      client
+        .from("orders")
+        .select(
+          "id,order_number,customer_name,total,order_status,created_at"
         )
-        .limit(8);
+        .order("created_at", {
+          ascending: false
+        })
+        .limit(5)
 
+    ]);
 
-    if (result.error) {
-
-      container.textContent =
-        "Unable to load orders.";
-
-      return;
-
+    if ($("#statOrders")) {
+      $("#statOrders").textContent =
+        ordersResult.count ?? 0;
     }
 
-
-    const orders =
-      result.data || [];
-
-
-    if (!orders.length) {
-
-      container.textContent =
-        "No orders yet.";
-
-      return;
-
+    if ($("#statProducts")) {
+      $("#statProducts").textContent =
+        productsResult.count ?? 0;
     }
 
+    if ($("#statSubscribers")) {
+      $("#statSubscribers").textContent =
+        subscribersResult.count ?? 0;
+    }
 
-    container.innerHTML =
-      orders.map(
-        function (order) {
+    const pending = pendingResult.data || [];
 
-          return `
+    if ($("#statPending")) {
+      $("#statPending").textContent =
+        pending.filter(
+          (x) => x.order_status === "pending"
+        ).length;
+    }
 
-            <div class="order-row">
+    if ($("#recentOrders")) {
+      renderOrderTable(
+        $("#recentOrders"),
+        pending,
+        false
+      );
+    }
 
-              <div>
+  } catch (err) {
 
-                <strong>
-                  ${escapeHtml(
-                    order.order_number ||
-                    order.id
-                  )}
-                </strong>
-
-                <small>
-                  ${escapeHtml(
-                    order.customer_name ||
-                    "Customer"
-                  )}
-                </small>
-
-              </div>
-
-
-              <div>
-
-                <strong>
-                  ${money(
-                    order.total
-                  )}
-                </strong>
-
-                <small>
-
-                  <span class="badge ${
-                    escapeHtml(
-                      order.status ||
-                      "pending"
-                    )
-                  }">
-
-                    ${escapeHtml(
-                      order.status ||
-                      "pending"
-                    )}
-
-                  </span>
-
-                </small>
-
-              </div>
-
-            </div>
-
-          `;
-
-        }
-      ).join("");
+    console.error("Dashboard error:", err);
 
   }
 
-
-  /* =====================================================
-     ORDERS
-  ===================================================== */
-
-  async function loadOrders() {
-
-    const container =
-      document.getElementById(
-        "ordersTable"
-      );
+}
 
 
-    container.textContent =
-      "Loading…";
+/* =========================================================
+   ORDERS
+   ========================================================= */
 
+function renderOrderTable(el, rows, full = true) {
 
-    const result =
-      await client
-        .from("orders")
-        .select(`
-          id,
-          order_number,
-          customer_name,
-          customer_phone,
-          city,
-          total,
-          status,
-          payment_method,
-          created_at
-        `)
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
+  if (!el) return;
 
+  if (!rows.length) {
 
-    if (result.error) {
+    el.innerHTML =
+      '<p class="subscriber-count">No orders found.</p>';
 
-      container.textContent =
-        result.error.message;
-
-      return;
-
-    }
-
-
-    renderOrders(
-      result.data || []
-    );
-
+    return;
   }
 
+  el.innerHTML = `
+    <table class="table">
 
-  function renderOrders(
-    orders
-  ) {
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Date</th>
+          ${full ? "<th>Update</th>" : ""}
+        </tr>
+      </thead>
 
-    const container =
-      document.getElementById(
-        "ordersTable"
-      );
+      <tbody>
 
-
-    const search =
-      (
-        document.getElementById(
-          "orderSearch"
-        )?.value ||
-        ""
-      )
-      .trim()
-      .toLowerCase();
-
-
-    const status =
-      document.getElementById(
-        "orderStatusFilter"
-      )?.value ||
-      "";
-
-
-    const filtered =
-      orders.filter(
-        function (order) {
-
-          const text =
-            [
-              order.order_number,
-              order.customer_name,
-              order.customer_phone
-            ]
-            .join(" ")
-            .toLowerCase();
-
-
-          return (
-            (!search ||
-              text.includes(search)) &&
-            (!status ||
-              order.status === status)
-          );
-
-        }
-      );
-
-
-    if (!filtered.length) {
-
-      container.innerHTML =
-        "<p style='padding:20px'>No orders found.</p>";
-
-      return;
-
-    }
-
-
-    container.innerHTML = `
-
-      <table>
-
-        <thead>
+        ${rows.map((o) => `
 
           <tr>
 
-            <th>
-              Order
-            </th>
+            <td>
+              <b>${esc(o.order_number)}</b>
 
-            <th>
-              Customer
-            </th>
+              ${
+                full
+                  ? `<div
+                      class="order-items"
+                      data-items="${esc(o.id)}">
+                     </div>`
+                  : ""
+              }
 
-            <th>
-              Phone
-            </th>
+            </td>
 
-            <th>
-              Total
-            </th>
+            <td>
+              ${esc(o.customer_name)}
+              <br>
+              <small>
+                ${esc(o.customer_phone || "")}
+              </small>
+            </td>
 
-            <th>
-              Payment
-            </th>
+            <td>
+              ${money(o.total)}
+            </td>
 
-            <th>
-              Status
-            </th>
+            <td>
+              <span class="badge">
+                ${esc(o.order_status)}
+              </span>
+            </td>
 
-            <th>
-              Date
-            </th>
+            <td>
+              ${new Date(o.created_at).toLocaleString()}
+            </td>
 
-          </tr>
-
-        </thead>
-
-
-        <tbody>
-
-          ${filtered.map(
-            function (order) {
-
-              return `
-
-                <tr>
-
-                  <td>
-                    <strong>
-                      ${escapeHtml(
-                        order.order_number ||
-                        order.id
-                      )}
-                    </strong>
-                  </td>
-
-                  <td>
-                    ${escapeHtml(
-                      order.customer_name ||
-                      ""
-                    )}
-                  </td>
-
-                  <td>
-                    ${escapeHtml(
-                      order.customer_phone ||
-                      ""
-                    )}
-                  </td>
-
-                  <td>
-                    ${money(
-                      order.total
-                    )}
-                  </td>
-
-                  <td>
-                    ${escapeHtml(
-                      order.payment_method ||
-                      ""
-                    )}
-                  </td>
-
+            ${
+              full
+                ? `
                   <td>
 
                     <select
-                      class="order-status"
-                      data-id="${escapeHtml(
-                        order.id
-                      )}"
-                    >
+                      class="status-select"
+                      data-id="${o.id}">
 
-                      ${[
-                        "pending",
-                        "confirmed",
-                        "processing",
-                        "shipped",
-                        "delivered",
-                        "cancelled"
-                      ].map(
-                        function (value) {
-
-                          return `
-
-                            <option
-                              value="${value}"
-                              ${
-                                order.status ===
-                                value
-                                  ? "selected"
-                                  : ""
-                              }
-                            >
-                              ${value}
-                            </option>
-
-                          `;
-
-                        }
-                      ).join("")}
+                      ${
+                        [
+                          "pending",
+                          "confirmed",
+                          "processing",
+                          "shipped",
+                          "delivered",
+                          "cancelled"
+                        ]
+                          .map(
+                            (s) => `
+                              <option
+                                ${
+                                  s === o.order_status
+                                    ? "selected"
+                                    : ""
+                                }>
+                                ${s}
+                              </option>
+                            `
+                          )
+                          .join("")
+                      }
 
                     </select>
 
                   </td>
-
-                  <td>
-                    ${new Date(
-                      order.created_at
-                    ).toLocaleString()}
-                  </td>
-
-                </tr>
-
-              `;
-
+                `
+                : ""
             }
-          ).join("")}
-
-        </tbody>
-
-      </table>
-
-    `;
-
-  }
-
-
-  document.addEventListener(
-    "change",
-    async function (event) {
-
-      if (
-        event.target.matches(
-          ".order-status"
-        )
-      ) {
-
-        const id =
-          event.target.dataset.id;
-
-
-        const status =
-          event.target.value;
-
-
-        const result =
-          await client
-            .from("orders")
-            .update({
-              status:
-                status
-            })
-            .eq(
-              "id",
-              id
-            );
-
-
-        if (result.error) {
-
-          alert(
-            result.error.message
-          );
-
-        } else {
-
-          showToast(
-            "Order status updated."
-          );
-
-          loadOrders();
-
-        }
-
-      }
-
-    }
-  );
-
-
-  const searchInput =
-    document.getElementById(
-      "orderSearch"
-    );
-
-
-  const statusFilter =
-    document.getElementById(
-      "orderStatusFilter"
-    );
-
-
-  let cachedOrders = [];
-
-
-  if (searchInput) {
-
-    searchInput.addEventListener(
-      "input",
-      function () {
-
-        renderOrders(
-          cachedOrders
-        );
-
-      }
-    );
-
-  }
-
-
-  if (statusFilter) {
-
-    statusFilter.addEventListener(
-      "change",
-      function () {
-
-        renderOrders(
-          cachedOrders
-        );
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     PRODUCTS
-  ===================================================== */
-
-  async function loadProducts() {
-
-    const container =
-      document.getElementById(
-        "productsTable"
-      );
-
-
-    container.textContent =
-      "Loading…";
-
-
-    const result =
-      await client
-        .from("products")
-        .select(`
-          id,
-          product_code,
-          name,
-          category,
-          price,
-          moq,
-          is_active,
-          is_featured
-        `)
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-
-    if (result.error) {
-
-      container.textContent =
-        result.error.message;
-
-      return;
-
-    }
-
-
-    const products =
-      result.data || [];
-
-
-    if (!products.length) {
-
-      container.innerHTML =
-        "<p style='padding:20px'>No products found.</p>";
-
-      return;
-
-    }
-
-
-    container.innerHTML = `
-
-      <table>
-
-        <thead>
-
-          <tr>
-
-            <th>
-              Code
-            </th>
-
-            <th>
-              Product
-            </th>
-
-            <th>
-              Category
-            </th>
-
-            <th>
-              Price
-            </th>
-
-            <th>
-              MOQ
-            </th>
-
-            <th>
-              Active
-            </th>
-
-            <th>
-              Featured
-            </th>
-
-            <th>
-              Save
-            </th>
 
           </tr>
 
-        </thead>
+        `).join("")}
+
+      </tbody>
+
+    </table>
+  `;
+
+  if (full) {
+    loadOrderItems(rows);
+  }
+
+}
 
 
-        <tbody>
+async function loadOrderItems(rows) {
 
-          ${products.map(
-            function (product) {
+  const ids = rows.map((x) => x.id);
 
-              return `
+  if (!ids.length) return;
 
-                <tr>
+  const { data, error } = await client
+    .from("order_items")
+    .select(
+      "order_id,product_name,size,quantity"
+    )
+    .in("order_id", ids);
 
-                  <td>
-                    ${escapeHtml(
-                      product.product_code
-                    )}
-                  </td>
+  if (error) {
+    console.error("Order items error:", error);
+    return;
+  }
 
-                  <td>
-                    ${escapeHtml(
-                      product.name
-                    )}
-                  </td>
+  (data || []).forEach((item) => {
 
-                  <td>
-                    ${escapeHtml(
-                      product.category ||
-                      ""
-                    )}
-                  </td>
+    const el = document.querySelector(
+      `[data-items="${item.order_id}"]`
+    );
 
-                  <td>
+    if (!el) return;
 
-                    <input
-                      class="product-price"
-                      data-id="${product.id}"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value="${product.price || 0}"
-                    >
+    el.textContent +=
+      (el.textContent ? ", " : "") +
+      `${item.product_name}` +
+      `${item.size ? " (" + item.size + ")" : ""}` +
+      ` × ${item.quantity}`;
 
-                  </td>
+  });
 
-                  <td>
+}
 
-                    <input
-                      class="product-moq"
-                      data-id="${product.id}"
-                      type="number"
-                      min="1"
-                      value="${product.moq || 1}"
-                    >
 
-                  </td>
+async function loadOrders() {
 
-                  <td>
+  const search =
+    $("#orderSearch")?.value.trim() || "";
 
-                    <input
-                      class="product-active"
-                      data-id="${product.id}"
-                      type="checkbox"
-                      ${
-                        product.is_active
-                          ? "checked"
-                          : ""
-                      }
-                    >
+  const status =
+    $("#orderStatusFilter")?.value || "";
 
-                  </td>
+  let q = client
+    .from("orders")
+    .select("*")
+    .order("created_at", {
+      ascending: false
+    })
+    .limit(100);
 
-                  <td>
+  if (status) {
+    q = q.eq("order_status", status);
+  }
 
-                    <input
-                      class="product-featured"
-                      data-id="${product.id}"
-                      type="checkbox"
-                      ${
-                        product.is_featured
-                          ? "checked"
-                          : ""
-                      }
-                    >
+  if (search) {
 
-                  </td>
-
-                  <td>
-
-                    <button
-                      class="save-product save-button"
-                      data-id="${product.id}"
-                      type="button"
-                    >
-                      Save
-                    </button>
-
-                  </td>
-
-                </tr>
-
-              `;
-
-            }
-          ).join("")}
-
-        </tbody>
-
-      </table>
-
-    `;
+    q = q.or(
+      `order_number.ilike.%${search}%,` +
+      `customer_name.ilike.%${search}%,` +
+      `customer_phone.ilike.%${search}%`
+    );
 
   }
 
+  const { data, error } = await q;
 
-  document.addEventListener(
-    "click",
-    async function (event) {
+  if (error) {
 
-      const button =
-        event.target.closest(
-          ".save-product"
-        );
+    console.error("Orders error:", error);
 
-
-      if (!button) {
-        return;
-      }
-
-
-      const id =
-        button.dataset.id;
-
-
-      const price =
-        Number(
-          document.querySelector(
-            `.product-price[data-id="${id}"]`
-          ).value
-        );
-
-
-      const moq =
-        Number(
-          document.querySelector(
-            `.product-moq[data-id="${id}"]`
-          ).value
-        );
-
-
-      const isActive =
-        document.querySelector(
-          `.product-active[data-id="${id}"]`
-        ).checked;
-
-
-      const isFeatured =
-        document.querySelector(
-          `.product-featured[data-id="${id}"]`
-        ).checked;
-
-
-      const result =
-        await client
-          .from("products")
-          .update({
-            price,
-            moq,
-            is_active:
-              isActive,
-            is_featured:
-              isFeatured
-          })
-          .eq(
-            "id",
-            id
-          );
-
-
-      if (result.error) {
-
-        alert(
-          result.error.message
-        );
-
-        return;
-
-      }
-
-
-      showToast(
-        "Product updated."
-      );
-
-    }
-  );
-
-
-  /* =====================================================
-     INVENTORY
-  ===================================================== */
-
-  async function loadInventory() {
-
-    const container =
-      document.getElementById(
-        "inventoryTable"
-      );
-
-
-    container.textContent =
-      "Loading…";
-
-
-    const result =
-      await client
-        .from("product_sizes")
-        .select(`
-          id,
-          product_id,
-          size,
-          stock,
-          is_active,
-          products (
-            product_code,
-            name
-          )
-        `)
-        .order(
-          "created_at",
-          {
-            ascending: true
-          }
-        );
-
-
-    if (result.error) {
-
-      container.textContent =
-        result.error.message;
-
-      return;
-
+    if ($("#ordersTable")) {
+      $("#ordersTable").innerHTML =
+        `<p class="message error">
+          ${esc(error.message)}
+        </p>`;
     }
 
-
-    const rows =
-      result.data || [];
-
-
-    if (!rows.length) {
-
-      container.innerHTML =
-        "<p style='padding:20px'>No size inventory found.</p>";
-
-      return;
-
-    }
-
-
-    container.innerHTML = `
-
-      <table>
-
-        <thead>
-
-          <tr>
-
-            <th>
-              Product
-            </th>
-
-            <th>
-              Size
-            </th>
-
-            <th>
-              Stock
-            </th>
-
-            <th>
-              Active
-            </th>
-
-            <th>
-              Save
-            </th>
-
-          </tr>
-
-        </thead>
-
-
-        <tbody>
-
-          ${rows.map(
-            function (row) {
-
-              return `
-
-                <tr>
-
-                  <td>
-
-                    ${
-                      row.products
-                        ? escapeHtml(
-                            row.products.product_code +
-                            " — " +
-                            row.products.name
-                          )
-                        : "Product"
-                    }
-
-                  </td>
-
-                  <td>
-                    ${escapeHtml(
-                      row.size
-                    )}
-                  </td>
-
-                  <td>
-
-                    <input
-                      class="inventory-stock"
-                      data-id="${row.id}"
-                      type="number"
-                      min="0"
-                      value="${Number(
-                        row.stock || 0
-                      )}"
-                    >
-
-                  </td>
-
-                  <td>
-
-                    <input
-                      class="inventory-active"
-                      data-id="${row.id}"
-                      type="checkbox"
-                      ${
-                        row.is_active
-                          ? "checked"
-                          : ""
-                      }
-                    >
-
-                  </td>
-
-                  <td>
-
-                    <button
-                      class="save-inventory save-button"
-                      data-id="${row.id}"
-                      type="button"
-                    >
-                      Save
-                    </button>
-
-                  </td>
-
-                </tr>
-
-              `;
-
-            }
-          ).join("")}
-
-        </tbody>
-
-      </table>
-
-    `;
-
+    return;
   }
 
-
-  document.addEventListener(
-    "click",
-    async function (event) {
-
-      const button =
-        event.target.closest(
-          ".save-inventory"
-        );
-
-
-      if (!button) {
-        return;
-      }
-
-
-      const id =
-        button.dataset.id;
-
-
-      const stock =
-        Number(
-          document.querySelector(
-            `.inventory-stock[data-id="${id}"]`
-          ).value
-        );
-
-
-      const active =
-        document.querySelector(
-          `.inventory-active[data-id="${id}"]`
-        ).checked;
-
-
-      const result =
-        await client
-          .from("product_sizes")
-          .update({
-            stock,
-            is_active:
-              active
-          })
-          .eq(
-            "id",
-            id
-          );
-
-
-      if (result.error) {
-
-        alert(
-          result.error.message
-        );
-
-        return;
-
-      }
-
-
-      showToast(
-        "Inventory updated."
-      );
-
-    }
+  renderOrderTable(
+    $("#ordersTable"),
+    data || [],
+    true
   );
 
-
-  /* =====================================================
-     SUBSCRIBERS
-  ===================================================== */
-
-  async function loadSubscribers() {
-
-    const container =
-      document.getElementById(
-        "subscribersTable"
-      );
+}
 
 
-    container.textContent =
-      "Loading…";
+$("#orderSearch")?.addEventListener(
+  "input",
+  loadOrders
+);
+
+$("#orderStatusFilter")?.addEventListener(
+  "change",
+  loadOrders
+);
 
 
-    const result =
-      await client
-        .from(
-          "newsletter_subscribers"
-        )
-        .select(`
-          id,
-          email,
-          is_active,
-          created_at
-        `)
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
+/* =========================================================
+   UPDATE ORDER STATUS
+   ========================================================= */
+
+document.addEventListener("change", async (e) => {
+
+  if (!e.target.matches(".status-select")) {
+    return;
+  }
+
+  const id = e.target.dataset.id;
+  const status = e.target.value;
+
+  e.target.disabled = true;
+
+  const { error } = await client
+    .from("orders")
+    .update({
+      order_status: status
+    })
+    .eq("id", id);
+
+  e.target.disabled = false;
+
+  if (error) {
+
+    alert(error.message);
+
+    return;
+  }
+
+  loadOrders();
+
+});
 
 
-    if (result.error) {
+/* =========================================================
+   PRODUCTS
+   ========================================================= */
 
-      container.textContent =
-        result.error.message;
+async function loadProducts() {
 
-      return;
+  const {
+    data,
+    error
+  } = await client
+    .from("products")
+    .select("*")
+    .order("created_at", {
+      ascending: false
+    });
 
+  if (error) {
+
+    console.error("Products error:", error);
+
+    if ($("#productsGrid")) {
+      $("#productsGrid").innerHTML =
+        `<p class="message error">
+          ${esc(error.message)}
+        </p>`;
     }
 
+    return;
+  }
 
-    const subscribers =
-      result.data || [];
+  if (!$("#productsGrid")) return;
+
+  $("#productsGrid").innerHTML = `
+    <div class="product-grid">
+
+      ${(data || []).map((p) => `
+
+        <div class="product-card-admin">
+
+          <small>
+            ${esc(p.product_code)}
+            ·
+            ${esc(p.category)}
+          </small>
+
+          <h3>
+            ${esc(p.name)}
+          </h3>
+
+          <label>
+            Price
+
+            <input
+              type="number"
+              step="0.01"
+              value="${p.price}"
+              data-price="${p.id}">
+          </label>
+
+          <label>
+            MOQ
+
+            <input
+              type="number"
+              value="${p.moq}"
+              data-moq="${p.id}">
+          </label>
+
+          <label>
+            <input
+              type="checkbox"
+              ${p.is_active ? "checked" : ""}
+              data-active="${p.id}">
+
+            Active
+          </label>
+
+          <label>
+            <input
+              type="checkbox"
+              ${p.is_featured ? "checked" : ""}
+              data-featured="${p.id}">
+
+            Featured
+          </label>
+
+          <button
+            class="primary save-product"
+            data-id="${p.id}">
+            Save Changes
+          </button>
+
+          <span
+            class="message"
+            id="pm-${p.id}">
+          </span>
+
+        </div>
+
+      `).join("")}
+
+    </div>
+  `;
+
+}
 
 
-    if (!subscribers.length) {
+/* =========================================================
+   SAVE PRODUCT
+   ========================================================= */
 
-      container.innerHTML =
-        "<p style='padding:20px'>No subscribers yet.</p>";
+document.addEventListener("click", async (e) => {
 
-      return;
+  const button =
+    e.target.closest(".save-product");
 
+  if (!button) return;
+
+  const id = button.dataset.id;
+
+  const get = (name) =>
+    document.querySelector(
+      `[data-${name}="${id}"]`
+    );
+
+  const payload = {
+
+    price: Number(
+      get("price").value
+    ),
+
+    moq: Math.max(
+      0,
+      Number(get("moq").value)
+    ),
+
+    is_active:
+      get("active").checked,
+
+    is_featured:
+      get("featured").checked
+
+  };
+
+  button.disabled = true;
+
+  const { error } = await client
+    .from("products")
+    .update(payload)
+    .eq("id", id);
+
+  button.disabled = false;
+
+  msg(
+    $("#pm-" + id),
+    error
+      ? "Save failed: " + error.message
+      : "Saved",
+    error
+      ? "error"
+      : "success"
+  );
+
+});
+
+
+/* =========================================================
+   INVENTORY
+   ========================================================= */
+
+async function loadInventory() {
+
+  const {
+    data,
+    error
+  } = await client
+    .from("products")
+    .select(
+      "id,product_code,name,product_sizes(id,size,stock,is_active)"
+    )
+    .order("product_code");
+
+  if (error) {
+
+    console.error("Inventory error:", error);
+
+    if ($("#inventoryGrid")) {
+      $("#inventoryGrid").innerHTML =
+        `<div class="card">
+          <p class="message error">
+            ${esc(error.message)}
+          </p>
+        </div>`;
     }
 
+    return;
+  }
 
-    container.innerHTML = `
+  if (!$("#inventoryGrid")) return;
 
-      <table>
+  $("#inventoryGrid").innerHTML =
+    (data || []).map((p) => `
 
-        <thead>
+      <div class="card">
 
-          <tr>
+        <h3>
+          ${esc(p.product_code)}
+          —
+          ${esc(p.name)}
+        </h3>
 
-            <th>
-              Email
-            </th>
+        <div class="stock-list">
 
-            <th>
-              Status
-            </th>
+          ${
+            (p.product_sizes || [])
+              .map(
+                (s) => `
 
-            <th>
-              Subscribed
-            </th>
+                  <div class="stock-row">
 
-            <th>
-              Action
-            </th>
-
-          </tr>
-
-        </thead>
-
-
-        <tbody>
-
-          ${subscribers.map(
-            function (subscriber) {
-
-              return `
-
-                <tr>
-
-                  <td>
-                    ${escapeHtml(
-                      subscriber.email
-                    )}
-                  </td>
-
-                  <td>
-
-                    <span class="badge">
-
-                      ${
-                        subscriber.is_active
-                          ? "Active"
-                          : "Inactive"
-                      }
-
+                    <span>
+                      <b>
+                        ${esc(s.size)}
+                      </b>
                     </span>
 
-                  </td>
-
-                  <td>
-                    ${new Date(
-                      subscriber.created_at
-                    ).toLocaleString()}
-                  </td>
-
-                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value="${s.stock}"
+                      data-stock="${s.id}"
+                      data-old="${s.stock}">
 
                     <button
-                      class="subscriber-toggle save-button"
-                      data-id="${subscriber.id}"
-                      data-active="${
-                        subscriber.is_active
-                      }"
-                      type="button"
-                    >
-
-                      ${
-                        subscriber.is_active
-                          ? "Deactivate"
-                          : "Activate"
-                      }
-
+                      class="primary save-stock"
+                      data-id="${s.id}"
+                      data-product="${p.id}">
+                      Save
                     </button>
 
-                  </td>
+                  </div>
 
-                </tr>
+                `
+              )
+              .join("") ||
+            '<p class="subscriber-count">No sizes configured.</p>'
+          }
 
-              `;
+        </div>
 
-            }
-          ).join("")}
+      </div>
 
-        </tbody>
+    `).join("");
 
-      </table>
+}
 
-    `;
+
+/* =========================================================
+   SAVE INVENTORY
+   ========================================================= */
+
+document.addEventListener("click", async (e) => {
+
+  const button =
+    e.target.closest(".save-stock");
+
+  if (!button) return;
+
+  const input =
+    document.querySelector(
+      `[data-stock="${button.dataset.id}"]`
+    );
+
+  if (!input) return;
+
+  const old =
+    Number(input.dataset.old || 0);
+
+  const stock =
+    Math.max(
+      0,
+      parseInt(input.value || 0, 10)
+    );
+
+  button.disabled = true;
+
+  const { error } = await client
+    .from("product_sizes")
+    .update({
+      stock
+    })
+    .eq("id", button.dataset.id);
+
+  button.disabled = false;
+
+  if (error) {
+
+    alert(error.message);
+
+    return;
+  }
+
+  const diff = stock - old;
+
+  if (diff !== 0) {
+
+    const { error: movementError } =
+      await client
+        .from("inventory_movements")
+        .insert({
+          product_id:
+            button.dataset.product,
+
+          size_id:
+            button.dataset.id,
+
+          quantity_change:
+            diff,
+
+          reason:
+            "admin_stock_adjustment"
+        });
+
+    if (movementError) {
+      console.error(
+        "Inventory movement error:",
+        movementError
+      );
+    }
 
   }
 
+  input.dataset.old = stock;
 
-  document.addEventListener(
-    "click",
-    async function (event) {
+  button.textContent = "Saved";
 
-      const button =
-        event.target.closest(
-          ".subscriber-toggle"
-        );
+  setTimeout(() => {
+    button.textContent = "Save";
+  }, 1000);
 
-
-      if (!button) {
-        return;
-      }
+});
 
 
-      const id =
-        button.dataset.id;
+/* =========================================================
+   NEWSLETTER SUBSCRIBERS
+   ========================================================= */
 
+async function loadSubscribers() {
 
-      const currentlyActive =
-        button.dataset.active ===
-        "true";
+  const {
+    data,
+    error
+  } = await client
+    .from("newsletter_subscribers")
+    .select("*")
+    .order("subscribed_at", {
+      ascending: false
+    });
 
+  if (error) {
 
-      const result =
-        await client
-          .from(
-            "newsletter_subscribers"
-          )
-          .update({
-            is_active:
-              !currentlyActive
-          })
-          .eq(
-            "id",
-            id
-          );
-
-
-      if (result.error) {
-
-        alert(
-          result.error.message
-        );
-
-        return;
-
-      }
-
-
-      showToast(
-        "Subscriber status updated."
-      );
-
-
-      loadSubscribers();
-
-    }
-  );
-
-
-  /* =====================================================
-     REFRESH BUTTONS
-  ===================================================== */
-
-  document
-    .querySelectorAll(
-      "[data-refresh]"
-    )
-    .forEach(
-      function (button) {
-
-        button.addEventListener(
-          "click",
-          function () {
-
-            const type =
-              button.dataset.refresh;
-
-
-            if (
-              type ===
-              "dashboard"
-            ) {
-
-              loadDashboard();
-
-            } else if (
-              type ===
-              "orders"
-            ) {
-
-              loadOrders();
-
-            } else if (
-              type ===
-              "products"
-            ) {
-
-              loadProducts();
-
-            } else if (
-              type ===
-              "inventory"
-            ) {
-
-              loadInventory();
-
-            } else if (
-              type ===
-              "subscribers"
-            ) {
-
-              loadSubscribers();
-
-            }
-
-          }
-        );
-
-      }
+    console.error(
+      "Subscribers error:",
+      error
     );
 
-
-  /* =====================================================
-     AUTH STATE
-  ===================================================== */
-
-  client.auth.onAuthStateChange(
-    function (event) {
-
-      if (
-        event ===
-        "SIGNED_OUT"
-      ) {
-
-        showLogin();
-
-      }
-
+    if ($("#subscribersTable")) {
+      $("#subscribersTable").innerHTML =
+        `<p class="message error">
+          ${esc(error.message)}
+        </p>`;
     }
-  );
+
+    return;
+  }
+
+  const subscribers = data || [];
+
+  if ($("#subscriberCount")) {
+    $("#subscriberCount").textContent =
+      `${subscribers.length} subscriber` +
+      `${subscribers.length === 1 ? "" : "s"}`;
+  }
+
+  if (!$("#subscribersTable")) return;
+
+  $("#subscribersTable").innerHTML = `
+
+    <table class="table">
+
+      <thead>
+
+        <tr>
+          <th>Email</th>
+          <th>Subscribed</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        ${subscribers.map((s) => `
+
+          <tr>
+
+            <td>
+              ${esc(s.email)}
+            </td>
+
+            <td>
+              ${new Date(
+                s.subscribed_at
+              ).toLocaleString()}
+            </td>
+
+            <td>
+              ${s.is_active
+                ? "Active"
+                : "Inactive"}
+            </td>
+
+            <td>
+
+              <button
+                class="${
+                  s.is_active
+                    ? "danger"
+                    : "secondary"
+                } toggle-sub"
+                data-id="${s.id}"
+                data-active="${s.is_active}">
+
+                ${
+                  s.is_active
+                    ? "Deactivate"
+                    : "Activate"
+                }
+
+              </button>
+
+            </td>
+
+          </tr>
+
+        `).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
 
 
-  /* =====================================================
-     START
-  ===================================================== */
+/* =========================================================
+   TOGGLE SUBSCRIBER
+   ========================================================= */
 
-  checkAdmin();
+document.addEventListener("click", async (e) => {
 
-})();
+  const button =
+    e.target.closest(".toggle-sub");
+
+  if (!button) return;
+
+  const active =
+    button.dataset.active !== "true";
+
+  button.disabled = true;
+
+  const { error } = await client
+    .from("newsletter_subscribers")
+    .update({
+      is_active: active
+    })
+    .eq("id", button.dataset.id);
+
+  button.disabled = false;
+
+  if (error) {
+
+    alert(error.message);
+
+    return;
+  }
+
+  loadSubscribers();
+
+});
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+start();
