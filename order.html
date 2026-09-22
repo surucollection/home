@@ -252,6 +252,91 @@
 
       </label>
 
+      <div
+  id="onlinePaymentBox"
+  class="online-payment-box"
+  hidden
+>
+
+  <div class="payment-divider"></div>
+
+  <h3>
+    Complete Your Payment
+  </h3>
+
+  <p class="payment-instruction">
+    Scan the QR code below to complete your payment.
+    After payment, you may optionally enter your
+    transaction ID or attach a payment screenshot.
+  </p>
+
+
+  <div class="payment-qr-wrap">
+
+    <img
+      id="paymentQR"
+      src="assets/payment-qr.png"
+      alt="Suru Collection Payment QR Code"
+    >
+
+  </div>
+
+
+  <label>
+
+    Payment Reference / Transaction ID
+    <span class="optional-label">
+      Optional
+    </span>
+
+    <input
+      id="paymentReference"
+      type="text"
+      placeholder="Enter transaction ID if available"
+      autocomplete="off"
+    >
+
+  </label>
+
+
+  <label>
+
+    Payment Screenshot
+    <span class="optional-label">
+      Optional
+    </span>
+
+    <input
+      id="paymentScreenshot"
+      type="file"
+      accept="image/*"
+    >
+
+  </label>
+
+
+  <div
+    id="paymentScreenshotPreview"
+    class="payment-screenshot-preview"
+    hidden
+  >
+
+    <img
+      id="paymentScreenshotImage"
+      alt="Payment screenshot preview"
+    >
+
+    <button
+      id="removePaymentScreenshot"
+      type="button"
+    >
+      Remove screenshot
+    </button>
+
+  </div>
+
+</div>
+
 
       <div class="order-total">
 
