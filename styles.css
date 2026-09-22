@@ -514,6 +514,9 @@ a {
   font-weight: 500;
 
   line-height: 1.3;
+
+  /* Keep product prices aligned across all cards */
+  min-height: calc(1.3em * 3);
 }
 
 .product-price {
