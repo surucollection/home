@@ -1136,29 +1136,6 @@ if (removePaymentScreenshot) {
           );
 
 
-        const message =
-          [
-            "Hello Suru Collection, I would like to place an order.",
-            "",
-            lines.join("\n"),
-            "",
-            "Total: " +
-              money(total),
-            "Payment: " +
-              payment,
-            "",
-            "Customer: " +
-              name,
-            "Phone: " +
-              phone,
-            "Address: " +
-              address +
-              ", " +
-              city,
-            "",
-            "Please confirm availability and delivery charges."
-          ].join("\n");
-
 
         const paymentRef =
   document
