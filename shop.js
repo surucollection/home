@@ -41,21 +41,79 @@
   }
 
   function readStorage() {
-    try {
-      const value = localStorage.getItem(CART_KEY);
+  let localValue = null;
+  let cookieValue = null;
 
-      if (value !== null) {
-        return value;
-      }
-    } catch (error) {
-      console.warn(
-        "Suru Collection: localStorage unavailable.",
-        error
-      );
-    }
-
-    return readCookie(CART_KEY);
+  try {
+    localValue = localStorage.getItem(CART_KEY);
+  } catch (error) {
+    console.warn(
+      "Suru Collection: localStorage unavailable.",
+      error
+    );
   }
+
+  try {
+    cookieValue = readCookie(CART_KEY);
+  } catch (error) {
+    console.warn(
+      "Suru Collection: cookie read failed.",
+      error
+    );
+  }
+
+  /*
+   * If localStorage has a valid non-empty cart,
+   * use it as the primary storage.
+   */
+  if (localValue !== null) {
+    try {
+      const localCart = JSON.parse(localValue);
+
+      if (
+        Array.isArray(localCart) &&
+        localCart.length > 0
+      ) {
+        return localValue;
+      }
+
+      /*
+       * If localStorage contains an empty cart but
+       * the cookie contains items, use the cookie.
+       */
+      if (
+        Array.isArray(localCart) &&
+        localCart.length === 0 &&
+        cookieValue
+      ) {
+        try {
+          const cookieCart = JSON.parse(cookieValue);
+
+          if (
+            Array.isArray(cookieCart) &&
+            cookieCart.length > 0
+          ) {
+            return cookieValue;
+          }
+        } catch (e) {}
+      }
+
+      return localValue;
+    } catch (error) {
+      /*
+       * If localStorage is corrupted, fall back
+       * to the cookie.
+       */
+      if (cookieValue !== null) {
+        return cookieValue;
+      }
+
+      return localValue;
+    }
+  }
+
+  return cookieValue;
+}
 
   function writeStorage(value) {
     let localSaved = false;
