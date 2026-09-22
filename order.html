@@ -683,154 +683,201 @@ if (removePaymentScreenshot) {
 
   function renderCart() {
 
-    const cart =
-      getCart();
+  const cart = getCart();
 
+  const items =
+    document.getElementById("cartItems");
 
-    const items =
-      document.getElementById(
-        "cartItems"
+  const empty =
+    document.getElementById("cartEmpty");
+
+  const checkout =
+    document.getElementById("checkout");
+
+  const totalElement =
+    document.getElementById("cartTotal");
+
+  const countElement =
+    document.getElementById("cartCount");
+
+  if (!items || !empty || !checkout) {
+    console.error(
+      "Suru Collection: Cart elements not found."
+    );
+    return;
+  }
+
+  /*
+   * Show empty-cart state only when there
+   * are actually no saved cart items.
+   */
+  if (!Array.isArray(cart) || cart.length === 0) {
+
+    items.innerHTML = "";
+
+    empty.hidden = false;
+
+    checkout.style.display = "none";
+
+    if (totalElement) {
+      totalElement.textContent = "NPR 0";
+    }
+
+    if (countElement) {
+      countElement.textContent = "0";
+    }
+
+    return;
+  }
+
+  empty.hidden = true;
+  checkout.style.display = "grid";
+
+  let total = 0;
+
+  items.innerHTML = "";
+
+  cart.forEach(function (item, index) {
+
+    const price =
+      Number(item.price || 0);
+
+    const qty =
+      Math.max(
+        1,
+        parseInt(item.qty, 10) || 1
       );
 
+    const lineTotal =
+      price * qty;
 
-    const empty =
-      document.getElementById(
-        "cartEmpty"
-      );
+    total += lineTotal;
 
+    const article =
+      document.createElement("article");
 
-    const checkout =
-      document.getElementById(
-        "checkout"
-      );
+    article.className = "cart-item";
 
+    /* Product image */
 
-    if (!cart.length) {
+    if (item.image) {
 
-      empty.hidden = false;
+      const image =
+        document.createElement("img");
 
-      checkout.style.display =
-        "none";
+      image.src = item.image;
 
-      return;
+      image.alt =
+        item.name || "Product";
+
+      image.onerror =
+        function () {
+          this.style.display = "none";
+        };
+
+      article.appendChild(image);
 
     }
 
+    /* Product information */
 
-    empty.hidden = true;
+    const details =
+      document.createElement("div");
 
-    checkout.style.display =
-      "grid";
+    const code =
+      document.createElement("small");
 
+    code.textContent =
+      item.code || "";
 
-    let total = 0;
+    details.appendChild(code);
 
+    const name =
+      document.createElement("h3");
 
-    items.innerHTML =
-      cart.map(
-        function (item, index) {
+    name.textContent =
+      item.name || "";
 
-          const lineTotal =
-            Number(item.price || 0) *
-            Number(item.qty || 0);
+    details.appendChild(name);
 
+    const info =
+      document.createElement("p");
 
-          total += lineTotal;
+    const infoParts = [];
 
+    if (item.color) {
+      infoParts.push(
+        "Colour: " + item.color
+      );
+    }
 
-          return `
+    if (item.size) {
+      infoParts.push(
+        "Size: " + item.size
+      );
+    }
 
-            <article class="cart-item">
+    infoParts.push(
+      "Qty: " + qty
+    );
 
-              ${
-                item.image
+    info.textContent =
+      infoParts.join(" · ");
 
-                  ? `
+    details.appendChild(info);
 
-                    <img
-                      src="${item.image}"
-                      alt="${item.name || "Product"}"
-                      onerror="
-                        this.style.display='none'
-                      "
-                    >
+    const priceElement =
+      document.createElement("strong");
 
-                  `
+    priceElement.textContent =
+      money(lineTotal);
 
-                  : ""
-              }
+    details.appendChild(priceElement);
 
+    /* Remove button */
 
-              <div>
+    const removeButton =
+      document.createElement("button");
 
-                <small>
-                  ${item.code || ""}
-                </small>
+    removeButton.className =
+      "remove-item";
 
-                <h3>
-                  ${item.name || ""}
-                </h3>
+    removeButton.dataset.index =
+      index;
 
-                <p>
+    removeButton.type =
+      "button";
 
-                  ${
-                    item.color
-                      ? "Colour: " +
-                        item.color +
-                        " · "
-                      : ""
-                  }
+    removeButton.textContent =
+      "Remove";
 
-                  ${
-                    item.size
-                      ? "Size: " +
-                        item.size +
-                        " · "
-                      : ""
-                  }
+    details.appendChild(removeButton);
 
-                  Qty:
-                  ${item.qty}
+    article.appendChild(details);
 
-                </p>
+    items.appendChild(article);
 
-                <strong>
-                  ${money(lineTotal)}
-                </strong>
+  });
 
+  /* Update total */
 
-                <button
-                  class="remove-item"
-                  data-index="${index}"
-                  type="button"
-                >
-                  Remove
-                </button>
+  if (totalElement) {
 
-              </div>
-
-            </article>
-
-          `;
-
-        }
-      ).join("");
-
-
-    document.getElementById(
-      "cartTotal"
-    ).textContent =
+    totalElement.textContent =
       money(total);
 
+  }
 
-    document.getElementById(
-      "cartCount"
-    ).textContent =
+  /* Update cart badge */
+
+  if (countElement) {
+
+    countElement.textContent =
       cart.reduce(
-        function (total, item) {
+        function (sum, item) {
 
           return (
-            total +
+            sum +
             Number(item.qty || 0)
           );
 
@@ -839,6 +886,8 @@ if (removePaymentScreenshot) {
       );
 
   }
+
+}
 
 
   /* =====================================================
