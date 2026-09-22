@@ -362,7 +362,7 @@
 
       <p class="small-note">
 
-        This version sends the order details
+        Sends the order details
         to Suru Collection on WhatsApp.
         No payment is collected on this page.
 
@@ -464,6 +464,174 @@
 
   const WHATSAPP =
     "9779740381427";
+
+  const paymentSelect =
+  document.getElementById("payment");
+
+const onlinePaymentBox =
+  document.getElementById("onlinePaymentBox");
+
+const paymentReference =
+  document.getElementById("paymentReference");
+
+const paymentScreenshot =
+  document.getElementById("paymentScreenshot");
+
+const paymentScreenshotPreview =
+  document.getElementById(
+    "paymentScreenshotPreview"
+  );
+
+const paymentScreenshotImage =
+  document.getElementById(
+    "paymentScreenshotImage"
+  );
+
+const removePaymentScreenshot =
+  document.getElementById(
+    "removePaymentScreenshot"
+  );
+
+
+/* =====================================================
+   ONLINE PAYMENT DISPLAY
+===================================================== */
+
+function updatePaymentSection() {
+
+  const isOnline =
+    paymentSelect &&
+    paymentSelect.value ===
+      "Online Payment — confirm with Suru Collection";
+
+  if (onlinePaymentBox) {
+
+    onlinePaymentBox.hidden =
+      !isOnline;
+
+  }
+
+}
+
+
+if (paymentSelect) {
+
+  paymentSelect.addEventListener(
+    "change",
+    updatePaymentSection
+  );
+
+  updatePaymentSection();
+
+}
+
+
+/* =====================================================
+   PAYMENT SCREENSHOT PREVIEW
+===================================================== */
+
+if (paymentScreenshot) {
+
+  paymentScreenshot.addEventListener(
+    "change",
+    function () {
+
+      const file =
+        paymentScreenshot.files &&
+        paymentScreenshot.files[0];
+
+      if (!file) {
+
+        paymentScreenshotPreview.hidden =
+          true;
+
+        paymentScreenshotImage.src =
+          "";
+
+        return;
+
+      }
+
+
+      if (!file.type.startsWith("image/")) {
+
+        alert(
+          "Please select an image file."
+        );
+
+        paymentScreenshot.value =
+          "";
+
+        return;
+
+      }
+
+
+      /*
+         Keep the screenshot reasonably small.
+         This is only a browser-side check.
+      */
+
+      if (
+        file.size >
+        10 * 1024 * 1024
+      ) {
+
+        alert(
+          "Please select an image smaller than 10 MB."
+        );
+
+        paymentScreenshot.value =
+          "";
+
+        return;
+
+      }
+
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        function (event) {
+
+          paymentScreenshotImage.src =
+            event.target.result;
+
+          paymentScreenshotPreview.hidden =
+            false;
+
+        };
+
+
+      reader.readAsDataURL(file);
+
+    }
+  );
+
+}
+
+
+if (removePaymentScreenshot) {
+
+  removePaymentScreenshot.addEventListener(
+    "click",
+    function () {
+
+      paymentScreenshot.value =
+        "";
+
+      paymentScreenshotImage.src =
+        "";
+
+      paymentScreenshotPreview.hidden =
+        true;
+
+    }
+  );
+
+}
 
 
   /* =====================================================
@@ -794,7 +962,7 @@
 
     placeOrder.addEventListener(
       "click",
-      function () {
+      async function () {
 
 
         const cart =
@@ -943,15 +1111,193 @@
           ].join("\n");
 
 
-        window.open(
-          "https://wa.me/" +
-          WHATSAPP +
-          "?text=" +
-          encodeURIComponent(
-            message
-          ),
-          "_blank"
+        const paymentRef =
+  document
+    .getElementById(
+      "paymentReference"
+    )
+    .value
+    .trim();
+
+
+const screenshotInput =
+  document.getElementById(
+    "paymentScreenshot"
+  );
+
+
+const screenshotFile =
+  screenshotInput &&
+  screenshotInput.files &&
+  screenshotInput.files[0]
+    ? screenshotInput.files[0]
+    : null;
+
+
+/* =====================================================
+   PAYMENT INFORMATION
+===================================================== */
+
+let paymentDetails = "";
+
+
+if (
+  payment ===
+  "Online Payment — confirm with Suru Collection"
+) {
+
+  paymentDetails =
+    [
+      "Payment: Online Payment",
+      paymentRef
+        ? "Payment Reference: " +
+          paymentRef
+        : "Payment Reference: Not provided",
+      screenshotFile
+        ? "Payment Screenshot: Attached"
+        : "Payment Screenshot: Not provided"
+    ].join("\n");
+
+} else {
+
+  paymentDetails =
+    "Payment: Cash on Delivery";
+
+}
+
+
+/* =====================================================
+   WHATSAPP MESSAGE
+===================================================== */
+
+const message =
+  [
+    "Hello Suru Collection, I would like to place an order.",
+    "",
+    lines.join("\n"),
+    "",
+    "Total: " +
+      money(total),
+    paymentDetails,
+    "",
+    "Customer: " +
+      name,
+    "Phone: " +
+      phone,
+    "Address: " +
+      address +
+      ", " +
+      city,
+    "",
+    "Please confirm availability and delivery charges."
+  ].join("\n");
+
+
+/* =====================================================
+   SCREENSHOT PRESENT
+   ===================================================== */
+
+if (screenshotFile) {
+
+  /*
+     Mobile browsers can use the native share sheet
+     to share the screenshot together with the
+     order message.
+
+     The customer can select WhatsApp from the
+     share sheet.
+  */
+
+  if (
+    navigator.share &&
+    navigator.canShare
+  ) {
+
+    try {
+
+      const shareData = {
+        title:
+          "Suru Collection Order",
+        text: message,
+        files: [
+          screenshotFile
+        ]
+      };
+
+
+      if (
+        navigator.canShare(
+          shareData
+        )
+      ) {
+
+        await navigator.share(
+          shareData
         );
+
+        return;
+
+      }
+
+    } catch (error) {
+
+      /*
+         User cancelled the share sheet.
+         Do nothing.
+      */
+
+      if (
+        error &&
+        error.name ===
+          "AbortError"
+      ) {
+
+        return;
+
+      }
+
+    }
+
+  }
+
+
+  /*
+     Browser does not support
+     file sharing.
+  */
+
+  alert(
+    "Your browser cannot attach the screenshot automatically. Please open WhatsApp and attach the selected screenshot manually."
+  );
+
+  window.open(
+    "https://wa.me/" +
+    WHATSAPP +
+    "?text=" +
+    encodeURIComponent(
+      message
+    ),
+    "_blank"
+  );
+
+  return;
+
+}
+
+
+/* =====================================================
+   NO SCREENSHOT
+   ===================================================== */
+
+window.open(
+  "https://wa.me/" +
+  WHATSAPP +
+  "?text=" +
+  encodeURIComponent(
+    message
+  ),
+  "_blank"
+);
 
       }
     );
