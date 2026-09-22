@@ -3324,3 +3324,163 @@ a {
   }
 
 }
+/* =========================================================
+   ONLINE PAYMENT
+   ========================================================= */
+
+.online-payment-box {
+  margin-top: 20px;
+  padding: 20px;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+
+  background: #faf7f4;
+}
+
+.payment-divider {
+  height: 1px;
+  margin-bottom: 20px;
+
+  background: var(--line);
+}
+
+.online-payment-box h3 {
+  margin: 0 0 7px;
+
+  color: var(--text);
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.payment-instruction {
+  margin: 0 0 18px;
+
+  color: var(--muted);
+
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+
+/* QR */
+
+.payment-qr-wrap {
+  width: min(230px, 100%);
+
+  margin: 0 auto 22px;
+
+  padding: 12px;
+
+  background: #fff;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+
+  box-shadow:
+    0 5px 18px rgba(60, 30, 30, .06);
+}
+
+.payment-qr-wrap img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  aspect-ratio: 1 / 1;
+
+  object-fit: contain;
+}
+
+
+/* Optional label */
+
+.optional-label {
+  margin-left: 5px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  font-weight: 500;
+}
+
+
+/* File input */
+
+.online-payment-box input[type="file"] {
+  height: auto;
+
+  padding: 10px;
+
+  background: #fff;
+
+  cursor: pointer;
+}
+
+
+/* Screenshot preview */
+
+.payment-screenshot-preview {
+  margin-top: 12px;
+
+  padding: 10px;
+
+  background: #fff;
+
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.payment-screenshot-preview img {
+  display: block;
+
+  width: 100%;
+  max-height: 260px;
+
+  object-fit: contain;
+
+  border-radius: 6px;
+
+  background: #f5eee8;
+}
+
+.payment-screenshot-preview button {
+  margin-top: 8px;
+
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: var(--maroon);
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+  .online-payment-box {
+    padding: 17px;
+  }
+
+  .payment-qr-wrap {
+    width: min(210px, 100%);
+  }
+
+  .online-payment-box h3 {
+    font-size: 20px;
+  }
+
+}
