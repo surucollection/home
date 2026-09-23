@@ -1287,6 +1287,24 @@ window.open(
 
   renderCart();
 
+  /*
+     If the cart had to be recovered from IndexedDB
+     or Supabase, render it again when recovery finishes.
+  */
+  document.addEventListener(
+    "suruCartReady",
+    renderCart
+  );
+
+  if (
+    window.SuruShop &&
+    window.SuruShop.ready
+  ) {
+    window.SuruShop.ready.then(
+      renderCart
+    );
+  }
+
 
 })();
 
