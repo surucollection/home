@@ -2944,31 +2944,14 @@ async function loadCustomers() {
 
   }
 
+  // Use the dedicated admin RPC so customer management is not blocked
+  // by the normal customer RLS policies. The RPC itself verifies that the
+  // signed-in user is an active admin/manager.
   const {
     data,
     error
   } = await client
-    .from("customers")
-    .select(`
-      id,
-      auth_user_id,
-      name,
-      phone,
-      email,
-      address,
-      city,
-      district,
-      province,
-      postal_code,
-      is_active,
-      created_at
-    `)
-    .order(
-      "created_at",
-      {
-        ascending: false
-      }
-    );
+    .rpc("admin_list_customers");
 
   if (error) {
 
