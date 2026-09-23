@@ -126,6 +126,10 @@
     Subscribers
   </button>
 
+  <button data-view="customers">
+    Customers
+  </button>
+
 </aside>
 
 
@@ -342,6 +346,37 @@
 
 
 <div
+  id="customers"
+  class="view"
+>
+
+  <div class="page-title">
+    <div>
+      <h2>Customers</h2>
+      <p>View registered customer accounts and their order history.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <input id="customerSearch" placeholder="Search name or phone">
+      <select id="customerStatusFilter">
+        <option value="">All customers</option>
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+    <div id="customersTable">Loading…</div>
+  </div>
+
+  <div class="card hidden" id="customerDetailsCard">
+    <h3 id="customerDetailsTitle">Customer Details</h3>
+    <div id="customerDetails"></div>
+  </div>
+
+</div>
+
+<div
   id="subscribers"
   class="view"
 >
@@ -392,7 +427,7 @@
 <script src="../supabase-config.js?v=20260921"></script>
 
 <!-- Admin application -->
-<script src="admin.js?v=20260922"></script>
+<script src="admin.js?v=20260923"></script>
 
 </body>
 </html>

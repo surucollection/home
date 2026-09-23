@@ -771,3 +771,5 @@ tr:last-child td {
   .form-grid { grid-template-columns:1fr; }
   .stock-color { max-width:120px; }
 }
+.customer-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}.customer-profile-grid>div{background:#faf5f1;padding:13px;border-radius:9px}.customer-profile-grid b,.customer-profile-grid span{display:block}.customer-profile-grid span{margin-top:5px;color:#705e70}.customer-orders-heading{margin-top:24px;color:#642b39}@media(max-width:650px){.customer-profile-grid{grid-template-columns:1fr}}
+.danger{border:1px solid #e2c4bf;border-radius:9px;min-height:40px;padding:0 12px;background:#fff;color:#a33a2d;font-weight:600;cursor:pointer}.danger:hover{background:#fff4f2}
