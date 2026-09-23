@@ -74,6 +74,51 @@ document.addEventListener("DOMContentLoaded", async () => {
   const { data: sessionData } = await client.auth.getSession();
   let session = sessionData?.session || null;
 
+  async function finishCustomerProfile(user, pending = null) {
+    if (!user) return null;
+
+    const existing = await getProfile();
+    if (!pending && existing.data) return existing.data;
+
+    const metadata = user.user_metadata || {};
+    const p = pending || {};
+    const locationData = {
+      latitude: p.latitude ?? metadata.latitude ?? null,
+      longitude: p.longitude ?? metadata.longitude ?? null,
+      location_address: p.location_address || metadata.location_address || null
+    };
+
+    const payload = {
+      auth_user_id: user.id,
+      name: p.name || metadata.name || existing.data?.name || "",
+      email: user.email || p.email || existing.data?.email || null,
+      phone: p.phone || existing.data?.phone || null,
+      address: p.address || existing.data?.address || null,
+      city: p.city || existing.data?.city || null,
+      district: p.district || existing.data?.district || null,
+      province: p.province || existing.data?.province || null,
+      postal_code: p.postal_code || existing.data?.postal_code || null,
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+      location_address: locationData.location_address,
+      location_updated_at:
+        locationData.latitude != null && locationData.longitude != null
+          ? new Date().toISOString()
+          : existing.data?.location_updated_at || null,
+      is_active: true
+    };
+
+    const { data, error } = await client
+      .from("customers")
+      .upsert(payload, { onConflict: "auth_user_id" })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+
   /* =====================================================
      LOGIN - EMAIL/PASSWORD ONLY
   ===================================================== */
