@@ -591,9 +591,6 @@ document.addEventListener("DOMContentLoaded", function () {
             await loadInventory();
           }
 
-          if (viewName === "subscribers") {
-            await loadSubscribers();
-          }
           if (viewName === "customers") {
             await loadCustomers();
           }
@@ -613,7 +610,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const [
         ordersResult,
         productsResult,
-        subscribersResult,
         pendingResult
       ] = await Promise.all([
 
@@ -626,14 +622,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         client
           .from("products")
-          .select("*", {
-            count: "exact",
-            head: true
-          })
-          .eq("is_active", true),
-
-        client
-          .from("newsletter_subscribers")
           .select("*", {
             count: "exact",
             head: true
@@ -656,9 +644,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
       $("#statProducts").textContent =
         productsResult.count ?? 0;
-
-      $("#statSubscribers").textContent =
-        subscribersResult.count ?? 0;
 
       const pending =
         pendingResult.data || [];
@@ -2924,176 +2909,6 @@ document.addEventListener("DOMContentLoaded", function () {
   );
 
 
-  /* =========================================================
-     SUBSCRIBERS
-  ========================================================= */
-
-  async function loadSubscribers() {
-
-    const {
-      data,
-      error
-    } =
-      await client
-        .from(
-          "newsletter_subscribers"
-        )
-        .select("*")
-        .order(
-          "subscribed_at",
-          {
-            ascending: false
-          }
-        );
-
-    if (error) {
-
-      $("#subscribersTable")
-        .innerHTML =
-        `<p class="message error">
-          ${esc(error.message)}
-        </p>`;
-
-      return;
-    }
-
-    const count =
-      data?.length || 0;
-
-    $("#subscriberCount")
-      .textContent =
-      `${count} subscriber${
-        count === 1
-          ? ""
-          : "s"
-      }`;
-
-    $("#subscribersTable")
-      .innerHTML = `
-
-        <table class="table">
-
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Subscribed</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            ${
-              (data || [])
-                .map(
-                  s => `
-
-                    <tr>
-
-                      <td>
-                        ${esc(
-                          s.email
-                        )}
-                      </td>
-
-                      <td>
-                        ${new Date(
-                          s.subscribed_at
-                        ).toLocaleString()}
-                      </td>
-
-                      <td>
-                        ${
-                          s.is_active
-                            ? "Active"
-                            : "Inactive"
-                        }
-                      </td>
-
-                      <td>
-
-                        <button
-                          class="${
-                            s.is_active
-                              ? "danger"
-                              : "secondary"
-                          } toggle-sub"
-                          data-id="${s.id}"
-                          data-active="${s.is_active}">
-
-                          ${
-                            s.is_active
-                              ? "Deactivate"
-                              : "Activate"
-                          }
-
-                        </button>
-
-                      </td>
-
-                    </tr>
-
-                  `
-                )
-                .join("")
-            }
-
-          </tbody>
-
-        </table>
-      `;
-  }
-
-
-  /* =========================================================
-     SUBSCRIBER TOGGLE
-  ========================================================= */
-
-  document.addEventListener(
-    "click",
-    async function (e) {
-
-      const button =
-        e.target.closest(
-          ".toggle-sub"
-        );
-
-      if (!button) return;
-
-      const active =
-        button.dataset.active !==
-        "true";
-
-      const {
-        error
-      } =
-        await client
-          .from(
-            "newsletter_subscribers"
-          )
-          .update({
-            is_active:
-              active
-          })
-          .eq(
-            "id",
-            button.dataset.id
-          );
-
-      if (error) {
-
-        alert(
-          error.message
-        );
-
-      } else {
-
-        await loadSubscribers();
-      }
-    }
-  );
-
 
   /* =========================================================
      INITIAL START
@@ -3114,18 +2929,86 @@ let customerRows = [];
 ===================================================== */
 
 async function loadCustomers() {
-  const table = document.getElementById("customersTable");
-  if (table) table.innerHTML = `<div class="loading">Loading customers...</div>`;
 
-  try {
-    const { data, error } = await client.rpc("admin_list_customers");
-    if (error) throw error;
-    customerRows = Array.isArray(data) ? data : [];
-    renderCustomers();
-  } catch (error) {
-    console.error("Customer loading error:", error);
-    if (table) table.innerHTML = `<div class="error">Unable to load customers: ${esc(error?.message || error)}</div>`;
+  const table = document.getElementById(
+    "customersTable"
+  );
+
+  // This function lives outside the main DOMContentLoaded closure, so it must
+  // create its own Supabase client instead of relying on the closure variable.
+  const adminClient = window.supabase.createClient(
+    window.SURU_SUPABASE_URL,
+    window.SURU_SUPABASE_KEY
+  );
+
+  if (table) {
+
+    table.innerHTML = `
+      <div class="loading">
+        Loading customers...
+      </div>
+    `;
+
   }
+
+  let {
+    data,
+    error
+  } = await adminClient
+    .rpc("admin_list_customers");
+
+  // Fallback to direct SELECT for projects where the admin RLS policy permits it.
+  if (error) {
+    const fallback = await adminClient
+      .from("customers")
+    .select(`
+      id,
+      auth_user_id,
+      name,
+      phone,
+      email,
+      address,
+      city,
+      district,
+      province,
+      postal_code,
+      is_active,
+      created_at
+    `)
+    .order(
+      "created_at",
+      {
+        ascending: false
+      }
+    );
+    data = fallback.data;
+    error = fallback.error;
+  }
+
+  if (error) {
+
+    if (table) {
+
+      table.innerHTML = `
+        <div class="error">
+          ${error.message}
+        </div>
+      `;
+
+    }
+
+    console.error(
+      "Customer loading error:",
+      error
+    );
+
+    return;
+  }
+
+  customerRows =
+    data || [];
+
+  renderCustomers();
 }
 
 
