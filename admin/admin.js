@@ -594,6 +594,9 @@ document.addEventListener("DOMContentLoaded", function () {
           if (viewName === "subscribers") {
             await loadSubscribers();
           }
+          if (viewName === "customers") {
+            await loadCustomers();
+          }
         }
       );
     });
@@ -3099,3 +3102,935 @@ document.addEventListener("DOMContentLoaded", function () {
   start();
 
 });
+/* =====================================================
+   CUSTOMER MANAGEMENT
+===================================================== */
+
+let customerRows = [];
+
+
+/* =====================================================
+   LOAD CUSTOMERS
+===================================================== */
+
+async function loadCustomers() {
+
+  const table = document.getElementById(
+    "customersTable"
+  );
+
+  if (table) {
+
+    table.innerHTML = `
+      <div class="loading">
+        Loading customers...
+      </div>
+    `;
+
+  }
+
+  const {
+    data,
+    error
+  } = await client
+    .from("customers")
+    .select(`
+      id,
+      auth_user_id,
+      name,
+      phone,
+      email,
+      address,
+      city,
+      district,
+      province,
+      postal_code,
+      is_active,
+      created_at
+    `)
+    .order(
+      "created_at",
+      {
+        ascending: false
+      }
+    );
+
+  if (error) {
+
+    if (table) {
+
+      table.innerHTML = `
+        <div class="error">
+          ${error.message}
+        </div>
+      `;
+
+    }
+
+    console.error(
+      "Customer loading error:",
+      error
+    );
+
+    return;
+  }
+
+  customerRows =
+    data || [];
+
+  renderCustomers();
+}
+
+
+/* =====================================================
+   RENDER CUSTOMER LIST
+===================================================== */
+
+function renderCustomers() {
+
+  const container =
+    document.getElementById(
+      "customersTable"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  const search =
+    (
+      document.getElementById(
+        "customerSearch"
+      )?.value || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const status =
+    document.getElementById(
+      "customerStatusFilter"
+    )?.value || "all";
+
+
+  const rows =
+    customerRows.filter(
+      customer => {
+
+        const searchable = [
+
+          customer.name,
+
+          customer.phone,
+
+          customer.email,
+
+          customer.city,
+
+          customer.district
+
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+
+        const matchesSearch =
+          !search ||
+          searchable.includes(
+            search
+          );
+
+
+        const matchesStatus =
+          status === "all" ||
+
+          (
+            status === "active" &&
+            customer.is_active
+          ) ||
+
+          (
+            status === "inactive" &&
+            !customer.is_active
+          );
+
+
+        return (
+          matchesSearch &&
+          matchesStatus
+        );
+
+      }
+    );
+
+
+  if (!rows.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        No customers found.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML = `
+
+    <div class="table-wrap">
+
+      <table class="data-table">
+
+        <thead>
+
+          <tr>
+
+            <th>Name</th>
+
+            <th>Phone</th>
+
+            <th>Location</th>
+
+            <th>Status</th>
+
+            <th>Joined</th>
+
+            <th>Actions</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          ${rows.map(customer => `
+
+            <tr>
+
+              <td>
+
+                <strong>
+                  ${escapeHtml(
+                    customer.name ||
+                    "—"
+                  )}
+                </strong>
+
+              </td>
+
+
+              <td>
+
+                ${escapeHtml(
+                  customer.phone ||
+                  "—"
+                )}
+
+              </td>
+
+
+              <td>
+
+                ${
+                  [
+                    customer.city,
+                    customer.district
+                  ]
+                    .filter(Boolean)
+                    .map(escapeHtml)
+                    .join(", ") ||
+                  "—"
+                }
+
+              </td>
+
+
+              <td>
+
+                <span class="status-badge">
+
+                  ${
+                    customer.is_active
+                      ? "Active"
+                      : "Inactive"
+                  }
+
+                </span>
+
+              </td>
+
+
+              <td>
+
+                ${
+                  customer.created_at
+                    ? new Date(
+                        customer.created_at
+                      ).toLocaleDateString()
+                    : "—"
+                }
+
+              </td>
+
+
+              <td>
+
+                <div class="table-actions">
+
+                  <button
+                    class="secondary customer-view"
+                    data-id="${customer.id}"
+                  >
+                    View
+                  </button>
+
+
+                  <button
+                    class="danger customer-toggle"
+                    data-id="${customer.id}"
+                  >
+
+                    ${
+                      customer.is_active
+                        ? "Deactivate"
+                        : "Activate"
+                    }
+
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          `).join("")}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  `;
+}
+
+
+/* =====================================================
+   CUSTOMER DETAILS
+===================================================== */
+
+async function showCustomer(id) {
+
+  const customer =
+    customerRows.find(
+      item =>
+        item.id === id
+    );
+
+  if (!customer) {
+    return;
+  }
+
+
+  const card =
+    document.getElementById(
+      "customerDetailsCard"
+    );
+
+  if (!card) {
+    return;
+  }
+
+
+  card.hidden = false;
+
+  card.innerHTML = `
+    <div class="card">
+
+      <div class="card-header">
+
+        <div>
+
+          <h3>
+            ${escapeHtml(
+              customer.name ||
+              "Customer"
+            )}
+          </h3>
+
+          <p>
+            Customer details
+          </p>
+
+        </div>
+
+        <button
+          class="secondary"
+          id="closeCustomerDetails"
+        >
+          Close
+        </button>
+
+      </div>
+
+
+      <div class="customer-profile-grid">
+
+        <div>
+
+          <b>Name</b>
+
+          <span>
+            ${escapeHtml(
+              customer.name ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>Phone</b>
+
+          <span>
+            ${escapeHtml(
+              customer.phone ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>Email</b>
+
+          <span>
+            ${escapeHtml(
+              customer.email ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>Status</b>
+
+          <span>
+            ${
+              customer.is_active
+                ? "Active"
+                : "Inactive"
+            }
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>Address</b>
+
+          <span>
+            ${escapeHtml(
+              customer.address ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>City</b>
+
+          <span>
+            ${escapeHtml(
+              customer.city ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>District</b>
+
+          <span>
+            ${escapeHtml(
+              customer.district ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>Province</b>
+
+          <span>
+            ${escapeHtml(
+              customer.province ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>Postal Code</b>
+
+          <span>
+            ${escapeHtml(
+              customer.postal_code ||
+              "—"
+            )}
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <b>Joined</b>
+
+          <span>
+            ${
+              customer.created_at
+                ? new Date(
+                    customer.created_at
+                  ).toLocaleString()
+                : "—"
+            }
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <h3 class="customer-orders-heading">
+        Order History
+      </h3>
+
+      <div id="customerOrders">
+        Loading orders...
+      </div>
+
+    </div>
+  `;
+
+
+  document
+    .getElementById(
+      "closeCustomerDetails"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        card.hidden = true;
+
+        card.innerHTML = "";
+
+      }
+    );
+
+
+  /* =====================================================
+     LOAD CUSTOMER ORDERS
+  ===================================================== */
+
+  const {
+    data: orders,
+    error
+  } = await client
+    .from("orders")
+    .select(`
+      id,
+      order_number,
+      total,
+      payment_method,
+      payment_status,
+      order_status,
+      created_at
+    `)
+    .eq(
+      "customer_id",
+      customer.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending: false
+      }
+    );
+
+
+  const ordersContainer =
+    document.getElementById(
+      "customerOrders"
+    );
+
+
+  if (!ordersContainer) {
+    return;
+  }
+
+
+  if (error) {
+
+    ordersContainer.innerHTML = `
+      <div class="error">
+        ${escapeHtml(
+          error.message
+        )}
+      </div>
+    `;
+
+    return;
+  }
+
+
+  if (!orders?.length) {
+
+    ordersContainer.innerHTML = `
+      <p>
+        No orders found for this customer.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  const totalSpent =
+    orders.reduce(
+      (
+        total,
+        order
+      ) =>
+        total +
+        Number(
+          order.total || 0
+        ),
+      0
+    );
+
+
+  ordersContainer.innerHTML = `
+
+    <div class="stats-grid">
+
+      <div class="stat-card">
+
+        <span>
+          Total Orders
+        </span>
+
+        <strong>
+          ${orders.length}
+        </strong>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <span>
+          Total Spent
+        </span>
+
+        <strong>
+          NPR ${totalSpent.toLocaleString(
+            "en-IN"
+          )}
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <div class="table-wrap">
+
+      <table class="data-table">
+
+        <thead>
+
+          <tr>
+
+            <th>Order</th>
+
+            <th>Date</th>
+
+            <th>Total</th>
+
+            <th>Payment</th>
+
+            <th>Status</th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          ${orders.map(order => `
+
+            <tr>
+
+              <td>
+                ${escapeHtml(
+                  order.order_number ||
+                  "—"
+                )}
+              </td>
+
+              <td>
+                ${
+                  order.created_at
+                    ? new Date(
+                        order.created_at
+                      ).toLocaleString()
+                    : "—"
+                }
+              </td>
+
+              <td>
+                NPR ${
+                  Number(
+                    order.total || 0
+                  ).toLocaleString(
+                    "en-IN"
+                  )
+                }
+              </td>
+
+              <td>
+
+                ${
+                  escapeHtml(
+                    order.payment_method ||
+                    "—"
+                  )
+                }
+
+                <br>
+
+                <small>
+                  ${
+                    escapeHtml(
+                      order.payment_status ||
+                      ""
+                    )
+                  }
+                </small>
+
+              </td>
+
+              <td>
+                ${
+                  escapeHtml(
+                    order.order_status ||
+                    "pending"
+                  )
+                }
+              </td>
+
+            </tr>
+
+          `).join("")}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  `;
+}
+
+
+/* =====================================================
+   ACTIVATE / DEACTIVATE CUSTOMER
+===================================================== */
+
+async function toggleCustomer(id) {
+
+  const customer =
+    customerRows.find(
+      item =>
+        item.id === id
+    );
+
+  if (!customer) {
+    return;
+  }
+
+
+  const newStatus =
+    !customer.is_active;
+
+
+  const action =
+    newStatus
+      ? "activate"
+      : "deactivate";
+
+
+  if (
+    !confirm(
+      `Are you sure you want to ${action} this customer?`
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } = await client
+    .from("customers")
+    .update({
+      is_active:
+        newStatus
+    })
+    .eq(
+      "id",
+      id
+    );
+
+
+  if (error) {
+
+    alert(
+      "Unable to update customer:\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  await loadCustomers();
+}
+
+
+/* =====================================================
+   CUSTOMER EVENTS
+===================================================== */
+
+document.addEventListener(
+  "click",
+  async event => {
+
+    const viewButton =
+      event.target.closest(
+        ".customer-view"
+      );
+
+    if (viewButton) {
+
+      await showCustomer(
+        viewButton.dataset.id
+      );
+
+      return;
+    }
+
+
+    const toggleButton =
+      event.target.closest(
+        ".customer-toggle"
+      );
+
+    if (toggleButton) {
+
+      await toggleCustomer(
+        toggleButton.dataset.id
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   CUSTOMER SEARCH
+===================================================== */
+
+document
+  .getElementById(
+    "customerSearch"
+  )
+  ?.addEventListener(
+    "input",
+    renderCustomers
+  );
+
+
+/* =====================================================
+   CUSTOMER STATUS FILTER
+===================================================== */
+
+document
+  .getElementById(
+    "customerStatusFilter"
+  )
+  ?.addEventListener(
+    "change",
+    loadCustomers
+  );
+
+
+/* =====================================================
+   HTML ESCAPE HELPER
+===================================================== */
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
