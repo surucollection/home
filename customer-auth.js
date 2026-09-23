@@ -64,127 +64,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (year) year.textContent = new Date().getFullYear();
 
   async function getProfile() {
-    const { data: sessionResult } = await client.auth.getSession();
-    const authUser = sessionResult?.session?.user;
-
-    if (!authUser?.id) {
-      return { data: null, error: new Error("Your session has expired. Please sign in again.") };
+    const { data, error } = await client.rpc("my_customer_profile");
+    let profile = data;
+    if (typeof profile === "string") {
+      try { profile = JSON.parse(profile); } catch (_) {}
     }
-
-    const metadata = authUser.user_metadata || {};
-    const metadataProfile = {
-      auth_user_id: authUser.id,
-      name: metadata.name || "",
-      email: authUser.email || metadata.email || "",
-      phone: metadata.phone || "",
-      address: metadata.address || "",
-      city: metadata.city || "",
-      district: metadata.district || "",
-      province: metadata.province || "",
-      postal_code: metadata.postal_code || "",
-      latitude: metadata.latitude ?? null,
-      longitude: metadata.longitude ?? null,
-      location_address: metadata.location_address || null
-    };
-
-    // First read the actual customer row. Merge it with Auth metadata so
-    // account information still displays if a browser/RLS issue prevents
-    // one of the profile reads from returning all fields.
-    const { data: directProfile, error: directError } = await client
-      .from("customers")
-      .select("*")
-      .eq("auth_user_id", authUser.id)
-      .maybeSingle();
-
-    if (directProfile) {
-      return {
-        data: { ...metadataProfile, ...directProfile },
-        error: null
-      };
-    }
-
-    if (directError) {
-      console.warn("Direct customer profile lookup failed:", directError);
-    }
-
-    // Existing SECURITY DEFINER RPC remains a second source.
-    const { data: rpcData, error: rpcError } = await client.rpc("customer_profile");
-    let rpcProfile = rpcData;
-    if (typeof rpcProfile === "string") {
-      try { rpcProfile = JSON.parse(rpcProfile); } catch (_) {}
-    }
-
-    if (rpcProfile && typeof rpcProfile === "object" && Object.keys(rpcProfile).length) {
-      return {
-        data: { ...metadataProfile, ...rpcProfile },
-        error: null
-      };
-    }
-
-    // Auth metadata is populated during registration, so it is a safe
-    // last-resort display source for the account page.
-    if (Object.values(metadataProfile).some(v => v !== "" && v != null)) {
-      return { data: metadataProfile, error: null };
-    }
-
-    return { data: null, error: rpcError || directError || new Error("Customer profile not found.") };
+    const hasProfile = profile && typeof profile === "object" && Object.keys(profile).length > 0;
+    if (error) return { data: null, error };
+    return { data: hasProfile ? profile : null, error: null };
   }
 
   const { data: sessionData } = await client.auth.getSession();
   let session = sessionData?.session || null;
-
-  async function finishCustomerProfile(user, pending = null) {
-    if (!user) return null;
-
-    const existing = await getProfile();
-    if (!pending && existing.data) return existing.data;
-
-    const metadata = user.user_metadata || {};
-    const p = pending || {};
-    const locationData = {
-      latitude: p.latitude ?? metadata.latitude ?? null,
-      longitude: p.longitude ?? metadata.longitude ?? null,
-      location_address: p.location_address || metadata.location_address || null
-    };
-
-    const phone = String(
-      p.phone ?? metadata.phone ?? existing.data?.phone ?? ""
-    ).trim();
-
-    if (!phone) {
-      throw new Error("Phone number is required to create your customer profile. Please go back and enter your phone number.");
-    }
-
-    const payload = {
-      auth_user_id: user.id,
-      name: p.name || metadata.name || existing.data?.name || "",
-      email: user.email || p.email || existing.data?.email || null,
-      phone,
-      address: p.address || existing.data?.address || null,
-      city: p.city || existing.data?.city || null,
-      district: p.district || existing.data?.district || null,
-      province: p.province || existing.data?.province || null,
-      postal_code: p.postal_code || existing.data?.postal_code || null,
-      latitude: locationData.latitude,
-      longitude: locationData.longitude,
-      location_address: locationData.location_address,
-      location_updated_at:
-        locationData.latitude != null && locationData.longitude != null
-          ? new Date().toISOString()
-          : existing.data?.location_updated_at || null,
-      is_active: true
-    };
-
-    const { data, error } = await client
-      .from("customers")
-      .upsert(payload, { onConflict: "auth_user_id" })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
 
   /* =====================================================
      LOGIN - EMAIL/PASSWORD ONLY
@@ -304,12 +195,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const { data: profile, error } = await getProfile();
-    if (error && !profile) {
-      showMessage(error.message || "Could not load your customer profile.", "error");
+    if (error) {
+      showMessage(error.message, "error");
       return;
     }
     if (!profile) {
-      showMessage("Customer profile not found. Please sign in again.", "error");
+      showMessage("Customer profile not found.", "error");
       return;
     }
 
@@ -368,11 +259,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* -----------------------------
        ORDERS
     ----------------------------- */
-    if (!profile.id) {
-      if ($("orders")) $("orders").innerHTML = "<p>No orders yet.</p>";
-      return;
-    }
-
     const { data: orders, error: orderError } = await client
       .from("orders")
       .select(`
