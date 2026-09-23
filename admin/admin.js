@@ -2944,38 +2944,44 @@ async function loadCustomers() {
 
   }
 
-  // Use the dedicated admin RPC so customer management is not blocked
-  // by the normal customer RLS policies. The RPC itself verifies that the
-  // signed-in user is an active admin/manager.
-  const {
-    data,
-    error
-  } = await client
-    .rpc("admin_list_customers");
+  // Load customers directly. The customers RLS policy already permits
+  // active admins/managers to read all customer rows. Use the RPC as a
+  // fallback so this page remains compatible if the direct query is blocked.
+  let data = null;
+  let error = null;
+
+  try {
+    const direct = await client
+      .from("customers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    data = direct.data;
+    error = direct.error;
+  } catch (e) {
+    error = e;
+  }
 
   if (error) {
+    console.warn("Direct customer query failed; trying admin RPC:", error);
+    const rpc = await client.rpc("admin_list_customers");
+    data = rpc.data;
+    error = rpc.error;
+  }
 
+  if (error) {
     if (table) {
-
       table.innerHTML = `
         <div class="error">
-          ${error.message}
+          Unable to load customers: ${esc(error.message || error)}
         </div>
       `;
-
     }
-
-    console.error(
-      "Customer loading error:",
-      error
-    );
-
+    console.error("Customer loading error:", error);
     return;
   }
 
-  customerRows =
-    data || [];
-
+  customerRows = Array.isArray(data) ? data : [];
   renderCustomers();
 }
 
