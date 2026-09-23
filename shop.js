@@ -61,7 +61,16 @@
       error
     );
   }
+  let sessionValue = null;
 
+  try {
+    sessionValue = sessionStorage.getItem(CART_KEY);
+  } catch (error) {
+    console.warn(
+      "Suru Collection: sessionStorage unavailable.",
+      error
+    );
+  }
   /*
    * If localStorage has a valid non-empty cart,
    * use it as the primary storage.
@@ -112,24 +121,40 @@
     }
   }
 
+    if (sessionValue !== null && sessionValue !== "") {
+    try {
+      const sessionCart = JSON.parse(sessionValue);
+
+      if (Array.isArray(sessionCart)) {
+        return sessionValue;
+      }
+    } catch (error) {}
+  }
+
   return cookieValue;
 }
 
   function writeStorage(value) {
-    let localSaved = false;
+  let localSaved = false;
 
-    try {
-      localStorage.setItem(CART_KEY, value);
+  /* Primary: localStorage */
+  try {
+    localStorage.setItem(CART_KEY, value);
 
-      localSaved =
-        localStorage.getItem(CART_KEY) === value;
-    } catch (error) {
-      console.warn(
-        "Suru Collection: localStorage save failed.",
-        error
-      );
-    }
+    localSaved =
+      localStorage.getItem(CART_KEY) === value;
+  } catch (error) {
+    console.warn(
+      "Suru Collection: localStorage save failed.",
+      error
+    );
+  }
 
+  /*
+   * If localStorage worked, keep the existing behavior.
+   * Also try to keep the cookie synchronized.
+   */
+  if (localSaved) {
     try {
       writeCookie(CART_KEY, value);
     } catch (error) {
@@ -139,24 +164,52 @@
       );
     }
 
-    if (localSaved) return true;
+    return true;
+  }
 
-    try {
-      return readCookie(CART_KEY) === value;
-    } catch (error) {
-      return false;
+  /* Secondary fallback: sessionStorage */
+  try {
+    sessionStorage.setItem(CART_KEY, value);
+
+    if (
+      sessionStorage.getItem(CART_KEY) === value
+    ) {
+      return true;
     }
+  } catch (error) {
+    console.warn(
+      "Suru Collection: sessionStorage save failed.",
+      error
+    );
   }
 
+  /* Final fallback: cookie */
+  try {
+    writeCookie(CART_KEY, value);
+
+    return readCookie(CART_KEY) === value;
+  } catch (error) {
+    console.warn(
+      "Suru Collection: cookie save failed.",
+      error
+    );
+
+    return false;
+  }
+}
   function removeStorage() {
-    try {
-      localStorage.removeItem(CART_KEY);
-    } catch (error) {}
+  try {
+    localStorage.removeItem(CART_KEY);
+  } catch (error) {}
 
-    try {
-      removeCookie(CART_KEY);
-    } catch (error) {}
-  }
+  try {
+    sessionStorage.removeItem(CART_KEY);
+  } catch (error) {}
+
+  try {
+    removeCookie(CART_KEY);
+  } catch (error) {}
+}
 
   function normalise(value) {
     return String(value || "")
