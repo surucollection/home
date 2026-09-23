@@ -1,1 +1,124 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Account | Suru Collection</title><link rel="stylesheet" href="customer.css"></head><body><header class="customer-header"><a href="index.html"><img src="assets/suru-logo-official.png" alt="Suru Collection"></a><nav><a href="index.html">Shop</a><button id="logoutBtn" class="btn secondary" type="button">Logout</button></nav></header><main class="page"><section class="account-card"><h1>Welcome, <span id="customerName">Customer</span></h1><h2>My Profile</h2><div class="profile-grid"><div><b>Name</b><span id="profileName">—</span></div><div><b>Phone</b><span id="profilePhone">—</span></div><div><b>Address</b><span id="profileAddress">—</span></div><div><b>City / District</b><span id="profileCity">—</span></div></div><h2>My Orders</h2><div id="orders">Loading orders…</div><h2>Change Password</h2><form id="changePasswordForm"><label class="field">New Password<input id="newPassword" type="password" minlength="6" autocomplete="new-password" required></label><label class="field">Confirm New Password<input id="confirmNewPassword" type="password" minlength="6" autocomplete="new-password" required></label><button class="btn" type="submit">Change Password</button></form><div id="message" class="message"></div></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="customer-auth.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Account | Suru Collection</title>
+<meta name="description" content="Manage your Suru Collection account, delivery location and orders.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="customer.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="icon" type="image/x-icon" href="assets/suru-logo-official.png">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html" aria-label="Suru Collection home">
+      <img src="assets/suru-logo-official.png" alt="Suru Collection">
+    </a>
+    <button id="menuToggle" class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <nav id="mainNav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="about.html">About Us</a>
+      <a href="index.html#collection">Our Collection</a>
+      <a href="products.html">Products</a>
+      <a href="contact.html">Contact</a>
+      <a href="account.html" class="account-link">My Account</a>
+    </nav>
+    <a href="order.html" class="cart-link" aria-label="Shopping cart">🛍️<span id="cartCount">0</span></a>
+  </div>
+</header>
+
+<main class="page">
+  <section class="account-card">
+    <h1>Welcome, <span id="customerName">Customer</span></h1>
+
+    <h2>My Profile</h2>
+    <div class="profile-grid">
+      <div><b>Name</b><span id="profileName">—</span></div>
+      <div><b>Email</b><span id="profileEmail">—</span></div>
+      <div><b>Phone</b><span id="profilePhone">Not added</span></div>
+      <div><b>Address</b><span id="profileAddress">—</span></div>
+      <div><b>City / District</b><span id="profileCity">—</span></div>
+    </div>
+
+    <div class="account-location-card">
+      <h2>Delivery Location</h2>
+      <p id="accountLocationPrompt">
+        Save your delivery pin so we can find addresses that are difficult to locate by text alone.
+      </p>
+
+      <div class="location-actions">
+        <button id="useCurrentLocation" type="button">📍 Use Current Location</button>
+        <button id="setLocationOnMap" class="secondary" type="button">🗺️ Set Location on Map</button>
+        <button id="saveAccountLocation" class="btn" type="button">Save Delivery Location</button>
+      </div>
+
+      <div id="locationStatus" class="location-status"></div>
+      <input id="locationLatitude" class="location-coordinates" type="hidden">
+      <input id="locationLongitude" class="location-coordinates" type="hidden">
+      <input id="locationAddress" class="location-coordinates" type="hidden">
+    </div>
+
+    <h2>My Orders</h2>
+    <div id="orders">Loading orders…</div>
+
+    <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:12px;">Logout</button>
+    <div id="message" class="message"></div>
+  </section>
+</main>
+
+<dialog id="locationDialog" class="location-dialog">
+  <div class="location-dialog-inner">
+    <div class="location-dialog-head">
+      <h2>Set Delivery Location</h2>
+      <button id="closeMapLocation" class="location-dialog-close" type="button" aria-label="Close">×</button>
+    </div>
+    <div id="locationMap" class="location-map"></div>
+    <div class="location-dialog-actions">
+      <button id="closeMapLocation2" class="cancel" type="button">Cancel</button>
+      <button id="confirmMapLocation" class="confirm" type="button">Save This Location</button>
+    </div>
+  </div>
+</dialog>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div><img src="assets/suru-logo-official.png" class="footer-logo" alt="Suru Collection"></div>
+    <div><h3>Quick Links</h3><a href="index.html">Home</a><a href="about.html">About Us</a><a href="products.html">Products</a><a href="contact.html">Contact</a></div>
+    <div><h3>Our Location</h3><p>Gaur, Rautahat<br>Nepal</p></div>
+    <div><h3>Suru Collection</h3><p>Traditional elegance for every occasion.</p><p>Inspired by Suruchi Sahani</p></div>
+  </div>
+  <div class="footer-bottom">© <span id="year"></span> Suru Collection. All rights reserved.</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="supabase-config.js"></script>
+<script src="shop.js"></script>
+<script src="location-picker.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  window.suruAccountLocationPicker =
+    window.SuruLocationPicker?.init({
+      mapId: "locationMap",
+      openButtonId: "setLocationOnMap",
+      currentButtonId: "useCurrentLocation",
+      statusId: "locationStatus",
+      latId: "locationLatitude",
+      lngId: "locationLongitude",
+      addressId: "locationAddress",
+      dialogId: "locationDialog",
+      confirmButtonId: "confirmMapLocation",
+      closeButtonId: "closeMapLocation"
+    });
+
+  document.getElementById("closeMapLocation2")?.addEventListener("click", function () {
+    document.getElementById("locationDialog")?.close();
+  });
+});
+</script>
+<script src="customer-auth.js"></script>
+</body>
+</html>

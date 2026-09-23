@@ -1,1 +1,88 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create Account | Suru Collection</title><link rel="stylesheet" href="customer.css"></head><body><main class="page"><section class="auth-card"><img src="assets/suru-logo-official.png" alt="Suru Collection"><h1>Create Account</h1><form id="registerForm"><label class="field">Full Name<input id="name" required></label><label class="field">Phone Number<input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98XXXXXXXX" required></label><label class="field">Password<input id="password" type="password" minlength="6" autocomplete="new-password" required></label><label class="field">Confirm Password<input id="confirmPassword" type="password" minlength="6" autocomplete="new-password" required></label><label class="field">Delivery Address<textarea id="address" rows="3" required></textarea></label><label class="field">City<input id="city" placeholder="Gaur" required></label><label class="field">District<input id="district" placeholder="Rautahat" required></label><button class="btn" type="submit">Create Account</button><div id="message" class="message"></div></form><div class="auth-links">Already have an account? <a href="login.html">Sign in</a></div></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="customer-auth.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create Account | Suru Collection</title>
+<meta name="description" content="Create your Suru Collection customer account using email OTP.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="customer.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="icon" type="image/x-icon" href="assets/suru-logo-official.png">
+</head>
+<body>
+<header class="nav"><div class="nav-inner">
+  <a class="brand" href="index.html" aria-label="Suru Collection home"><img src="assets/suru-logo-official.png" alt="Suru Collection"></a>
+  <button id="menuToggle" class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  <nav id="mainNav" aria-label="Main navigation">
+    <a href="index.html">Home</a><a href="about.html">About Us</a><a href="index.html#collection">Our Collection</a><a href="products.html">Products</a><a href="contact.html">Contact</a><a href="login.html" class="account-link">My Account</a>
+  </nav>
+  <a href="order.html" class="cart-link" aria-label="Shopping cart">🛍️<span id="cartCount">0</span></a>
+</div></header>
+
+<main class="page"><section class="auth-card">
+  <img src="assets/suru-logo-official.png" alt="Suru Collection">
+  <h1>Create Account</h1>
+  <p class="auth-intro">Create your account with your email. Set a password for future login. We will also verify your email with a 6-digit code.</p>
+  <form id="registerForm">
+    <label class="field">Full Name
+      <input id="name" autocomplete="name" required>
+    </label>
+    <label class="field">Email Address
+      <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+    </label>
+    <label class="field">Phone Number
+      <input id="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. 98XXXXXXXX" required>
+    </label>
+    <label class="field">Password
+      <input id="password" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" required>
+    </label>
+    <label class="field">Confirm Password
+      <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter your password" required>
+    </label>
+
+    <div id="otpSection" hidden>
+      <label class="field">Email Verification Code
+        <input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6-digit code">
+      </label>
+      <p class="location-help">Check your email for the 6-digit code. The code expires according to your account's Supabase OTP settings.</p>
+    </div>
+
+    <label class="field">Delivery Address
+      <textarea id="address" rows="3" autocomplete="street-address" placeholder="House/street, area, landmark"></textarea>
+    </label>
+    <label class="field">City
+      <input id="city" placeholder="Gaur" autocomplete="address-level2">
+    </label>
+    <label class="field">District
+      <input id="district" placeholder="Rautahat" autocomplete="address-level1">
+    </label>
+
+    <div class="location-box"><h3>Delivery Location</h3>
+      <p class="location-help">You can skip this during registration. If the address is difficult to find, save a map pin now or during checkout.</p>
+      <div class="location-actions"><button id="useCurrentLocation" type="button">📍 Use Current Location</button><button id="setLocationOnMap" class="secondary" type="button">🗺️ Set Location on Map</button></div>
+      <div id="locationStatus" class="location-status"></div>
+      <input id="locationLatitude" class="location-coordinates" type="hidden"><input id="locationLongitude" class="location-coordinates" type="hidden"><input id="locationAddress" class="location-coordinates" type="hidden">
+    </div>
+
+    <button id="sendOtpButton" class="btn" type="submit">Send Email OTP</button>
+    <button id="requestOtpButton" class="btn" type="submit" hidden>Verify & Create Account</button>
+    <div id="message" class="message"></div>
+  </form>
+  <div class="auth-links">Already have an account? <a href="login.html">Sign in with password or email OTP</a></div>
+</section></main>
+
+<dialog id="locationDialog" class="location-dialog"><div class="location-dialog-inner">
+  <div class="location-dialog-head"><h2>Set Delivery Location</h2><button id="closeMapLocation" class="location-dialog-close" type="button" aria-label="Close">×</button></div>
+  <div id="locationMap" class="location-map"></div>
+  <div class="location-dialog-actions"><button id="closeMapLocation2" class="cancel" type="button">Cancel</button><button id="confirmMapLocation" class="confirm" type="button">Save This Location</button></div>
+</div></dialog>
+
+<footer class="footer"><div class="footer-grid">
+  <div><img src="assets/suru-logo-official.png" class="footer-logo" alt="Suru Collection"></div>
+  <div><h3>Quick Links</h3><a href="index.html">Home</a><a href="about.html">About Us</a><a href="products.html">Products</a><a href="contact.html">Contact</a></div>
+  <div><h3>Our Location</h3><p>Gaur, Rautahat<br>Nepal</p></div><div><h3>Suru Collection</h3><p>Traditional elegance for every occasion.</p><p>Inspired by Suruchi Sahani</p></div>
+</div><div class="footer-bottom">© <span id="year"></span> Suru Collection. All rights reserved.</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script><script src="supabase-config.js"></script><script src="shop.js"></script><script src="location-picker.js"></script><script src="customer-auth.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function(){const picker=window.SuruLocationPicker?.init({mapId:"locationMap",openButtonId:"setLocationOnMap",currentButtonId:"useCurrentLocation",statusId:"locationStatus",latId:"locationLatitude",lngId:"locationLongitude",addressId:"locationAddress",dialogId:"locationDialog",confirmButtonId:"confirmMapLocation",closeButtonId:"closeMapLocation"});document.getElementById("closeMapLocation2")?.addEventListener("click",()=>document.getElementById("locationDialog")?.close());window.suruRegisterLocationPicker=picker;});</script>
+</body></html>

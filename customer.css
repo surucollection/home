@@ -1,1 +1,166 @@
 *{box-sizing:border-box}body{margin:0;background:#f8f4ef;color:#3f2028;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}.customer-header{background:#fffaf6;border-bottom:1px solid #eaded8;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.customer-header img{width:110px;height:55px;object-fit:contain}.customer-header nav{display:flex;gap:10px;align-items:center}.customer-header a,.btn{border:0;border-radius:9px;padding:10px 15px;text-decoration:none;background:#8d1236;color:#fff;font-weight:600;cursor:pointer}.customer-header a.secondary,.btn.secondary{background:#fff;color:#6d3041;border:1px solid #d8cbc6}.page{max-width:1000px;margin:40px auto;padding:0 18px}.auth-card,.account-card{background:#fff;border:1px solid #eaded8;border-radius:16px;padding:28px;box-shadow:0 5px 20px rgba(70,35,40,.05)}.auth-card{max-width:460px;margin:50px auto}.auth-card img{display:block;width:180px;height:90px;object-fit:contain;margin:0 auto 15px}.auth-card h1,.account-card h1{color:#76102f}.field{display:block;margin:14px 0;font-weight:600;font-size:13px}.field input,.field textarea{display:block;width:100%;margin-top:6px;padding:11px;border:1px solid #ddd0cb;border-radius:8px;background:#fff;font:inherit}.message{min-height:22px;margin-top:12px}.message.error{color:#b42318}.message.success{color:#18794e}.auth-links{text-align:center;margin-top:18px}.auth-links a{color:#8d1236}.profile-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:20px 0}.profile-grid div{padding:15px;background:#faf5f1;border-radius:10px}.profile-grid b,.profile-grid span{display:block}.profile-grid span{margin-top:5px;color:#705e62}.order-card{border:1px solid #eaded8;border-radius:12px;padding:17px;margin:12px 0;background:#fff}.order-head{display:flex;justify-content:space-between;gap:15px}.order-head span{color:#18794e}.order-card p,.order-card small{color:#806d70}.order-total{display:block;color:#7b102f;margin:12px 0}.customer-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.customer-profile-grid>div{background:#faf5f1;padding:12px;border-radius:9px}.customer-profile-grid b,.customer-profile-grid span{display:block}.customer-profile-grid span{margin-top:5px;color:#705e62}.customer-orders-heading{margin-top:25px}@media(max-width:650px){.customer-header{padding:10px 12px}.customer-header img{width:85px}.customer-header nav a{padding:8px 10px;font-size:12px}.page{margin:25px auto}.auth-card,.account-card{padding:20px}.profile-grid,.customer-profile-grid{grid-template-columns:1fr}}
+
+/* =====================================================
+   LOCATION PICKER
+===================================================== */
+
+.location-box {
+  margin: 18px 0;
+  padding: 16px;
+  background: #faf5f1;
+  border: 1px solid #eaded8;
+  border-radius: 12px;
+}
+
+.location-box h3 {
+  margin: 0 0 5px;
+  color: #76102f;
+}
+
+.location-help {
+  margin: 0 0 12px;
+  color: #806d70;
+  font-size: 13px;
+}
+
+.location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.location-actions button {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 13px;
+  background: #8d1236;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.location-actions button.secondary {
+  background: #fff;
+  color: #6d3041;
+  border: 1px solid #d8cbc6;
+}
+
+.location-status {
+  margin-top: 10px;
+  min-height: 20px;
+  color: #806d70;
+  font-size: 13px;
+}
+
+.location-status.selected {
+  color: #18794e;
+  font-weight: 700;
+}
+
+.location-status.error {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.location-coordinates {
+  display: none;
+}
+
+.location-dialog {
+  width: min(720px, calc(100% - 24px));
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(40, 20, 20, .25);
+}
+
+.location-dialog::backdrop {
+  background: rgba(30, 18, 20, .55);
+}
+
+.location-dialog-inner {
+  background: #fff;
+}
+
+.location-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 17px;
+  border-bottom: 1px solid #eaded8;
+}
+
+.location-dialog-head h2 {
+  margin: 0;
+  color: #76102f;
+  font-size: 20px;
+}
+
+.location-dialog-close {
+  border: 0;
+  background: transparent;
+  color: #76102f;
+  font-size: 27px;
+  cursor: pointer;
+}
+
+.location-map {
+  height: min(60vh, 440px);
+  min-height: 320px;
+  background: #eee;
+}
+
+.location-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 13px 17px;
+  border-top: 1px solid #eaded8;
+}
+
+.location-dialog-actions button {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.location-dialog-actions .cancel {
+  background: #fff;
+  color: #6d3041;
+  border: 1px solid #d8cbc6;
+}
+
+.location-dialog-actions .confirm {
+  background: #8d1236;
+  color: #fff;
+}
+
+.account-location-card {
+  margin: 20px 0;
+  padding: 18px;
+  background: #faf5f1;
+  border: 1px solid #eaded8;
+  border-radius: 12px;
+}
+
+.account-location-card h2 {
+  margin-top: 0;
+}
+
+@media(max-width:650px) {
+  .location-actions {
+    flex-direction: column;
+  }
+
+  .location-actions button {
+    width: 100%;
+  }
+
+  .location-map {
+    min-height: 300px;
+  }
+}
