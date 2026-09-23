@@ -512,7 +512,9 @@ tr:last-child td {
 #recentOrders,
 #ordersTable,
 #productsGrid,
-#inventoryGrid,
+#inventoryGrid {
+  color: #806d70;
+}
 
 /* =========================
    MOBILE
