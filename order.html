@@ -1171,96 +1171,34 @@ const message =
 
 /* =====================================================
    SCREENSHOT PRESENT
-   ===================================================== */
+===================================================== */
 
 if (screenshotFile) {
 
   /*
-     Mobile browsers can use the native share sheet
-     to share the screenshot together with the
-     order message.
+     WhatsApp's web link can reliably pre-fill the
+     complete order message.
 
-     The customer can select WhatsApp from the
-     share sheet.
+     A normal website cannot force an image attachment
+     into a WhatsApp chat together with pre-filled text.
+     Therefore we open WhatsApp with the full order
+     details and ask the customer to attach the selected
+     screenshot.
   */
 
-  if (
-    navigator.share &&
-    navigator.canShare
-  ) {
-
-    try {
-
-      const shareData = {
-        title:
-          "Suru Collection Order",
-        text: message,
-        files: [
-          screenshotFile
-        ]
-      };
-
-
-      if (
-        navigator.canShare(
-          shareData
-        )
-      ) {
-
-        await navigator.share(
-          shareData
-        );
-
-        return;
-
-      }
-
-    } catch (error) {
-
-      /*
-         User cancelled the share sheet.
-         Do nothing.
-      */
-
-      if (
-        error &&
-        error.name ===
-          "AbortError"
-      ) {
-
-        return;
-
-      }
-
-    }
-
-  }
-
-
-  /*
-     Browser does not support
-     file sharing.
-  */
-
-  alert(
-    "Your browser cannot attach the screenshot automatically. Please open WhatsApp and attach the selected screenshot manually."
-  );
-
-  window.open(
+  const whatsappUrl =
     "https://wa.me/" +
     WHATSAPP +
     "?text=" +
-    encodeURIComponent(
-      message
-    ),
+    encodeURIComponent(message);
+
+  window.open(
+    whatsappUrl,
     "_blank"
   );
 
   return;
-
 }
-
-
 /* =====================================================
    NO SCREENSHOT
    ===================================================== */
