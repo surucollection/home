@@ -64,38 +64,70 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (year) year.textContent = new Date().getFullYear();
 
   async function getProfile() {
-    // Prefer the authenticated customer's row directly. This avoids an empty
-    // profile when the RPC response is unavailable/stale in the browser.
     const { data: sessionResult } = await client.auth.getSession();
     const authUser = sessionResult?.session?.user;
 
-    if (authUser?.id) {
-      const { data: directProfile, error: directError } = await client
-        .from("customers")
-        .select("*")
-        .eq("auth_user_id", authUser.id)
-        .maybeSingle();
-
-      if (directProfile) return { data: directProfile, error: null };
-
-      // If the direct query fails, fall back to the existing RPC.
-      if (directError && directError.code !== "PGRST116") {
-        console.warn("Direct customer profile lookup failed:", directError);
-      }
+    if (!authUser?.id) {
+      return { data: null, error: new Error("Your session has expired. Please sign in again.") };
     }
 
-    const { data, error } = await client.rpc("customer_profile");
-    let profile = data;
-
-    // Some Supabase/client versions can expose JSONB responses as a string.
-    if (typeof profile === "string") {
-      try { profile = JSON.parse(profile); } catch (_) {}
-    }
-
-    return {
-      data: profile && typeof profile === "object" && Object.keys(profile).length ? profile : null,
-      error
+    const metadata = authUser.user_metadata || {};
+    const metadataProfile = {
+      auth_user_id: authUser.id,
+      name: metadata.name || "",
+      email: authUser.email || metadata.email || "",
+      phone: metadata.phone || "",
+      address: metadata.address || "",
+      city: metadata.city || "",
+      district: metadata.district || "",
+      province: metadata.province || "",
+      postal_code: metadata.postal_code || "",
+      latitude: metadata.latitude ?? null,
+      longitude: metadata.longitude ?? null,
+      location_address: metadata.location_address || null
     };
+
+    // First read the actual customer row. Merge it with Auth metadata so
+    // account information still displays if a browser/RLS issue prevents
+    // one of the profile reads from returning all fields.
+    const { data: directProfile, error: directError } = await client
+      .from("customers")
+      .select("*")
+      .eq("auth_user_id", authUser.id)
+      .maybeSingle();
+
+    if (directProfile) {
+      return {
+        data: { ...metadataProfile, ...directProfile },
+        error: null
+      };
+    }
+
+    if (directError) {
+      console.warn("Direct customer profile lookup failed:", directError);
+    }
+
+    // Existing SECURITY DEFINER RPC remains a second source.
+    const { data: rpcData, error: rpcError } = await client.rpc("customer_profile");
+    let rpcProfile = rpcData;
+    if (typeof rpcProfile === "string") {
+      try { rpcProfile = JSON.parse(rpcProfile); } catch (_) {}
+    }
+
+    if (rpcProfile && typeof rpcProfile === "object" && Object.keys(rpcProfile).length) {
+      return {
+        data: { ...metadataProfile, ...rpcProfile },
+        error: null
+      };
+    }
+
+    // Auth metadata is populated during registration, so it is a safe
+    // last-resort display source for the account page.
+    if (Object.values(metadataProfile).some(v => v !== "" && v != null)) {
+      return { data: metadataProfile, error: null };
+    }
+
+    return { data: null, error: rpcError || directError || new Error("Customer profile not found.") };
   }
 
   const { data: sessionData } = await client.auth.getSession();
@@ -272,12 +304,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const { data: profile, error } = await getProfile();
-    if (error) {
-      showMessage(error.message, "error");
+    if (error && !profile) {
+      showMessage(error.message || "Could not load your customer profile.", "error");
       return;
     }
     if (!profile) {
-      showMessage("Customer profile not found.", "error");
+      showMessage("Customer profile not found. Please sign in again.", "error");
       return;
     }
 
@@ -336,6 +368,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* -----------------------------
        ORDERS
     ----------------------------- */
+    if (!profile.id) {
+      if ($("orders")) $("orders").innerHTML = "<p>No orders yet.</p>";
+      return;
+    }
+
     const { data: orders, error: orderError } = await client
       .from("orders")
       .select(`
