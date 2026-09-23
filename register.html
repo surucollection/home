@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Create Account | Suru Collection</title>
-<meta name="description" content="Create your Suru Collection customer account using email OTP.">
+<meta name="description" content="Create your Suru Collection customer account using email and password.">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="customer.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -23,7 +23,7 @@
 <main class="page"><section class="auth-card">
   <img src="assets/suru-logo-official.png" alt="Suru Collection">
   <h1>Create Account</h1>
-  <p class="auth-intro">Create your account with your email. Set a password for future login. We will also verify your email with a 6-digit code.</p>
+  <p class="auth-intro">Create your account with your email and password. Email verification is not required. A phone number is required for delivery/contact.</p>
   <form id="registerForm">
     <label class="field">Full Name
       <input id="name" autocomplete="name" required>
@@ -31,22 +31,16 @@
     <label class="field">Email Address
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
     </label>
-    <label class="field">Phone Number
-      <input id="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. 98XXXXXXXX" required>
-    </label>
     <label class="field">Password
       <input id="password" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" required>
+    </label>
+    <label class="field">Phone Number <span class="location-help">(Required)</span>
+      <input id="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+97798XXXXXXXX" required>
     </label>
     <label class="field">Confirm Password
       <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter your password" required>
     </label>
 
-    <div id="otpSection" hidden>
-      <label class="field">Email Verification Code
-        <input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6-digit code">
-      </label>
-      <p class="location-help">Check your email for the 6-digit code. The code expires according to your account's Supabase OTP settings.</p>
-    </div>
 
     <label class="field">Delivery Address
       <textarea id="address" rows="3" autocomplete="street-address" placeholder="House/street, area, landmark"></textarea>
@@ -65,11 +59,10 @@
       <input id="locationLatitude" class="location-coordinates" type="hidden"><input id="locationLongitude" class="location-coordinates" type="hidden"><input id="locationAddress" class="location-coordinates" type="hidden">
     </div>
 
-    <button id="sendOtpButton" class="btn" type="submit">Send Email OTP</button>
-    <button id="requestOtpButton" class="btn" type="submit" hidden>Verify & Create Account</button>
+    <button id="registerButton" class="btn" type="submit">Create Account</button>
     <div id="message" class="message"></div>
   </form>
-  <div class="auth-links">Already have an account? <a href="login.html">Sign in with password or email OTP</a></div>
+  <div class="auth-links">Already have an account? <a href="login.html">Sign in with email/password</a></div>
 </section></main>
 
 <dialog id="locationDialog" class="location-dialog"><div class="location-dialog-inner">

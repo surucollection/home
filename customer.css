@@ -164,3 +164,23 @@
     min-height: 300px;
   }
 }
+
+
+/* Email OTP step */
+.otp-section {
+  margin: 16px 0;
+  padding: 14px;
+  background: #faf5f1;
+  border: 1px solid #d9c2c8;
+  border-radius: 10px;
+}
+.otp-section .field { margin: 0; }
+.otp-section input {
+  font-size: 20px;
+  letter-spacing: 4px;
+  text-align: center;
+  font-weight: 700;
+}
+
+
+.login-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px}.method-option{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid rgba(0,0,0,.14);border-radius:10px;padding:12px;cursor:pointer;font-weight:600}.method-option input{margin:0}.method-option:has(input:checked){border-color:currentColor;box-shadow:0 0 0 1px currentColor inset}
