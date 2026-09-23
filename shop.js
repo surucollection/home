@@ -1,76 +1,193 @@
 /* =====================================================
    SURU COLLECTION — SHOP / CART
-   Browser storage + Supabase guest-cart fallback
+   Browser storage + Supabase guest cart
+   + URL guest ID fallback
 ===================================================== */
 
 const CART_KEY = "suruCart";
+const GUEST_KEY = "suruGuestId";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 let cartMemory = [];
 let cartReady = false;
 let cartReadyPromise = null;
-let saveTimer = null;
 
 
 /* =====================================================
-   SUPABASE GUEST CART
+   GUEST ID
 ===================================================== */
 
 function getGuestId() {
-  const KEY = "suruGuestId";
+
+  /* -----------------------------------------
+     1. Get ID from URL
+  ----------------------------------------- */
 
   try {
-    let id = localStorage.getItem(KEY);
 
-    if (id && /^[A-Za-z0-9_-]{20,200}$/.test(id)) {
-      return id;
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const urlId =
+      params.get("guest");
+
+    if (
+      urlId &&
+      /^[A-Za-z0-9_-]{20,200}$/.test(urlId)
+    ) {
+
+      /* Try to save it locally too */
+
+      try {
+        localStorage.setItem(
+          GUEST_KEY,
+          urlId
+        );
+      } catch (e) {}
+
+      try {
+        sessionStorage.setItem(
+          GUEST_KEY,
+          urlId
+        );
+      } catch (e) {}
+
+      try {
+        document.cookie =
+          GUEST_KEY +
+          "=" +
+          encodeURIComponent(urlId) +
+          "; path=/; max-age=" +
+          COOKIE_MAX_AGE +
+          "; SameSite=Lax";
+      } catch (e) {}
+
+      return urlId;
     }
+
   } catch (e) {}
 
-  try {
-    let id = sessionStorage.getItem(KEY);
 
-    if (id && /^[A-Za-z0-9_-]{20,200}$/.test(id)) {
+  /* -----------------------------------------
+     2. localStorage
+  ----------------------------------------- */
+
+  try {
+
+    const id =
+      localStorage.getItem(
+        GUEST_KEY
+      );
+
+    if (
+      id &&
+      /^[A-Za-z0-9_-]{20,200}$/.test(id)
+    ) {
       return id;
     }
+
   } catch (e) {}
 
+
+  /* -----------------------------------------
+     3. sessionStorage
+  ----------------------------------------- */
+
   try {
-    const match = document.cookie.match(
-      new RegExp(
-        "(?:^|; )" +
-        KEY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
-        "=([^;]*)"
-      )
-    );
 
-    if (match && match[1]) {
-      const id = decodeURIComponent(match[1]);
+    const id =
+      sessionStorage.getItem(
+        GUEST_KEY
+      );
 
-      if (/^[A-Za-z0-9_-]{20,200}$/.test(id)) {
+    if (
+      id &&
+      /^[A-Za-z0-9_-]{20,200}$/.test(id)
+    ) {
+      return id;
+    }
+
+  } catch (e) {}
+
+
+  /* -----------------------------------------
+     4. Cookie
+  ----------------------------------------- */
+
+  try {
+
+    const match =
+      document.cookie.match(
+        new RegExp(
+          "(?:^|; )" +
+          GUEST_KEY.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+          ) +
+          "=([^;]*)"
+        )
+      );
+
+    if (
+      match &&
+      match[1]
+    ) {
+
+      const id =
+        decodeURIComponent(
+          match[1]
+        );
+
+      if (
+        /^[A-Za-z0-9_-]{20,200}$/.test(
+          id
+        )
+      ) {
         return id;
       }
+
     }
+
   } catch (e) {}
+
+
+  /* -----------------------------------------
+     5. Generate new ID
+  ----------------------------------------- */
 
   const id =
     "suru_" +
     Date.now().toString(36) +
     "_" +
-    Math.random().toString(36).slice(2) +
-    Math.random().toString(36).slice(2);
+    Math.random()
+      .toString(36)
+      .slice(2) +
+    Math.random()
+      .toString(36)
+      .slice(2);
+
+
+  /* Try all available storage methods */
 
   try {
-    localStorage.setItem(KEY, id);
+    localStorage.setItem(
+      GUEST_KEY,
+      id
+    );
   } catch (e) {}
 
   try {
-    sessionStorage.setItem(KEY, id);
+    sessionStorage.setItem(
+      GUEST_KEY,
+      id
+    );
   } catch (e) {}
 
   try {
     document.cookie =
-      KEY +
+      GUEST_KEY +
       "=" +
       encodeURIComponent(id) +
       "; path=/; max-age=" +
@@ -78,52 +195,126 @@ function getGuestId() {
       "; SameSite=Lax";
   } catch (e) {}
 
+
   return id;
 }
 
 
+/* =====================================================
+   ADD GUEST ID TO CART LINKS
+===================================================== */
+
+function updateCartLinks() {
+
+  const guestId =
+    getGuestId();
+
+  if (!guestId) {
+    return;
+  }
+
+  document
+    .querySelectorAll(
+      'a[href*="order.html"]'
+    )
+    .forEach(link => {
+
+      try {
+
+        const url =
+          new URL(
+            link.href,
+            window.location.href
+          );
+
+        url.searchParams.set(
+          "guest",
+          guestId
+        );
+
+        link.href =
+          url.toString();
+
+      } catch (e) {}
+
+    });
+}
+
+
+/* =====================================================
+   SUPABASE GUEST CART
+===================================================== */
+
 function getGuestCartUrl() {
+
   if (
     window.SUPABASE_URL &&
-    window.SUPABASE_URL.includes("supabase.co")
+    window.SUPABASE_URL.includes(
+      "supabase.co"
+    )
   ) {
+
     return (
-      window.SUPABASE_URL.replace(/\/$/, "") +
+      window.SUPABASE_URL.replace(
+        /\/$/,
+        ""
+      ) +
       "/functions/v1/guest-cart"
     );
   }
 
-  return "https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/guest-cart";
+  return (
+    "https://vkycraymxhkqxgpcpdzw.supabase.co" +
+    "/functions/v1/guest-cart"
+  );
 }
 
 
-async function supabaseGuestCart(action, cart) {
-  try {
-    const guestId = getGuestId();
+async function supabaseGuestCart(
+  action,
+  cart
+) {
 
-    const response = await fetch(
-      getGuestCartUrl(),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          action: action,
-          guest_id: guestId,
-          cart: cart
-        })
-      }
-    );
+  try {
+
+    const guestId =
+      getGuestId();
+
+
+    const response =
+      await fetch(
+        getGuestCartUrl(),
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            action:
+              action,
+
+            guest_id:
+              guestId,
+
+            cart:
+              cart
+          })
+        }
+      );
+
 
     if (!response.ok) {
       return null;
     }
 
-    const data = await response.json();
 
-    return data;
+    return await response.json();
+
   } catch (error) {
+
     console.warn(
       "Supabase guest cart unavailable:",
       error
@@ -135,153 +326,215 @@ async function supabaseGuestCart(action, cart) {
 
 
 /* =====================================================
-   COOKIE STORAGE
+   COOKIE
 ===================================================== */
 
 function readCookie(name) {
+
   try {
-    const match = document.cookie.match(
-      new RegExp(
-        "(?:^|; )" +
-        name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
-        "=([^;]*)"
-      )
-    );
+
+    const match =
+      document.cookie.match(
+        new RegExp(
+          "(?:^|; )" +
+          name.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+          ) +
+          "=([^;]*)"
+        )
+      );
 
     return match
-      ? decodeURIComponent(match[1])
+      ? decodeURIComponent(
+          match[1]
+        )
       : null;
+
   } catch (e) {
+
     return null;
+
   }
 }
 
 
-function writeCookie(name, value) {
+function writeCookie(
+  name,
+  value
+) {
+
   try {
+
     document.cookie =
       name +
       "=" +
-      encodeURIComponent(value) +
+      encodeURIComponent(
+        value
+      ) +
       "; path=/; max-age=" +
       COOKIE_MAX_AGE +
       "; SameSite=Lax";
 
-    return readCookie(name) === value;
+
+    return (
+      readCookie(name) ===
+      value
+    );
+
   } catch (e) {
+
     return false;
+
   }
 }
 
 
 /* =====================================================
-   NORMAL BROWSER STORAGE
+   CART PARSER
 ===================================================== */
 
 function parseCart(value) {
-  try {
-    const parsed = JSON.parse(value);
 
-    if (Array.isArray(parsed)) {
+  try {
+
+    const parsed =
+      JSON.parse(value);
+
+    if (
+      Array.isArray(parsed)
+    ) {
       return parsed;
     }
+
   } catch (e) {}
 
-  return null;
-}
-
-
-function readStorage() {
-
-  /* localStorage */
-  try {
-    const value = localStorage.getItem(CART_KEY);
-
-    if (value) {
-      const cart = parseCart(value);
-
-      if (cart) {
-        return cart;
-      }
-    }
-  } catch (e) {}
-
-
-  /* sessionStorage */
-  try {
-    const value = sessionStorage.getItem(CART_KEY);
-
-    if (value) {
-      const cart = parseCart(value);
-
-      if (cart) {
-        return cart;
-      }
-    }
-  } catch (e) {}
-
-
-  /* cookie */
-  try {
-    const value = readCookie(CART_KEY);
-
-    if (value) {
-      const cart = parseCart(value);
-
-      if (cart) {
-        return cart;
-      }
-    }
-  } catch (e) {}
-
-
-  /* IndexedDB */
   return null;
 }
 
 
 /* =====================================================
-   WRITE LOCAL STORAGE
+   READ CART FROM BROWSER
 ===================================================== */
 
-function writeStorage(cart) {
+function readStorage() {
 
-  const value = JSON.stringify(cart);
-
-  /* localStorage */
   try {
+
+    const value =
+      localStorage.getItem(
+        CART_KEY
+      );
+
+    if (value) {
+
+      const cart =
+        parseCart(value);
+
+      if (cart) {
+        return cart;
+      }
+    }
+
+  } catch (e) {}
+
+
+  try {
+
+    const value =
+      sessionStorage.getItem(
+        CART_KEY
+      );
+
+    if (value) {
+
+      const cart =
+        parseCart(value);
+
+      if (cart) {
+        return cart;
+      }
+    }
+
+  } catch (e) {}
+
+
+  try {
+
+    const value =
+      readCookie(
+        CART_KEY
+      );
+
+    if (value) {
+
+      const cart =
+        parseCart(value);
+
+      if (cart) {
+        return cart;
+      }
+    }
+
+  } catch (e) {}
+
+
+  return null;
+}
+
+
+/* =====================================================
+   WRITE CART TO BROWSER
+===================================================== */
+
+function writeStorage(
+  cart
+) {
+
+  const value =
+    JSON.stringify(
+      cart
+    );
+
+
+  try {
+
     localStorage.setItem(
       CART_KEY,
       value
     );
 
-    const check =
-      localStorage.getItem(CART_KEY);
-
-    if (check === value) {
+    if (
+      localStorage.getItem(
+        CART_KEY
+      ) === value
+    ) {
       return true;
     }
+
   } catch (e) {}
 
 
-  /* sessionStorage */
   try {
+
     sessionStorage.setItem(
       CART_KEY,
       value
     );
 
-    const check =
-      sessionStorage.getItem(CART_KEY);
-
-    if (check === value) {
+    if (
+      sessionStorage.getItem(
+        CART_KEY
+      ) === value
+    ) {
       return true;
     }
+
   } catch (e) {}
 
 
-  /* cookie */
   try {
+
     if (
       writeCookie(
         CART_KEY,
@@ -290,6 +543,7 @@ function writeStorage(cart) {
     ) {
       return true;
     }
+
   } catch (e) {}
 
 
@@ -303,18 +557,27 @@ function writeStorage(cart) {
 
 async function loadCart() {
 
-  let localCart = readStorage();
+  const localCart =
+    readStorage();
+
 
   if (
-    Array.isArray(localCart)
+    Array.isArray(
+      localCart
+    )
   ) {
-    cartMemory = localCart;
 
-    /* Still check server in background.
-       Server cart is useful when browser
-       storage was unavailable previously. */
+    cartMemory =
+      localCart;
 
-    try {
+
+    /* Synchronize from server only
+       when local cart is empty */
+
+    if (
+      cartMemory.length === 0
+    ) {
+
       const server =
         await supabaseGuestCart(
           "get"
@@ -322,50 +585,52 @@ async function loadCart() {
 
       if (
         server &&
-        Array.isArray(server.cart)
+        Array.isArray(
+          server.cart
+        ) &&
+        server.cart.length > 0
       ) {
 
-        /* If local cart is empty and
-           server has items, restore it. */
+        cartMemory =
+          server.cart;
 
-        if (
-          cartMemory.length === 0 &&
-          server.cart.length > 0
-        ) {
-          cartMemory = server.cart;
-
-          writeStorage(cartMemory);
-        }
+        writeStorage(
+          cartMemory
+        );
       }
-    } catch (e) {}
+    }
+
 
     return cartMemory;
   }
 
 
-  /* Browser storage failed.
-     Get cart from Supabase. */
+  /* Browser storage unavailable.
+     Recover from Supabase. */
 
-  try {
-    const server =
-      await supabaseGuestCart(
-        "get"
-      );
-
-    if (
-      server &&
-      Array.isArray(server.cart)
-    ) {
-      cartMemory = server.cart;
-
-      writeStorage(cartMemory);
-
-      return cartMemory;
-    }
-  } catch (e) {}
+  const server =
+    await supabaseGuestCart(
+      "get"
+    );
 
 
-  /* Nothing exists anywhere. */
+  if (
+    server &&
+    Array.isArray(
+      server.cart
+    )
+  ) {
+
+    cartMemory =
+      server.cart;
+
+    writeStorage(
+      cartMemory
+    );
+
+    return cartMemory;
+  }
+
 
   cartMemory = [];
 
@@ -380,58 +645,50 @@ async function loadCart() {
 async function saveCart() {
 
   const cart =
-    Array.isArray(cartMemory)
+    Array.isArray(
+      cartMemory
+    )
       ? cartMemory
       : [];
 
-  /* Always keep an in-memory copy. */
-  cartMemory = cart;
+
+  cartMemory =
+    cart;
 
 
-  /* Try browser storage first. */
   const browserSaved =
-    writeStorage(cart);
-
-
-  /* If browser storage worked,
-     also synchronize with Supabase
-     in the background. */
-
-  if (browserSaved) {
-
-    supabaseGuestCart(
-      "save",
+    writeStorage(
       cart
-    ).catch(() => {});
-
-    return true;
-  }
+    );
 
 
-  /* Browser storage failed.
-     Supabase becomes the primary storage. */
+  /* Always synchronize with
+     Supabase */
 
-  const server =
+  try {
+
     await supabaseGuestCart(
       "save",
       cart
     );
 
-  if (server) {
-    return true;
-  }
+  } catch (e) {}
 
 
-  /* Even if everything fails,
-     keep cart in memory so the
-     current session continues working. */
+  /*
+     Returning true is important.
+
+     The cart is always retained
+     in memory even when a browser
+     blocks persistent storage.
+  */
 
   return true;
 }
 
 
 /* =====================================================
-   CART READY
+   INITIALIZE
 ===================================================== */
 
 async function initializeCart() {
@@ -440,9 +697,11 @@ async function initializeCart() {
     return cartMemory;
   }
 
+
   if (cartReadyPromise) {
     return cartReadyPromise;
   }
+
 
   cartReadyPromise =
     loadCart()
@@ -453,9 +712,15 @@ async function initializeCart() {
             ? cart
             : [];
 
-        cartReady = true;
+
+        cartReady =
+          true;
+
 
         updateCartCount();
+
+        updateCartLinks();
+
 
         document.dispatchEvent(
           new CustomEvent(
@@ -463,7 +728,9 @@ async function initializeCart() {
           )
         );
 
+
         return cartMemory;
+
       })
       .catch(error => {
 
@@ -472,10 +739,17 @@ async function initializeCart() {
           error
         );
 
+
         cartMemory = [];
-        cartReady = true;
+
+        cartReady =
+          true;
+
 
         updateCartCount();
+
+        updateCartLinks();
+
 
         document.dispatchEvent(
           new CustomEvent(
@@ -483,19 +757,25 @@ async function initializeCart() {
           )
         );
 
+
         return cartMemory;
+
       });
+
 
   return cartReadyPromise;
 }
 
 
 /* =====================================================
-   PUBLIC CART ACCESS
+   GET CART
 ===================================================== */
 
 function getCart() {
-  return Array.isArray(cartMemory)
+
+  return Array.isArray(
+    cartMemory
+  )
     ? cartMemory
     : [];
 }
@@ -509,18 +789,31 @@ function updateCartCount() {
 
   const count =
     cartMemory.reduce(
-      (total, item) =>
-        total +
-        Number(item.quantity || 0),
+      (total, item) => {
+
+        return (
+          total +
+          Number(
+            item.quantity ??
+            item.qty ??
+            0
+          )
+        );
+
+      },
       0
     );
 
+
   document
     .querySelectorAll(
-      ".cart-count, #cartCount, [data-cart-count]"
+      "#cartCount, .cart-count, [data-cart-count]"
     )
     .forEach(element => {
-      element.textContent = count;
+
+      element.textContent =
+        count;
+
     });
 }
 
@@ -529,16 +822,23 @@ function updateCartCount() {
    ITEM KEY
 ===================================================== */
 
-function getItemKey(item) {
+function getItemKey(
+  item
+) {
 
   return [
+
     item.product_id ||
       item.id ||
       item.productId ||
       "",
+
     item.size || "",
-    item.color || "",
-    item.colour || ""
+
+    item.color ||
+      item.colour ||
+      ""
+
   ].join("::");
 }
 
@@ -547,64 +847,113 @@ function getItemKey(item) {
    ADD TO CART
 ===================================================== */
 
-async function addToCart(product) {
+async function addToCart(
+  product
+) {
 
   await initializeCart();
+
 
   if (!product) {
     return false;
   }
 
+
   const item = {
     ...product
   };
 
+
+  const qty =
+    Number(
+      item.quantity ??
+      item.qty ??
+      1
+    );
+
+
   item.quantity =
     Math.max(
       1,
-      Number(item.quantity || 1)
+      qty
     );
+
+
+  /* Keep both names for compatibility */
+
+  item.qty =
+    item.quantity;
+
 
   if (
     item.color &&
     !item.colour
   ) {
-    item.colour = item.color;
+    item.colour =
+      item.color;
   }
+
 
   if (
     item.colour &&
     !item.color
   ) {
-    item.color = item.colour;
+    item.color =
+      item.colour;
   }
 
 
   const key =
-    getItemKey(item);
+    getItemKey(
+      item
+    );
+
 
   const existingIndex =
     cartMemory.findIndex(
       existing =>
-        getItemKey(existing) === key
+        getItemKey(
+          existing
+        ) === key
     );
 
 
-  if (existingIndex >= 0) {
+  if (
+    existingIndex >= 0
+  ) {
+
+    const oldQty =
+      Number(
+        cartMemory[
+          existingIndex
+        ].quantity ??
+        cartMemory[
+          existingIndex
+        ].qty ??
+        0
+      );
+
 
     cartMemory[
       existingIndex
     ].quantity =
-      Number(
-        cartMemory[
-          existingIndex
-        ].quantity || 0
-      ) +
+      oldQty +
       item.quantity;
+
+
+    cartMemory[
+      existingIndex
+    ].qty =
+      cartMemory[
+        existingIndex
+      ].quantity;
 
   } else {
 
-    cartMemory.push(item);
+    cartMemory.push(
+      item
+    );
+
   }
 
 
@@ -612,17 +961,22 @@ async function addToCart(product) {
 
   updateCartCount();
 
+  updateCartLinks();
+
   return true;
 }
 
 
 /* =====================================================
-   REMOVE FROM CART
+   REMOVE
 ===================================================== */
 
-async function removeFromCart(index) {
+async function removeFromCart(
+  index
+) {
 
   await initializeCart();
+
 
   if (
     index < 0 ||
@@ -631,10 +985,12 @@ async function removeFromCart(index) {
     return false;
   }
 
+
   cartMemory.splice(
     index,
     1
   );
+
 
   await saveCart();
 
@@ -655,6 +1011,7 @@ async function updateCartQuantity(
 
   await initializeCart();
 
+
   if (
     index < 0 ||
     index >= cartMemory.length
@@ -662,14 +1019,27 @@ async function updateCartQuantity(
     return false;
   }
 
+
   const qty =
     Math.max(
       1,
-      Number(quantity || 1)
+      Number(
+        quantity || 1
+      )
     );
 
-  cartMemory[index].quantity =
+
+  cartMemory[
+    index
+  ].quantity =
     qty;
+
+
+  cartMemory[
+    index
+  ].qty =
+    qty;
+
 
   await saveCart();
 
@@ -687,13 +1057,19 @@ async function clearCart() {
 
   await initializeCart();
 
+
   cartMemory = [];
 
-  writeStorage([]);
+
+  writeStorage(
+    []
+  );
+
 
   await supabaseGuestCart(
     "delete"
   );
+
 
   updateCartCount();
 
@@ -705,194 +1081,31 @@ async function clearCart() {
    BUY NOW
 ===================================================== */
 
-async function buyNow(product) {
+async function buyNow(
+  product
+) {
 
   await clearCart();
 
-  await addToCart(product);
+  await addToCart(
+    product
+  );
+
+
+  const guestId =
+    getGuestId();
+
 
   window.location.href =
-    "order.html";
+    "order.html?guest=" +
+    encodeURIComponent(
+      guestId
+    );
 }
 
 
 /* =====================================================
-   LEGACY / PRODUCT CARD SUPPORT
-===================================================== */
-
-function normalizeProductFromElement(
-  element
-) {
-
-  if (!element) {
-    return null;
-  }
-
-  const product = {
-    id:
-      element.dataset.productId ||
-      element.dataset.id ||
-      "",
-    product_id:
-      element.dataset.productId ||
-      element.dataset.id ||
-      "",
-    name:
-      element.dataset.productName ||
-      element.dataset.name ||
-      "",
-    price:
-      Number(
-        element.dataset.price || 0
-      ),
-    image:
-      element.dataset.image ||
-      "",
-    size:
-      element.dataset.size ||
-      "",
-    color:
-      element.dataset.color ||
-      element.dataset.colour ||
-      "",
-    colour:
-      element.dataset.colour ||
-      element.dataset.color ||
-      "",
-    quantity: 1
-  };
-
-  return product;
-}
-
-
-/* =====================================================
-   DOM CLICK HANDLER
-===================================================== */
-
-document.addEventListener(
-  "click",
-  async function(event) {
-
-    const addButton =
-      event.target.closest(
-        ".add-cart, .variant-aware-add, [data-add-to-cart]"
-      );
-
-    if (!addButton) {
-      return;
-    }
-
-    /*
-      If the product page already has
-      its own handler, do not interfere.
-    */
-
-    if (
-      addButton.dataset.cartHandled ===
-      "true"
-    ) {
-      return;
-    }
-
-    const card =
-      addButton.closest(
-        ".product-card, .product-item, [data-product-id]"
-      );
-
-    if (!card) {
-      return;
-    }
-
-
-    /* Try to use existing global
-       product object if supplied. */
-
-    let product = null;
-
-    if (
-      card._suruProduct
-    ) {
-      product =
-        card._suruProduct;
-    }
-
-
-    if (!product) {
-      product =
-        normalizeProductFromElement(
-          card
-        );
-    }
-
-
-    if (
-      !product ||
-      (
-        !product.product_id &&
-        !product.id
-      )
-    ) {
-      return;
-    }
-
-
-    event.preventDefault();
-
-    addButton.dataset.cartHandled =
-      "true";
-
-    addButton.disabled = true;
-
-    try {
-
-      await addToCart(product);
-
-      addButton.textContent =
-        "Added ✓";
-
-      setTimeout(() => {
-
-        addButton.disabled =
-          false;
-
-        addButton.textContent =
-          "Add to Cart";
-
-        delete addButton.dataset
-          .cartHandled;
-
-      }, 1000);
-
-    } catch (error) {
-
-      console.error(
-        "Add to cart error:",
-        error
-      );
-
-      addButton.disabled =
-        false;
-
-      delete addButton.dataset
-        .cartHandled;
-    }
-
-  }
-);
-
-
-/* =====================================================
-   CART LINK COUNT
-===================================================== */
-
-function refreshCartUI() {
-  updateCartCount();
-}
-
-
-/* =====================================================
-   INITIALIZATION
+   INIT
 ===================================================== */
 
 document.addEventListener(
@@ -901,7 +1114,9 @@ document.addEventListener(
 
     initializeCart();
 
-    refreshCartUI();
+    updateCartLinks();
+
+    updateCartCount();
 
   }
 );
@@ -941,18 +1156,30 @@ window.SuruShop = {
     loadCart,
 
   updateCartCount:
-    updateCartCount
+    updateCartCount,
+
+  /* Compatibility aliases */
+
+  updateCount:
+    updateCartCount,
+
+  clear:
+    clearCart
 
 };
 
 
 /* =====================================================
-   KEEP CART COUNT UPDATED AFTER PAGE CHANGES
+   CART READY
 ===================================================== */
 
 document.addEventListener(
   "suruCartReady",
   function() {
+
     updateCartCount();
+
+    updateCartLinks();
+
   }
 );
