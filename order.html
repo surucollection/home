@@ -730,9 +730,16 @@ if (removePaymentScreenshot) {
       cart.map(
         function (item, index) {
 
-          const lineTotal =
-            Number(item.price || 0) *
-            Number(item.qty || 0);
+          const itemQty =
+  Number(
+    item.quantity ??
+    item.qty ??
+    0
+  );
+
+const lineTotal =
+  Number(item.price || 0) *
+  itemQty;
 
 
           total += lineTotal;
@@ -790,7 +797,8 @@ if (removePaymentScreenshot) {
                   }
 
                   Qty:
-                  ${item.qty}
+                  ${item.quantity ?? item.qty ?? 0}
+                  
 
                 </p>
 
@@ -1078,7 +1086,7 @@ if (removePaymentScreenshot) {
                     : ""
                 ) +
                 " | Qty: " +
-                item.qty +
+                (item.quantity ?? item.qty ?? 0) +
                 " | " +
                 money(lineTotal)
               );
