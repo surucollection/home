@@ -64,18 +64,94 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (year) year.textContent = new Date().getFullYear();
 
   async function getProfile() {
-    const { data, error } = await client.rpc("my_customer_profile");
-    let profile = data;
+    const { data: sessionResult } = await client.auth.getSession();
+    const authUser = sessionResult?.session?.user;
+    if (!authUser?.id) return { data: null, error: null };
+
+    // Secure RPC is the primary profile source; it works even when customers RLS
+    // prevents a browser-side SELECT.
+    const rpc = await client.rpc("my_customer_profile");
+    let profile = rpc.data;
     if (typeof profile === "string") {
-      try { profile = JSON.parse(profile); } catch (_) {}
+      try { profile = JSON.parse(profile); } catch (_) { profile = null; }
     }
-    const hasProfile = profile && typeof profile === "object" && Object.keys(profile).length > 0;
-    if (error) return { data: null, error };
-    return { data: hasProfile ? profile : null, error: null };
+    if (profile && typeof profile === "object" && Object.keys(profile).length) {
+      return { data: profile, error: null };
+    }
+
+    // Fallback for older databases that do not yet have the new RPC.
+    const legacy = await client.rpc("customer_profile");
+    profile = legacy.data;
+    if (typeof profile === "string") {
+      try { profile = JSON.parse(profile); } catch (_) { profile = null; }
+    }
+    if (profile && typeof profile === "object" && Object.keys(profile).length) {
+      return { data: profile, error: null };
+    }
+
+    // Final fallback to a direct query when RLS permits it.
+    const direct = await client.from("customers").select("*").eq("auth_user_id", authUser.id).maybeSingle();
+    if (direct.data) return { data: direct.data, error: null };
+
+    return { data: null, error: rpc.error || legacy.error || direct.error };
   }
+
 
   const { data: sessionData } = await client.auth.getSession();
   let session = sessionData?.session || null;
+
+  async function finishCustomerProfile(user, pending = null) {
+    if (!user) return null;
+
+    const existing = await getProfile();
+    if (!pending && existing.data) return existing.data;
+
+    const metadata = user.user_metadata || {};
+    const p = pending || {};
+    const locationData = {
+      latitude: p.latitude ?? metadata.latitude ?? null,
+      longitude: p.longitude ?? metadata.longitude ?? null,
+      location_address: p.location_address || metadata.location_address || null
+    };
+
+    const phone = String(
+      p.phone ?? metadata.phone ?? existing.data?.phone ?? ""
+    ).trim();
+
+    if (!phone) {
+      throw new Error("Phone number is required to create your customer profile. Please go back and enter your phone number.");
+    }
+
+    const payload = {
+      auth_user_id: user.id,
+      name: p.name || metadata.name || existing.data?.name || "",
+      email: user.email || p.email || existing.data?.email || null,
+      phone,
+      address: p.address || existing.data?.address || null,
+      city: p.city || existing.data?.city || null,
+      district: p.district || existing.data?.district || null,
+      province: p.province || existing.data?.province || null,
+      postal_code: p.postal_code || existing.data?.postal_code || null,
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+      location_address: locationData.location_address,
+      location_updated_at:
+        locationData.latitude != null && locationData.longitude != null
+          ? new Date().toISOString()
+          : existing.data?.location_updated_at || null,
+      is_active: true
+    };
+
+    const { data, error } = await client
+      .from("customers")
+      .upsert(payload, { onConflict: "auth_user_id" })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
 
   /* =====================================================
      LOGIN - EMAIL/PASSWORD ONLY
