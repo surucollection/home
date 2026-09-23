@@ -591,6 +591,9 @@ document.addEventListener("DOMContentLoaded", function () {
             await loadInventory();
           }
 
+          if (viewName === "subscribers") {
+            await loadSubscribers();
+          }
           if (viewName === "customers") {
             await loadCustomers();
           }
@@ -610,6 +613,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const [
         ordersResult,
         productsResult,
+        subscribersResult,
         pendingResult
       ] = await Promise.all([
 
@@ -622,6 +626,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         client
           .from("products")
+          .select("*", {
+            count: "exact",
+            head: true
+          })
+          .eq("is_active", true),
+
+        client
+          .from("newsletter_subscribers")
           .select("*", {
             count: "exact",
             head: true
@@ -644,6 +656,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       $("#statProducts").textContent =
         productsResult.count ?? 0;
+
+      $("#statSubscribers").textContent =
+        subscribersResult.count ?? 0;
 
       const pending =
         pendingResult.data || [];
@@ -2909,6 +2924,176 @@ document.addEventListener("DOMContentLoaded", function () {
   );
 
 
+  /* =========================================================
+     SUBSCRIBERS
+  ========================================================= */
+
+  async function loadSubscribers() {
+
+    const {
+      data,
+      error
+    } =
+      await client
+        .from(
+          "newsletter_subscribers"
+        )
+        .select("*")
+        .order(
+          "subscribed_at",
+          {
+            ascending: false
+          }
+        );
+
+    if (error) {
+
+      $("#subscribersTable")
+        .innerHTML =
+        `<p class="message error">
+          ${esc(error.message)}
+        </p>`;
+
+      return;
+    }
+
+    const count =
+      data?.length || 0;
+
+    $("#subscriberCount")
+      .textContent =
+      `${count} subscriber${
+        count === 1
+          ? ""
+          : "s"
+      }`;
+
+    $("#subscribersTable")
+      .innerHTML = `
+
+        <table class="table">
+
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Subscribed</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            ${
+              (data || [])
+                .map(
+                  s => `
+
+                    <tr>
+
+                      <td>
+                        ${esc(
+                          s.email
+                        )}
+                      </td>
+
+                      <td>
+                        ${new Date(
+                          s.subscribed_at
+                        ).toLocaleString()}
+                      </td>
+
+                      <td>
+                        ${
+                          s.is_active
+                            ? "Active"
+                            : "Inactive"
+                        }
+                      </td>
+
+                      <td>
+
+                        <button
+                          class="${
+                            s.is_active
+                              ? "danger"
+                              : "secondary"
+                          } toggle-sub"
+                          data-id="${s.id}"
+                          data-active="${s.is_active}">
+
+                          ${
+                            s.is_active
+                              ? "Deactivate"
+                              : "Activate"
+                          }
+
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  `
+                )
+                .join("")
+            }
+
+          </tbody>
+
+        </table>
+      `;
+  }
+
+
+  /* =========================================================
+     SUBSCRIBER TOGGLE
+  ========================================================= */
+
+  document.addEventListener(
+    "click",
+    async function (e) {
+
+      const button =
+        e.target.closest(
+          ".toggle-sub"
+        );
+
+      if (!button) return;
+
+      const active =
+        button.dataset.active !==
+        "true";
+
+      const {
+        error
+      } =
+        await client
+          .from(
+            "newsletter_subscribers"
+          )
+          .update({
+            is_active:
+              active
+          })
+          .eq(
+            "id",
+            button.dataset.id
+          );
+
+      if (error) {
+
+        alert(
+          error.message
+        );
+
+      } else {
+
+        await loadSubscribers();
+      }
+    }
+  );
+
 
   /* =========================================================
      INITIAL START
@@ -2929,60 +3114,18 @@ let customerRows = [];
 ===================================================== */
 
 async function loadCustomers() {
-
-  const table = document.getElementById(
-    "customersTable"
-  );
-
-  if (table) {
-
-    table.innerHTML = `
-      <div class="loading">
-        Loading customers...
-      </div>
-    `;
-
-  }
-
-  // Load customers directly. The customers RLS policy already permits
-  // active admins/managers to read all customer rows. Use the RPC as a
-  // fallback so this page remains compatible if the direct query is blocked.
-  let data = null;
-  let error = null;
+  const table = document.getElementById("customersTable");
+  if (table) table.innerHTML = `<div class="loading">Loading customers...</div>`;
 
   try {
-    const direct = await client
-      .from("customers")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    data = direct.data;
-    error = direct.error;
-  } catch (e) {
-    error = e;
-  }
-
-  if (error) {
-    console.warn("Direct customer query failed; trying admin RPC:", error);
-    const rpc = await client.rpc("admin_list_customers");
-    data = rpc.data;
-    error = rpc.error;
-  }
-
-  if (error) {
-    if (table) {
-      table.innerHTML = `
-        <div class="error">
-          Unable to load customers: ${esc(error.message || error)}
-        </div>
-      `;
-    }
+    const { data, error } = await client.rpc("admin_list_customers");
+    if (error) throw error;
+    customerRows = Array.isArray(data) ? data : [];
+    renderCustomers();
+  } catch (error) {
     console.error("Customer loading error:", error);
-    return;
+    if (table) table.innerHTML = `<div class="error">Unable to load customers: ${esc(error?.message || error)}</div>`;
   }
-
-  customerRows = Array.isArray(data) ? data : [];
-  renderCustomers();
 }
 
 
