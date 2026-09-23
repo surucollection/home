@@ -64,9 +64,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (year) year.textContent = new Date().getFullYear();
 
   async function getProfile() {
+    // Prefer the authenticated customer's row directly. This avoids an empty
+    // profile when the RPC response is unavailable/stale in the browser.
+    const { data: sessionResult } = await client.auth.getSession();
+    const authUser = sessionResult?.session?.user;
+
+    if (authUser?.id) {
+      const { data: directProfile, error: directError } = await client
+        .from("customers")
+        .select("*")
+        .eq("auth_user_id", authUser.id)
+        .maybeSingle();
+
+      if (directProfile) return { data: directProfile, error: null };
+
+      // If the direct query fails, fall back to the existing RPC.
+      if (directError && directError.code !== "PGRST116") {
+        console.warn("Direct customer profile lookup failed:", directError);
+      }
+    }
+
     const { data, error } = await client.rpc("customer_profile");
+    let profile = data;
+
+    // Some Supabase/client versions can expose JSONB responses as a string.
+    if (typeof profile === "string") {
+      try { profile = JSON.parse(profile); } catch (_) {}
+    }
+
     return {
-      data: data && typeof data === "object" && Object.keys(data).length ? data : null,
+      data: profile && typeof profile === "object" && Object.keys(profile).length ? profile : null,
       error
     };
   }
@@ -88,11 +115,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       location_address: p.location_address || metadata.location_address || null
     };
 
+    const phone = String(
+      p.phone ?? metadata.phone ?? existing.data?.phone ?? ""
+    ).trim();
+
+    if (!phone) {
+      throw new Error("Phone number is required to create your customer profile. Please go back and enter your phone number.");
+    }
+
     const payload = {
       auth_user_id: user.id,
       name: p.name || metadata.name || existing.data?.name || "",
       email: user.email || p.email || existing.data?.email || null,
-      phone: p.phone || existing.data?.phone || null,
+      phone,
       address: p.address || existing.data?.address || null,
       city: p.city || existing.data?.city || null,
       district: p.district || existing.data?.district || null,
