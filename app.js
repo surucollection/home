@@ -1619,10 +1619,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (year) year.textContent = new Date().getFullYear();
 
   async function getProfile() {
-    // Prefer the authenticated customer's row directly. This avoids an empty
-    // profile when the RPC response is unavailable/stale in the browser.
-    const { data: sessionResult } = await client.auth.getSession();
-    const authUser = sessionResult?.session?.user;
+    // Always obtain the current authenticated user first. getUser() asks
+    // Supabase for the authenticated identity and avoids relying only on the
+    // locally hydrated session immediately after a redirect.
+    const { data: userResult, error: userError } = await client.auth.getUser();
+    const authUser = userResult?.user || null;
+
+    if (userError) {
+      console.warn("Could not read authenticated user:", userError);
+    }
 
     if (authUser?.id) {
       const { data: directProfile, error: directError } = await client
@@ -1631,25 +1636,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         .eq("auth_user_id", authUser.id)
         .maybeSingle();
 
-      if (directProfile) return { data: directProfile, error: null };
+      if (directProfile) return { data: directProfile, error: null, user: authUser };
 
-      // If the direct query fails, fall back to the existing RPC.
-      if (directError && directError.code !== "PGRST116") {
+      if (directError) {
         console.warn("Direct customer profile lookup failed:", directError);
       }
     }
 
-    const { data, error } = await client.rpc("customer_profile");
+    // SECURITY DEFINER fallback. This also works when the customers SELECT
+    // policy or browser cache prevents the direct table query from returning.
+    const { data, error } = await client.rpc("my_customer_profile");
     let profile = data;
 
-    // Some Supabase/client versions can expose JSONB responses as a string.
     if (typeof profile === "string") {
       try { profile = JSON.parse(profile); } catch (_) {}
     }
 
     return {
       data: profile && typeof profile === "object" && Object.keys(profile).length ? profile : null,
-      error
+      error,
+      user: authUser
     };
   }
 
@@ -1826,22 +1832,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const { data: profile, error } = await getProfile();
-    if (error) {
-      showMessage(error.message, "error");
-      return;
+    let profileResult = await getProfile();
+
+    // A just-completed login can take a moment to hydrate the authenticated
+    // session across a page redirect. Retry briefly instead of rendering an
+    // empty account page.
+    for (let attempt = 0; attempt < 3 && !profileResult.data; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      profileResult = await getProfile();
     }
-    if (!profile) {
-      showMessage("Customer profile not found.", "error");
+
+    const profile = profileResult.data;
+    const profileUser = profileResult.user || session?.user || null;
+
+    if (profileResult.error && !profile) {
+      showMessage(profileResult.error.message || "Could not load your customer profile.", "error");
       return;
     }
 
-    if ($("customerName")) $("customerName").textContent = profile.name || "Customer";
-    if ($("profileName")) $("profileName").textContent = profile.name || "—";
-    if ($("profileEmail")) $("profileEmail").textContent = profile.email || session.user.email || "—";
-    if ($("profilePhone")) $("profilePhone").textContent = profile.phone || "Not added";
-    if ($("profileAddress")) $("profileAddress").textContent = profile.address || "—";
-    if ($("profileCity")) $("profileCity").textContent = [profile.city, profile.district].filter(Boolean).join(", ") || "—";
+    // Always show the authenticated email even if an old account is missing
+    // its customers row; the remaining fields fall back cleanly.
+    if ($("customerName")) $("customerName").textContent = profile?.name || profileUser?.user_metadata?.name || "Customer";
+    if ($("profileName")) $("profileName").textContent = profile?.name || profileUser?.user_metadata?.name || "—";
+    if ($("profileEmail")) $("profileEmail").textContent = profile?.email || profileUser?.email || "—";
+    if ($("profilePhone")) $("profilePhone").textContent = profile?.phone || profileUser?.user_metadata?.phone || "Not added";
+    if ($("profileAddress")) $("profileAddress").textContent = profile?.address || profileUser?.user_metadata?.address || "—";
+    if ($("profileCity")) $("profileCity").textContent = [profile?.city || profileUser?.user_metadata?.city, profile?.district || profileUser?.user_metadata?.district].filter(Boolean).join(", ") || "—";
+
+    if (!profile) {
+      showMessage("Your login is active, but your customer profile has not been created yet.", "error");
+      return;
+    }
 
     const accountPicker = window.suruAccountLocationPicker;
     if (accountPicker && profile.latitude != null && profile.longitude != null) {
