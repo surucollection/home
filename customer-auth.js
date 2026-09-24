@@ -64,63 +64,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (year) year.textContent = new Date().getFullYear();
 
   async function getProfile() {
+    // Prefer the authenticated customer's row directly. This avoids an empty
+    // profile when the RPC response is unavailable/stale in the browser.
     const { data: sessionResult } = await client.auth.getSession();
     const authUser = sessionResult?.session?.user;
-    if (!authUser?.id) return { data: null, error: null };
 
-    // Secure RPC is the primary profile source; it works even when customers RLS
-    // prevents a browser-side SELECT.
-    const rpc = await client.rpc("my_customer_profile");
-    let profile = rpc.data;
+    if (authUser?.id) {
+      const { data: directProfile, error: directError } = await client
+        .from("customers")
+        .select("*")
+        .eq("auth_user_id", authUser.id)
+        .maybeSingle();
+
+      if (directProfile) return { data: directProfile, error: null };
+
+      // If the direct query fails, fall back to the existing RPC.
+      if (directError && directError.code !== "PGRST116") {
+        console.warn("Direct customer profile lookup failed:", directError);
+      }
+    }
+
+    const { data, error } = await client.rpc("customer_profile");
+    let profile = data;
+
+    // Some Supabase/client versions can expose JSONB responses as a string.
     if (typeof profile === "string") {
-      try { profile = JSON.parse(profile); } catch (_) { profile = null; }
-    }
-    if (profile && typeof profile === "object" && Object.keys(profile).length) {
-      return { data: profile, error: null };
+      try { profile = JSON.parse(profile); } catch (_) {}
     }
 
-    // Fallback for older databases that do not yet have the new RPC.
-    const legacy = await client.rpc("customer_profile");
-    profile = legacy.data;
-    if (typeof profile === "string") {
-      try { profile = JSON.parse(profile); } catch (_) { profile = null; }
-    }
-    if (profile && typeof profile === "object" && Object.keys(profile).length) {
-      return { data: profile, error: null };
-    }
-
-    // Final fallback to a direct query when RLS permits it.
-    const direct = await client.from("customers").select("*").eq("auth_user_id", authUser.id).maybeSingle();
-    if (direct.data) return { data: direct.data, error: null };
-
-    // Final fallback: the registration data is also stored in Supabase Auth
-    // metadata. This keeps the Account page populated even if the browser
-    // cannot read the customers row for any reason.
-    const meta = authUser.user_metadata || {};
-    if (meta.name || meta.phone || meta.address || meta.city || meta.district) {
-      return {
-        data: {
-          id: null,
-          auth_user_id: authUser.id,
-          name: meta.name || "",
-          email: authUser.email || meta.email || null,
-          phone: meta.phone || "",
-          address: meta.address || null,
-          city: meta.city || null,
-          district: meta.district || null,
-          province: meta.province || null,
-          postal_code: meta.postal_code || null,
-          latitude: meta.latitude ?? null,
-          longitude: meta.longitude ?? null,
-          location_address: meta.location_address || null
-        },
-        error: null
-      };
-    }
-
-    return { data: null, error: rpc.error || legacy.error || direct.error };
+    return {
+      data: profile && typeof profile === "object" && Object.keys(profile).length ? profile : null,
+      error
+    };
   }
-
 
   const { data: sessionData } = await client.auth.getSession();
   let session = sessionData?.session || null;
