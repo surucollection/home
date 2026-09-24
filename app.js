@@ -1570,10 +1570,7 @@ if (document.getElementById("passwordLoginButton") || document.getElementById("r
 ===================================================== */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const client = window.supabase.createClient(
-    window.SURU_SUPABASE_URL,
-    window.SURU_SUPABASE_KEY
-  );
+  const client = window.suruSupabaseClient;
 
   const $ = id => document.getElementById(id);
 
@@ -1625,42 +1622,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (year) year.textContent = new Date().getFullYear();
 
   async function getProfile() {
-    // Always obtain the current authenticated user first. getUser() asks
-    // Supabase for the authenticated identity and avoids relying only on the
-    // locally hydrated session immediately after a redirect.
     const { data: userResult, error: userError } = await client.auth.getUser();
     const authUser = userResult?.user || null;
-
-    if (userError) {
-      console.warn("Could not read authenticated user:", userError);
+    if (!authUser?.id) {
+      return { data: null, error: userError || new Error("No authenticated user."), user: null };
     }
 
-    if (authUser?.id) {
-      const { data: directProfile, error: directError } = await client
-        .from("customers")
-        .select("*")
-        .eq("auth_user_id", authUser.id)
-        .maybeSingle();
-
-      if (directProfile) return { data: directProfile, error: null, user: authUser };
-
-      if (directError) {
-        console.warn("Direct customer profile lookup failed:", directError);
-      }
-    }
-
-    // SECURITY DEFINER fallback. This also works when the customers SELECT
-    // policy or browser cache prevents the direct table query from returning.
-    const { data, error } = await client.rpc("my_customer_profile");
-    let profile = data;
-
+    // The SECURITY DEFINER RPC is the primary profile source. It is not
+    // blocked by the customers table's row-level security policy.
+    const { data: rpcData, error: rpcError } = await client.rpc("my_customer_profile");
+    let profile = rpcData;
     if (typeof profile === "string") {
       try { profile = JSON.parse(profile); } catch (_) {}
     }
+    if (profile && typeof profile === "object" && Object.keys(profile).length) {
+      return { data: profile, error: null, user: authUser };
+    }
+
+    // Fallback to the normal table query.
+    const { data: directProfile, error: directError } = await client
+      .from("customers")
+      .select("*")
+      .eq("auth_user_id", authUser.id)
+      .maybeSingle();
 
     return {
-      data: profile && typeof profile === "object" && Object.keys(profile).length ? profile : null,
-      error,
+      data: directProfile || null,
+      error: directError || rpcError || null,
       user: authUser
     };
   }
@@ -1872,6 +1860,51 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ($("profilePhone")) $("profilePhone").textContent = profile?.phone || profileUser?.user_metadata?.phone || "Not added";
     if ($("profileAddress")) $("profileAddress").textContent = profile?.address || profileUser?.user_metadata?.address || "—";
     if ($("profileCity")) $("profileCity").textContent = [profile?.city || profileUser?.user_metadata?.city, profile?.district || profileUser?.user_metadata?.district].filter(Boolean).join(", ") || "—";
+
+    // Populate the editable account form.
+    if ($("editName")) $("editName").value = profile?.name || profileUser?.user_metadata?.name || "";
+    if ($("editEmail")) $("editEmail").value = profile?.email || profileUser?.email || "";
+    if ($("editPhone")) $("editPhone").value = profile?.phone || profileUser?.user_metadata?.phone || "";
+    if ($("editAddress")) $("editAddress").value = profile?.address || profileUser?.user_metadata?.address || "";
+    if ($("editCity")) $("editCity").value = profile?.city || profileUser?.user_metadata?.city || "";
+    if ($("editDistrict")) $("editDistrict").value = profile?.district || profileUser?.user_metadata?.district || "";
+
+    $("profileForm")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const message = $("profileMessage");
+      const name = $("editName")?.value.trim() || "";
+      const phone = $("editPhone")?.value.trim() || "";
+      if (!name || !phone) {
+        if (message) { message.textContent = "Name and phone number are required."; message.className = "message error"; }
+        return;
+      }
+      if (message) { message.textContent = "Saving…"; message.className = "message"; }
+      const { data: updated, error } = await client
+        .from("customers")
+        .update({
+          name,
+          phone,
+          address: $("editAddress")?.value.trim() || null,
+          city: $("editCity")?.value.trim() || null,
+          district: $("editDistrict")?.value.trim() || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("auth_user_id", session.user.id)
+        .select()
+        .maybeSingle();
+      if (error) {
+        if (message) { message.textContent = error.message; message.className = "message error"; }
+        return;
+      }
+      if (updated) {
+        if ($("customerName")) $("customerName").textContent = updated.name || "Customer";
+        if ($("profileName")) $("profileName").textContent = updated.name || "—";
+        if ($("profilePhone")) $("profilePhone").textContent = updated.phone || "Not added";
+        if ($("profileAddress")) $("profileAddress").textContent = updated.address || "—";
+        if ($("profileCity")) $("profileCity").textContent = [updated.city, updated.district].filter(Boolean).join(", ") || "—";
+      }
+      if (message) { message.textContent = "Account details saved successfully."; message.className = "message success"; }
+    });
 
     if (!profile) {
       showMessage("Your login is active, but your customer profile has not been created yet.", "error");
@@ -4445,10 +4478,7 @@ if (document.getElementById("productRoot")) {
 if (document.getElementById("loginView") || document.getElementById("appView")) {
 document.addEventListener("DOMContentLoaded", function () {
 
-  const client = window.supabase.createClient(
-    window.SURU_SUPABASE_URL,
-    window.SURU_SUPABASE_KEY
-  );
+  const client = window.suruSupabaseClient;
 
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => document.querySelectorAll(s);
@@ -7527,31 +7557,8 @@ async function loadCustomers() {
 
   }
 
-  const {
-    data,
-    error
-  } = await window.suruSupabaseClient
-    .from("customers")
-    .select(`
-      id,
-      auth_user_id,
-      name,
-      phone,
-      email,
-      address,
-      city,
-      district,
-      province,
-      postal_code,
-      is_active,
-      created_at
-    `)
-    .order(
-      "created_at",
-      {
-        ascending: false
-      }
-    );
+  const { data, error } = await window.suruSupabaseClient
+    .rpc("admin_list_customers");
 
   if (error) {
 
