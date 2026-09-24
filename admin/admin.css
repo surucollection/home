@@ -772,3 +772,33 @@ tr:last-child td {
 }
 .customer-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}.customer-profile-grid>div{background:#faf5f1;padding:13px;border-radius:9px}.customer-profile-grid b,.customer-profile-grid span{display:block}.customer-profile-grid span{margin-top:5px;color:#705e70}.customer-orders-heading{margin-top:24px;color:#642b39}@media(max-width:650px){.customer-profile-grid{grid-template-columns:1fr}}
 .danger{border:1px solid #e2c4bf;border-radius:9px;min-height:40px;padding:0 12px;background:#fff;color:#a33a2d;font-weight:600;cursor:pointer}.danger:hover{background:#fff4f2}
+
+/* =========================
+   NCM SHIPPING
+========================= */
+.ncm-cell {
+  min-width: 210px;
+  vertical-align: top;
+}
+
+.ncm-cell select {
+  width: 100%;
+  min-width: 190px;
+  margin-bottom: 7px;
+  border: 1px solid #ddd0cb;
+  border-radius: 8px;
+  background: #fff;
+  color: #49363a;
+  padding: 8px 9px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.ncm-cell button {
+  margin-right: 6px;
+  margin-bottom: 5px;
+}
+
+.ncm-cell small {
+  color: #806d70;
+}

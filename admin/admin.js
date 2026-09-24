@@ -672,6 +672,76 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
   /* =========================================================
+     NCM SHIPPING INTEGRATION
+  ========================================================= */
+
+  let ncmBranches = [];
+  let ncmBranchesLoaded = false;
+
+  function ncmBranchOptions(selected = "", placeholder = "Select branch") {
+    return `<option value="">${esc(placeholder)}</option>` +
+      ncmBranches.map(b => {
+        const name = b.name || b.branch_name || b.title || "";
+        return `<option value="${esc(name)}" ${String(name).toLowerCase() === String(selected).toLowerCase() ? "selected" : ""}>${esc(name)}</option>`;
+      }).join("");
+  }
+
+  function guessNcmBranch(order) {
+    const hay = [order.city, order.district, order.province].filter(Boolean).join(" ").toLowerCase();
+    return ncmBranches.find(b => {
+      const name = String(b.name || b.branch_name || b.title || "").toLowerCase();
+      return name && (hay.includes(name) || name.includes(String(order.city || "").toLowerCase()));
+    })?.name || "";
+  }
+
+  async function ncmInvoke(body) {
+    const result = await client.functions.invoke("ncm-admin", { body });
+    if (result.error) throw new Error(result.error.message || "NCM function failed");
+    if (result.data?.error) throw new Error(result.data.error);
+    return result.data;
+  }
+
+  async function loadNcmBranches(showAlert = true) {
+    const select = $("#ncmSourceBranch");
+    if (select) select.disabled = true;
+    try {
+      const data = await ncmInvoke({ action: "branches" });
+      ncmBranches = Array.isArray(data) ? data : (data?.branches || []);
+      ncmBranchesLoaded = true;
+      if (select) {
+        const saved = localStorage.getItem("suru_ncm_source_branch") || "";
+        select.innerHTML = ncmBranchOptions(saved, "NCM source branch");
+        if (saved) select.value = saved;
+      }
+      if (showAlert) alert(`Loaded ${ncmBranches.length} NCM branches.`);
+      if ($("#orders")) loadOrders();
+    } catch (err) {
+      if (showAlert) alert("NCM: " + err.message);
+    } finally {
+      if (select) select.disabled = false;
+    }
+  }
+
+  $("#ncmLoadBranches")?.addEventListener("click", () => loadNcmBranches(true));
+
+  $("#ncmSourceBranch")?.addEventListener("change", e => {
+    localStorage.setItem("suru_ncm_source_branch", e.target.value || "");
+  });
+
+  $("#ncmConfigureWebhook")?.addEventListener("click", async () => {
+    const btn = $("#ncmConfigureWebhook");
+    btn.disabled = true;
+    try {
+      await ncmInvoke({ action: "configure-webhook" });
+      alert("Nepal Can Move webhook configured successfully.");
+    } catch (err) {
+      alert("NCM webhook: " + err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* =========================================================
      ORDERS
   ========================================================= */
 
@@ -702,7 +772,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <th>Date</th>
             ${
               full
-                ? "<th>Update</th>"
+                ? "<th>Update</th><th>Nepal Can Move</th>"
                 : ""
             }
           </tr>
@@ -790,6 +860,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
 
                       </select>
+                    </td>
+                    <td class="ncm-cell">
+                      ${o.ncm_order_id
+                        ? `<strong>NCM #${esc(o.ncm_order_id)}</strong><br><small>${esc(o.ncm_status || "created")}</small><br><button type="button" class="btn-secondary ncm-sync-btn" data-id="${o.id}">Sync</button>`
+                        : `<select class="ncm-destination-branch" data-id="${o.id}">${ncmBranchOptions(guessNcmBranch(o), "Destination branch")}</select><button type="button" class="btn-primary ncm-create-btn" data-id="${o.id}">Create shipment</button>`}
                     </td>
                   `
                   : ""
@@ -925,6 +1000,45 @@ document.addEventListener("DOMContentLoaded", function () {
       "change",
       loadOrders
     );
+
+
+  document.addEventListener("click", async function (e) {
+    const createBtn = e.target.closest(".ncm-create-btn");
+    const syncBtn = e.target.closest(".ncm-sync-btn");
+
+    if (createBtn) {
+      const orderId = createBtn.dataset.id;
+      const source = $("#ncmSourceBranch")?.value || localStorage.getItem("suru_ncm_source_branch") || "";
+      const destination = document.querySelector(`.ncm-destination-branch[data-id="${orderId}"]`)?.value || "";
+      if (!source) return alert("Select the NCM source branch first.");
+      if (!destination) return alert("Select the NCM destination branch for this order.");
+      if (!confirm("Create this order in Nepal Can Move as a live shipment?")) return;
+      createBtn.disabled = true;
+      try {
+        await ncmInvoke({ action: "create", order_id: orderId, source_branch: source, destination_branch: destination, delivery_type: "Door2Door", weight: "1" });
+        alert("NCM shipment created successfully.");
+        await loadOrders();
+      } catch (err) {
+        alert("NCM: " + err.message);
+      } finally {
+        createBtn.disabled = false;
+      }
+      return;
+    }
+
+    if (syncBtn) {
+      const orderId = syncBtn.dataset.id;
+      syncBtn.disabled = true;
+      try {
+        await ncmInvoke({ action: "sync", order_id: orderId });
+        await loadOrders();
+      } catch (err) {
+        alert("NCM sync: " + err.message);
+      } finally {
+        syncBtn.disabled = false;
+      }
+    }
+  });
 
 
   /* =========================================================
@@ -2934,13 +3048,6 @@ async function loadCustomers() {
     "customersTable"
   );
 
-  // This function lives outside the main DOMContentLoaded closure, so it must
-  // create its own Supabase client instead of relying on the closure variable.
-  const adminClient = window.supabase.createClient(
-    window.SURU_SUPABASE_URL,
-    window.SURU_SUPABASE_KEY
-  );
-
   if (table) {
 
     table.innerHTML = `
@@ -2951,16 +3058,11 @@ async function loadCustomers() {
 
   }
 
-  let {
+  const {
     data,
     error
-  } = await adminClient
-    .rpc("admin_list_customers");
-
-  // Fallback to direct SELECT for projects where the admin RLS policy permits it.
-  if (error) {
-    const fallback = await adminClient
-      .from("customers")
+  } = await client
+    .from("customers")
     .select(`
       id,
       auth_user_id,
@@ -2981,9 +3083,6 @@ async function loadCustomers() {
         ascending: false
       }
     );
-    data = fallback.data;
-    error = fallback.error;
-  }
 
   if (error) {
 
