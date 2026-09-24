@@ -12,6 +12,12 @@ window.SURU_SUPABASE_URL =
 window.SURU_SUPABASE_KEY =
   "sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC";
 
+/* Shared Supabase client for consolidated modules that run outside local scopes. */
+window.suruSupabaseClient = window.supabase.createClient(
+  window.SURU_SUPABASE_URL,
+  window.SURU_SUPABASE_KEY
+);
+
 
 /* SHOP / CART */
 /* =====================================================
@@ -1827,6 +1833,14 @@ document.addEventListener("DOMContentLoaded", async () => {
      ACCOUNT PAGE
   ===================================================== */
   if (location.pathname.endsWith("account.html")) {
+    /* Supabase may still be restoring the persisted session immediately after
+       a login redirect. Wait briefly before deciding the user is signed out. */
+    for (let attempt = 0; attempt < 10 && !session; attempt++) {
+      const { data: retrySession } = await client.auth.getSession();
+      session = retrySession?.session || null;
+      if (!session) await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
     if (!session) {
       location.href = "login.html";
       return;
@@ -7516,7 +7530,7 @@ async function loadCustomers() {
   const {
     data,
     error
-  } = await client
+  } = await window.suruSupabaseClient
     .from("customers")
     .select(`
       id,
@@ -8043,7 +8057,7 @@ async function showCustomer(id) {
   const {
     data: orders,
     error
-  } = await client
+  } = await window.suruSupabaseClient
     .from("orders")
     .select(`
       id,
@@ -8292,7 +8306,7 @@ async function toggleCustomer(id) {
 
   const {
     error
-  } = await client
+  } = await window.suruSupabaseClient
     .from("customers")
     .update({
       is_active:
