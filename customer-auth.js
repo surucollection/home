@@ -93,6 +93,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     const direct = await client.from("customers").select("*").eq("auth_user_id", authUser.id).maybeSingle();
     if (direct.data) return { data: direct.data, error: null };
 
+    // Final fallback: the registration data is also stored in Supabase Auth
+    // metadata. This keeps the Account page populated even if the browser
+    // cannot read the customers row for any reason.
+    const meta = authUser.user_metadata || {};
+    if (meta.name || meta.phone || meta.address || meta.city || meta.district) {
+      return {
+        data: {
+          id: null,
+          auth_user_id: authUser.id,
+          name: meta.name || "",
+          email: authUser.email || meta.email || null,
+          phone: meta.phone || "",
+          address: meta.address || null,
+          city: meta.city || null,
+          district: meta.district || null,
+          province: meta.province || null,
+          postal_code: meta.postal_code || null,
+          latitude: meta.latitude ?? null,
+          longitude: meta.longitude ?? null,
+          location_address: meta.location_address || null
+        },
+        error: null
+      };
+    }
+
     return { data: null, error: rpc.error || legacy.error || direct.error };
   }
 
