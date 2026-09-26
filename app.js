@@ -1561,12 +1561,11 @@ if (document.getElementById("locationMap") || document.getElementById("setLocati
 if (document.getElementById("passwordLoginButton") || document.getElementById("registerForm") || document.getElementById("logoutBtn")) {
 /* =====================================================
    SURU COLLECTION - CUSTOMER AUTHENTICATION
-   Email OTP Login / Registration / Account
+   Email/password registration, login and account management
    + Saved delivery map location
 
-   Customers can authenticate with either their email/password or email OTP.
-   Phone is NOT used for authentication. A phone number can
-   still be collected at checkout because it is useful for delivery.
+   Phone is required for customer delivery/contact details but is
+   not used as an authentication identifier.
 ===================================================== */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -11047,18 +11046,6 @@ if (removePaymentScreenshot) {
   /* =====================================================
      HELPERS
   ===================================================== */
-
-  /*
-     IMPORTANT:
-     The cart is now controlled by shop.js.
-
-     This means order.html uses the exact same
-     storage system as the product pages.
-
-     shop.js will use localStorage when available
-     and automatically fall back to cookies when
-     localStorage is blocked or unavailable.
-  */
 
   function getCart() {
 
