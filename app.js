@@ -1604,7 +1604,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const mainNav = $("mainNav");
 
   if (menuToggle && mainNav) {
-    menuToggle.addEventListener("click", function () {
+    menuToggle.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
       const open = mainNav.classList.toggle("open");
       menuToggle.setAttribute("aria-expanded", String(open));
     });
