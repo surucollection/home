@@ -1234,362 +1234,11 @@ document.addEventListener(
 );
 
 
-/* LOCATION PICKER */
-if (document.getElementById("locationMap") || document.getElementById("setLocationOnMap") || document.getElementById("useCurrentLocation")) {
-/* =====================================================
-   SURU COLLECTION — DELIVERY LOCATION PICKER
-   Uses browser geolocation + Leaflet/OpenStreetMap.
-   Coordinates are stored separately from the written
-   address so hard-to-find addresses remain deliverable.
-===================================================== */
-
-(function () {
-  "use strict";
-
-  const DEFAULT_LAT = 26.7645; // Gaur
-  const DEFAULT_LNG = 85.2786;
-
-  function byId(id) {
-    return document.getElementById(id);
-  }
-
-  function formatCoord(value) {
-    return Number(value).toFixed(6);
-  }
-
-  function createMapPicker(config) {
-    const {
-      mapId = "locationMap",
-      openButtonId = "setLocationOnMap",
-      currentButtonId = "useCurrentLocation",
-      statusId = "locationStatus",
-      latId = "locationLatitude",
-      lngId = "locationLongitude",
-      addressId = "locationAddress",
-      dialogId = "locationDialog",
-      confirmButtonId = "confirmMapLocation",
-      closeButtonId = "closeMapLocation"
-    } = config || {};
-
-    const status = byId(statusId);
-    const latInput = byId(latId);
-    const lngInput = byId(lngId);
-    const addressInput = byId(addressId);
-    const dialog = byId(dialogId);
-    const openButton = byId(openButtonId);
-    const currentButton = byId(currentButtonId);
-    const confirmButton = byId(confirmButtonId);
-    const closeButton = byId(closeButtonId);
-    const mapElement = byId(mapId);
-
-    if (!status || !latInput || !lngInput) {
-      return null;
-    }
-
-    let map = null;
-    let marker = null;
-    let pendingLat = null;
-    let pendingLng = null;
-
-    function setStatus(text, type) {
-      status.textContent = text || "";
-      status.className = "location-status" + (type ? " " + type : "");
-    }
-
-    function updateStatus() {
-      const lat = parseFloat(latInput.value);
-      const lng = parseFloat(lngInput.value);
-
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        setStatus(
-          "Location saved: " +
-          formatCoord(lat) +
-          ", " +
-          formatCoord(lng),
-          "selected"
-        );
-      } else {
-        setStatus(
-          "No map location selected yet. A map pin is required before placing an order."
-        );
-      }
-    }
-
-    function ensureMap() {
-      if (map || !mapElement || !window.L) {
-        return map;
-      }
-
-      map = L.map(mapElement, {
-        zoomControl: true
-      }).setView([DEFAULT_LAT, DEFAULT_LNG], 13);
-
-      L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors'
-        }
-      ).addTo(map);
-
-      map.on("click", function (event) {
-        pendingLat = event.latlng.lat;
-        pendingLng = event.latlng.lng;
-        showPendingMarker(pendingLat, pendingLng);
-      });
-
-      const existingLat = parseFloat(latInput.value);
-      const existingLng = parseFloat(lngInput.value);
-
-      if (Number.isFinite(existingLat) && Number.isFinite(existingLng)) {
-        pendingLat = existingLat;
-        pendingLng = existingLng;
-        map.setView([existingLat, existingLng], 17);
-        showPendingMarker(existingLat, existingLng);
-      }
-
-      return map;
-    }
-
-    function showPendingMarker(lat, lng) {
-      if (!map) return;
-
-      if (marker) {
-        marker.setLatLng([lat, lng]);
-      } else {
-        marker = L.marker([lat, lng], {
-          draggable: true
-        }).addTo(map);
-
-        marker.on("dragend", function () {
-          const point = marker.getLatLng();
-          pendingLat = point.lat;
-          pendingLng = point.lng;
-        });
-      }
-
-      map.setView([lat, lng], Math.max(map.getZoom(), 16));
-    }
-
-    function openMap() {
-      if (!dialog) return;
-
-      if (typeof dialog.showModal === "function") {
-        dialog.showModal();
-      } else {
-        dialog.setAttribute("open", "");
-      }
-
-      const m = ensureMap();
-
-      if (m) {
-        setTimeout(function () {
-          m.invalidateSize();
-        }, 50);
-      }
-    }
-
-    function closeMap() {
-      if (!dialog) return;
-
-      if (typeof dialog.close === "function") {
-        dialog.close();
-      } else {
-        dialog.removeAttribute("open");
-      }
-    }
-
-    function savePendingLocation() {
-      if (!Number.isFinite(pendingLat) || !Number.isFinite(pendingLng)) {
-        setStatus("Please tap the map or use your current location first.", "error");
-        return false;
-      }
-
-      latInput.value = String(pendingLat);
-      lngInput.value = String(pendingLng);
-
-      /*
-        Keep a machine-readable fallback even if no reverse
-        geocoder is used. The written delivery address remains
-        the customer's human-readable address.
-      */
-      if (addressInput && !addressInput.value.trim()) {
-        addressInput.value =
-          "Map pin: " +
-          formatCoord(pendingLat) +
-          ", " +
-          formatCoord(pendingLng);
-      }
-
-      updateStatus();
-      closeMap();
-      return true;
-    }
-
-    function useCurrentLocation() {
-      if (!navigator.geolocation) {
-        setStatus(
-          "Your browser does not support location services. Please set the location on the map.",
-          "error"
-        );
-        return;
-      }
-
-      setStatus("Requesting your current location…");
-
-      navigator.geolocation.getCurrentPosition(
-        function (position) {
-          pendingLat = position.coords.latitude;
-          pendingLng = position.coords.longitude;
-
-          const m = ensureMap();
-
-          if (m) {
-            m.setView([pendingLat, pendingLng], 17);
-            showPendingMarker(pendingLat, pendingLng);
-          }
-
-          latInput.value = String(pendingLat);
-          lngInput.value = String(pendingLng);
-
-          if (addressInput && !addressInput.value.trim()) {
-            addressInput.value =
-              "Current location pin: " +
-              formatCoord(pendingLat) +
-              ", " +
-              formatCoord(pendingLng);
-          }
-
-          updateStatus();
-        },
-        function (error) {
-          let message =
-            "Could not get your current location.";
-
-          if (error && error.code === 1) {
-            message =
-              "Location permission was denied. Please allow location access or set the pin on the map.";
-          } else if (error && error.code === 2) {
-            message =
-              "Your location could not be determined. Please set the pin on the map.";
-          }
-
-          setStatus(message, "error");
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 60000
-        }
-      );
-    }
-
-    if (openButton) {
-      openButton.addEventListener("click", openMap);
-    }
-
-    if (currentButton) {
-      currentButton.addEventListener("click", useCurrentLocation);
-    }
-
-    if (confirmButton) {
-      confirmButton.addEventListener("click", savePendingLocation);
-    }
-
-    if (closeButton) {
-      closeButton.addEventListener("click", closeMap);
-    }
-
-    if (dialog) {
-      dialog.addEventListener("click", function (event) {
-        if (event.target === dialog) {
-          closeMap();
-        }
-      });
-    }
-
-    updateStatus();
-
-    return {
-      setLocation: function (lat, lng, label) {
-        const latitude = Number(lat);
-        const longitude = Number(lng);
-
-        if (
-          !Number.isFinite(latitude) ||
-          !Number.isFinite(longitude)
-        ) {
-          return false;
-        }
-
-        latInput.value = String(latitude);
-        lngInput.value = String(longitude);
-
-        if (addressInput && label) {
-          addressInput.value = String(label);
-        }
-
-        pendingLat = latitude;
-        pendingLng = longitude;
-
-        if (map) {
-          map.setView([latitude, longitude], 17);
-          showPendingMarker(latitude, longitude);
-        }
-
-        updateStatus();
-        return true;
-      },
-
-      clear: function () {
-        latInput.value = "";
-        lngInput.value = "";
-
-        if (addressInput) {
-          addressInput.value = "";
-        }
-
-        pendingLat = null;
-        pendingLng = null;
-
-        if (marker) {
-          marker.remove();
-          marker = null;
-        }
-
-        updateStatus();
-      },
-
-      getLocation: function () {
-        const latitude = parseFloat(latInput.value);
-        const longitude = parseFloat(lngInput.value);
-
-        return {
-          latitude: Number.isFinite(latitude) ? latitude : null,
-          longitude: Number.isFinite(longitude) ? longitude : null,
-          location_address:
-            addressInput?.value.trim() || null
-        };
-      },
-
-      open: openMap,
-      useCurrentLocation
-    };
-  }
-
-  window.SuruLocationPicker = {
-    init: createMapPicker
-  };
-})();
-}
-
-
 /* CUSTOMER AUTHENTICATION */
 if (document.getElementById("passwordLoginButton") || document.getElementById("registerForm") || document.getElementById("logoutBtn")) {
 /* =====================================================
    SURU COLLECTION - CUSTOMER AUTHENTICATION
    Email/password registration, login and account management
-   + Saved delivery map location
 
    Phone is required for customer delivery/contact details but is
    not used as an authentication identifier.
@@ -1607,22 +1256,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.className = "message " + type;
   }
 
-  function getLocationPicker() {
-    return window.suruRegisterLocationPicker ||
-      window.suruAccountLocationPicker ||
-      window.SuruLocationPickerInstance ||
-      null;
-  }
-
-  function getLocationFromInputs() {
-    const latitude = parseFloat($("locationLatitude")?.value);
-    const longitude = parseFloat($("locationLongitude")?.value);
-    return {
-      latitude: Number.isFinite(latitude) ? latitude : null,
-      longitude: Number.isFinite(longitude) ? longitude : null,
-      location_address: $("locationAddress")?.value.trim() || null
-    };
-  }
 
       async function getProfile() {
     const { data: userResult, error: userError } = await client.auth.getUser();
@@ -1667,12 +1300,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const metadata = user.user_metadata || {};
     const p = pending || {};
-    const locationData = {
-      latitude: p.latitude ?? metadata.latitude ?? null,
-      longitude: p.longitude ?? metadata.longitude ?? null,
-      location_address: p.location_address || metadata.location_address || null
-    };
-
     const phone = String(
       p.phone ?? metadata.phone ?? existing.data?.phone ?? ""
     ).trim();
@@ -1691,13 +1318,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       district: p.district || existing.data?.district || null,
       province: p.province || existing.data?.province || null,
       postal_code: p.postal_code || existing.data?.postal_code || null,
-      latitude: locationData.latitude,
-      longitude: locationData.longitude,
-      location_address: locationData.location_address,
-      location_updated_at:
-        locationData.latitude != null && locationData.longitude != null
-          ? new Date().toISOString()
-          : existing.data?.location_updated_at || null,
       is_active: true
     };
 
@@ -1760,7 +1380,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const address = $("address")?.value.trim() || "";
     const city = $("city")?.value.trim() || "";
     const district = $("district")?.value.trim() || "";
-    const locationData = getLocationFromInputs();
 
     if (!name) { showMessage("Please enter your name.", "error"); return; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showMessage("Please enter a valid email address.", "error"); return; }
@@ -1774,10 +1393,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       password,
       options: {
         data: {
-          name, phone, address, city, district,
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-          location_address: locationData.location_address
+          name, phone, address, city, district
         }
       }
     });
@@ -1798,10 +1414,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     session = data.session;
     try {
       await finishCustomerProfile(user, {
-        name, email, phone, address, city, district,
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        location_address: locationData.location_address
+        name, email, phone, address, city, district
       });
     } catch (e) {
       showMessage(e.message || "Account was created, but the customer profile could not be saved.", "error");
@@ -1914,50 +1527,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const accountPicker = window.suruAccountLocationPicker;
-    if (accountPicker && profile.latitude != null && profile.longitude != null) {
-      accountPicker.setLocation(
-        profile.latitude,
-        profile.longitude,
-        profile.location_address || `Saved map pin: ${Number(profile.latitude).toFixed(6)}, ${Number(profile.longitude).toFixed(6)}`
-      );
-    }
-
-    const locationMissing = profile.latitude == null || profile.longitude == null;
-    if ($("accountLocationPrompt") && locationMissing) {
-      $("accountLocationPrompt").textContent =
-        "Your delivery map location is not saved. Please save it now or it will be requested during checkout.";
-    }
-
-    $("saveAccountLocation")?.addEventListener("click", async () => {
-      const locationData = accountPicker?.getLocation?.() || getLocationFromInputs();
-      if (locationData.latitude == null || locationData.longitude == null) {
-        showMessage("Please use your current location or set a pin on the map.", "error");
-        return;
-      }
-
-      const { error } = await client
-        .from("customers")
-        .update({
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-          location_address: locationData.location_address || null,
-          location_updated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq("auth_user_id", session.user.id);
-
-      if (error) {
-        showMessage(error.message, "error");
-        return;
-      }
-
-      showMessage("Delivery location saved successfully.", "success");
-      if ($("accountLocationPrompt")) {
-        $("accountLocationPrompt").textContent =
-          "Your delivery location is saved and will be used for future orders.";
-      }
-    });
 
     /* -----------------------------
        ORDERS
@@ -1973,8 +1542,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         order_status,
         shipping_address,
         city,
-        delivery_latitude,
-        delivery_longitude,
         created_at,
         order_items(
           product_name,
@@ -1999,9 +1566,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       $("orders").innerHTML = orders.map(order => {
         const items = order.order_items || [];
-        const mapLink = order.delivery_latitude != null && order.delivery_longitude != null
-          ? `<a class="location-map-link" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${encodeURIComponent(order.delivery_latitude + "," + order.delivery_longitude)}">View delivery pin</a>`
-          : "";
         return `
           <article class="order-card">
             <div class="order-head"><strong>${order.order_number || "Order"}</strong><span>${order.order_status || "pending"}</span></div>
@@ -2011,7 +1575,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
             <strong class="order-total">NPR ${Number(order.total || 0).toLocaleString("en-IN")}</strong>
             <small>Payment: ${order.payment_method || "—"} · ${order.payment_status || "—"}</small>
-            ${mapLink}
           </article>`;
       }).join("");
     }
@@ -7616,9 +7179,9 @@ function renderCustomers() {
 
           customer.email,
 
-          customer.city,
-
-          customer.district
+          customer.address,
+                    customer.city,
+                    customer.district
 
         ]
           .filter(Boolean)
@@ -7682,7 +7245,7 @@ function renderCustomers() {
 
             <th>Phone</th>
 
-            <th>Location</th>
+            <th>Address</th>
 
             <th>Status</th>
 
@@ -11299,13 +10862,6 @@ const lineTotal =
       "placeOrder"
     );
 
-
-  let savedCustomerLocation = {
-    latitude: null,
-    longitude: null,
-    location_address: null
-  };
-
   async function prefillCheckoutCustomer() {
     const client = window.suruSupabaseClient;
     if (!client) return;
@@ -11327,11 +10883,6 @@ const lineTotal =
       setValue("customerPhone", profile.phone);
       setValue("customerAddress", profile.address);
       setValue("customerCity", [profile.city, profile.district].filter(Boolean).join(", "));
-      savedCustomerLocation = {
-        latitude: Number.isFinite(Number(profile.latitude)) ? Number(profile.latitude) : null,
-        longitude: Number.isFinite(Number(profile.longitude)) ? Number(profile.longitude) : null,
-        location_address: profile.location_address || null
-      };
     } catch (error) {
       console.warn("Checkout profile prefill unavailable:", error);
     }
@@ -11390,29 +10941,23 @@ const lineTotal =
         let orderNumber = "";
 
         if (client) {
-          const { data, error } = await client.rpc("place_order_with_location", {
-            p_customer: {
-              name,
-              phone,
-              email,
-              address,
-              city: cityDistrict,
-              district: null,
-              province: null,
-              postal_code: null,
-              latitude: savedCustomerLocation.latitude,
-              longitude: savedCustomerLocation.longitude,
-              location_address: savedCustomerLocation.location_address
-            },
-            p_items: items,
-            p_payment_method: payment === "Online Payment — confirm with Suru Collection" ? "online" : "cod",
-            p_customer_note: paymentRef
-              ? "Payment reference: " + paymentRef
-              : null,
-            p_latitude: savedCustomerLocation.latitude,
-            p_longitude: savedCustomerLocation.longitude,
-            p_location_address: savedCustomerLocation.location_address
-          });
+          const { data, error } = await client.rpc("place_order", {
+          p_customer: {
+            name,
+            phone,
+            email,
+            address,
+            city: cityDistrict,
+            district: null,
+            province: null,
+            postal_code: null
+          },
+          p_items: items,
+          p_payment_method: payment === "Online Payment — confirm with Suru Collection" ? "online" : "cod",
+          p_customer_note: paymentRef
+            ? "Payment reference: " + paymentRef
+            : null
+        })
 
           if (error) throw error;
           orderNumber = data?.order_number || "";
@@ -11526,38 +11071,6 @@ const lineTotal =
 })();
 
 
-}
-
-
-/* ACCOUNT LOCATION INITIALISATION */
-if (document.getElementById("locationMap") && document.getElementById("saveAccountLocation")) {
-
-document.addEventListener("DOMContentLoaded", function () {
-  window.suruAccountLocationPicker =
-    window.SuruLocationPicker?.init({
-      mapId: "locationMap",
-      openButtonId: "setLocationOnMap",
-      currentButtonId: "useCurrentLocation",
-      statusId: "locationStatus",
-      latId: "locationLatitude",
-      lngId: "locationLongitude",
-      addressId: "locationAddress",
-      dialogId: "locationDialog",
-      confirmButtonId: "confirmMapLocation",
-      closeButtonId: "closeMapLocation"
-    });
-
-  document.getElementById("closeMapLocation2")?.addEventListener("click", function () {
-    document.getElementById("locationDialog")?.close();
-  });
-});
-
-}
-
-
-/* REGISTER LOCATION INITIALISATION */
-if (document.getElementById("registerForm") && document.getElementById("locationMap")) {
-document.addEventListener("DOMContentLoaded", function(){const picker=window.SuruLocationPicker?.init({mapId:"locationMap",openButtonId:"setLocationOnMap",currentButtonId:"useCurrentLocation",statusId:"locationStatus",latId:"locationLatitude",lngId:"locationLongitude",addressId:"locationAddress",dialogId:"locationDialog",confirmButtonId:"confirmMapLocation",closeButtonId:"closeMapLocation"});document.getElementById("closeMapLocation2")?.addEventListener("click",()=>document.getElementById("locationDialog")?.close());window.suruRegisterLocationPicker=picker;});
 }
 
 
