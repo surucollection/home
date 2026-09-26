@@ -182,6 +182,8 @@ a {
 }
 
 .menu-toggle {
+  position: relative;
+  z-index: 1102;
   display: none;
 
   border: 0;
@@ -1290,6 +1292,7 @@ a {
 
   .nav nav {
     position: absolute;
+    z-index: 1101;
 
     left: 0;
     right: 0;
