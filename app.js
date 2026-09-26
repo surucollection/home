@@ -11392,265 +11392,184 @@ const lineTotal =
     );
 
 
+  let savedCustomerLocation = {
+    latitude: null,
+    longitude: null,
+    location_address: null
+  };
+
+  async function prefillCheckoutCustomer() {
+    const client = window.suruSupabaseClient;
+    if (!client) return;
+
+    try {
+      const { data: sessionData } = await client.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data: profile } = await client.rpc("my_customer_profile");
+      if (!profile || typeof profile !== "object") return;
+
+      const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el && !el.value && value) el.value = value;
+      };
+
+      setValue("customerName", profile.name);
+      setValue("customerPhone", profile.phone);
+      setValue("customerAddress", profile.address);
+      setValue("customerCity", [profile.city, profile.district].filter(Boolean).join(", "));
+      savedCustomerLocation = {
+        latitude: Number.isFinite(Number(profile.latitude)) ? Number(profile.latitude) : null,
+        longitude: Number.isFinite(Number(profile.longitude)) ? Number(profile.longitude) : null,
+        location_address: profile.location_address || null
+      };
+    } catch (error) {
+      console.warn("Checkout profile prefill unavailable:", error);
+    }
+  }
+
   if (placeOrder) {
+    placeOrder.addEventListener("click", async function () {
+      const cart = getCart();
 
-    placeOrder.addEventListener(
-      "click",
-      async function () {
+      if (!cart.length) {
+        alert("Your cart is empty.");
+        return;
+      }
 
+      const name = document.getElementById("customerName")?.value.trim() || "";
+      const phone = document.getElementById("customerPhone")?.value.trim() || "";
+      const address = document.getElementById("customerAddress")?.value.trim() || "";
+      const cityDistrict = document.getElementById("customerCity")?.value.trim() || "";
+      const payment = document.getElementById("payment")?.value || "Cash on Delivery";
+      const paymentRef = document.getElementById("paymentReference")?.value.trim() || "";
+      const screenshotInput = document.getElementById("paymentScreenshot");
+      const screenshotFile = screenshotInput?.files?.[0] || null;
 
-        const cart =
-          getCart();
+      if (!name || !phone || !address || !cityDistrict) {
+        alert("Please fill in all delivery details.");
+        return;
+      }
 
+      const button = document.getElementById("placeOrder");
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = "Creating order…";
 
-        if (!cart.length) {
+      try {
+        const client = window.suruSupabaseClient;
+        let email = "";
 
-          alert(
-            "Your cart is empty."
-          );
-
-          return;
-
+        if (client) {
+          try {
+            const { data: userData } = await client.auth.getUser();
+            email = userData?.user?.email || "";
+          } catch (_) {}
         }
 
+        const items = cart.map(item => ({
+          code: String(item.code || item.product_code || "").trim(),
+          size: item.size || null,
+          color: item.color || item.colour || null,
+          qty: Math.max(1, Number(item.quantity ?? item.qty ?? 1))
+        })).filter(item => item.code);
 
-        const name =
-          document
-            .getElementById(
-              "customerName"
-            )
-            .value
-            .trim();
-
-
-        const phone =
-          document
-            .getElementById(
-              "customerPhone"
-            )
-            .value
-            .trim();
-
-
-        const address =
-          document
-            .getElementById(
-              "customerAddress"
-            )
-            .value
-            .trim();
-
-
-        const city =
-          document
-            .getElementById(
-              "customerCity"
-            )
-            .value
-            .trim();
-
-
-        const payment =
-          document
-            .getElementById(
-              "payment"
-            )
-            .value;
-
-
-        if (
-          !name ||
-          !phone ||
-          !address ||
-          !city
-        ) {
-
-          alert(
-            "Please fill in all delivery details."
-          );
-
-          return;
-
+        if (!items.length) {
+          throw new Error("Your cart contains an invalid product. Please remove it and add the product again.");
         }
 
+        let orderNumber = "";
+
+        if (client) {
+          const { data, error } = await client.rpc("place_order_with_location", {
+            p_customer: {
+              name,
+              phone,
+              email,
+              address,
+              city: cityDistrict,
+              district: null,
+              province: null,
+              postal_code: null,
+              latitude: savedCustomerLocation.latitude,
+              longitude: savedCustomerLocation.longitude,
+              location_address: savedCustomerLocation.location_address
+            },
+            p_items: items,
+            p_payment_method: payment === "Online Payment — confirm with Suru Collection" ? "online" : "cod",
+            p_customer_note: paymentRef
+              ? "Payment reference: " + paymentRef
+              : null,
+            p_latitude: savedCustomerLocation.latitude,
+            p_longitude: savedCustomerLocation.longitude,
+            p_location_address: savedCustomerLocation.location_address
+          });
+
+          if (error) throw error;
+          orderNumber = data?.order_number || "";
+        }
 
         let total = 0;
+        const lines = cart.map(item => {
+          const qty = Number(item.quantity ?? item.qty ?? 0);
+          const lineTotal = Number(item.price || 0) * qty;
+          total += lineTotal;
+          return "• " + (item.code || "") + " — " + (item.name || "") +
+            (item.color ? " | Colour: " + item.color : "") +
+            (item.size ? " | Size: " + item.size : "") +
+            " | Qty: " + qty + " | " + money(lineTotal);
+        });
 
+        const paymentDetails = payment === "Online Payment — confirm with Suru Collection"
+          ? [
+              "Payment: Online Payment",
+              paymentRef ? "Payment Reference: " + paymentRef : "Payment Reference: Not provided",
+              screenshotFile ? "Payment Screenshot: Please attach the selected image in WhatsApp." : "Payment Screenshot: Not provided"
+            ].join("\\n")
+          : "Payment: Cash on Delivery";
 
-        const lines =
-          cart.map(
-            function (item) {
+        const message = [
+          "Hello Suru Collection, I would like to place an order.",
+          orderNumber ? "Order Number: " + orderNumber : "",
+          "",
+          lines.join("\\n"),
+          "",
+          "Total: " + money(total),
+          paymentDetails,
+          "",
+          "Customer: " + name,
+          "Phone: " + phone,
+          "Address: " + address + ", " + cityDistrict,
+          "",
+          "Please confirm availability and delivery charges."
+        ].filter(Boolean).join("\\n");
 
-              const lineTotal =
-                Number(
-                  item.price || 0
-                ) *
-                Number(
-                  item.qty || 0
-                );
+        await window.SuruShop?.clearCart?.();
 
+        window.open(
+          "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(message),
+          "_blank"
+        );
 
-              total +=
-                lineTotal;
+        alert(
+          orderNumber
+            ? "Order " + orderNumber + " was saved successfully. WhatsApp is opening for confirmation."
+            : "WhatsApp is opening with your order details."
+        );
 
-
-              return (
-                "• " +
-                item.code +
-                " — " +
-                item.name +
-                (
-                  item.color
-                    ? " | Colour: " +
-                      item.color
-                    : ""
-                ) +
-                (
-                  item.size
-                    ? " | Size: " +
-                      item.size
-                    : ""
-                ) +
-                " | Qty: " +
-                (item.quantity ?? item.qty ?? 0) +
-                " | " +
-                money(lineTotal)
-              );
-
-            }
-          );
-
-
-        const paymentRef =
-  document
-    .getElementById(
-      "paymentReference"
-    )
-    .value
-    .trim();
-
-
-const screenshotInput =
-  document.getElementById(
-    "paymentScreenshot"
-  );
-
-
-const screenshotFile =
-  screenshotInput &&
-  screenshotInput.files &&
-  screenshotInput.files[0]
-    ? screenshotInput.files[0]
-    : null;
-
-
-/* =====================================================
-   PAYMENT INFORMATION
-===================================================== */
-
-let paymentDetails = "";
-
-
-if (
-  payment ===
-  "Online Payment — confirm with Suru Collection"
-) {
-
-  paymentDetails =
-    [
-      "Payment: Online Payment",
-      paymentRef
-        ? "Payment Reference: " +
-          paymentRef
-        : "Payment Reference: Not provided",
-      screenshotFile
-        ? "Payment Screenshot: Attached"
-        : "Payment Screenshot: Not provided"
-    ].join("\n");
-
-} else {
-
-  paymentDetails =
-    "Payment: Cash on Delivery";
-
-}
-
-
-/* =====================================================
-   WHATSAPP MESSAGE
-===================================================== */
-
-const message =
-  [
-    "Hello Suru Collection, I would like to place an order.",
-    "",
-    lines.join("\n"),
-    "",
-    "Total: " +
-      money(total),
-    paymentDetails,
-    "",
-    "Customer: " +
-      name,
-    "Phone: " +
-      phone,
-    "Address: " +
-      address +
-      ", " +
-      city,
-    "",
-    "Please confirm availability and delivery charges."
-  ].join("\n");
-
-
-/* =====================================================
-   SCREENSHOT PRESENT
-===================================================== */
-
-if (screenshotFile) {
-
-  /*
-     WhatsApp's web link can reliably pre-fill the
-     complete order message.
-
-     A normal website cannot force an image attachment
-     into a WhatsApp chat together with pre-filled text.
-     Therefore we open WhatsApp with the full order
-     details and ask the customer to attach the selected
-     screenshot.
-  */
-
-  const whatsappUrl =
-    "https://wa.me/" +
-    WHATSAPP +
-    "?text=" +
-    encodeURIComponent(message);
-
-  window.open(
-    whatsappUrl,
-    "_blank"
-  );
-
-  return;
-}
-/* =====================================================
-   NO SCREENSHOT
-   ===================================================== */
-
-window.open(
-  "https://wa.me/" +
-  WHATSAPP +
-  "?text=" +
-  encodeURIComponent(
-    message
-  ),
-  "_blank"
-);
-
+        renderCart();
+      } catch (error) {
+        console.error("Order creation failed:", error);
+        alert("Unable to place the order. " + (error?.message || "Please try again."));
+      } finally {
+        button.disabled = false;
+        button.textContent = originalText;
       }
-    );
-
+    });
   }
+
+  prefillCheckoutCustomer();
 
 
   /* =====================================================
