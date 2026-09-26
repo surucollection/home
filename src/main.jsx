@@ -22,7 +22,7 @@ async function getNcmBranches(){
   NCM_BRANCH_CACHE.items=branches;
   return branches;
 }
-const ncmNorm=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+const ncmNorm=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
 function matchNcmBranch(branches,city,district){
   const c=ncmNorm(city),d=ncmNorm(district);
   if(!c&&!d)return "";
