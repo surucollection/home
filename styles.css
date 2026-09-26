@@ -6241,7 +6241,7 @@ a {
   .sc-footer-description{max-width:151px;font-size:8.5px}
   .sc-footer-socials{gap:6px}
   .sc-footer-socials a{width:27px;height:27px;font-size:13px}
-  .sc-footer-nav,.sc-footer-contact{padding-left:6px}
+  .sc-footer-nav{padding-left:6px}.sc-footer-contact{padding-left:9px}
   .sc-footer-section-title{min-height:32px;font-size:10px}
   .sc-footer-service{min-height:62px}
   .sc-footer-service strong{font-size:7.5px}
