@@ -1,4 +1,4 @@
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css");
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 :root {
   --maroon: #76292d;
   --maroon-dark: #632126;
@@ -3825,7 +3825,43 @@ a {
 
 .footer-grid > div:first-child {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.footer-grid > .footer-brand-social {
+  grid-column: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.footer-grid > .footer-brand-social .social-links {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.footer-grid > .footer-brand-social .social-links a {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  flex: 0 0 32px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 50%;
+  color: rgba(255,255,255,.70);
+  transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.footer-grid > .footer-brand-social .social-links a:hover {
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.25);
+  transform: translateY(-2px);
 }
 
 .footer-logo {
@@ -3919,10 +3955,17 @@ a {
     gap: 28px 22px;
   }
 
-  .footer-grid > div:first-child {
+  .footer-grid > div:first-child,
+  .footer-grid > .footer-brand-social {
     grid-column: 1 / -1;
+    align-items: center;
     justify-content: center;
     margin-bottom: 2px;
+    text-align: center;
+  }
+
+  .footer-grid > .footer-brand-social .social-links {
+    justify-content: center;
   }
 
   .footer-logo {
@@ -3962,7 +4005,9 @@ a {
   }
 
   .footer-grid > div:first-child,
-  .footer-grid > div:not(:first-child) {
+  .footer-grid > div:not(:first-child),
+  .footer-grid > .footer-brand-social {
+    align-items: center;
     justify-content: center;
     text-align: center;
   }
