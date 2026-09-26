@@ -1888,7 +1888,7 @@ a {
   border: 0;
   border-radius: 9px;
 
-  background: #25d366;
+  background: #76292d;
 
   color: #fff;
 
@@ -1898,7 +1898,7 @@ a {
   cursor: pointer;
 
   box-shadow:
-    0 7px 18px rgba(37, 211, 102, .16);
+    0 7px 18px rgba(118, 41, 45, .16);
 
   transition:
     background .2s ease,
@@ -1907,12 +1907,12 @@ a {
 }
 
 .place-order:hover {
-  background: #20bd5b;
+  background: #632126;
 
   transform: translateY(-1px);
 
   box-shadow:
-    0 10px 24px rgba(37, 211, 102, .22);
+    0 10px 24px rgba(118, 41, 45, .22);
 }
 
 .place-order:active {
