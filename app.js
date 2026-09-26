@@ -19,6 +19,33 @@ window.suruSupabaseClient = window.supabase.createClient(
 );
 
 
+/* =====================================================
+   GLOBAL NAVIGATION
+   One shared mobile-menu handler for every page.
+===================================================== */
+(function initializeGlobalNavigation() {
+  const menuToggle = document.getElementById("menuToggle");
+  const mainNav = document.getElementById("mainNav");
+
+  if (!menuToggle || !mainNav) return;
+
+  menuToggle.addEventListener("click", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const open = mainNav.classList.toggle("open");
+    menuToggle.setAttribute("aria-expanded", String(open));
+  });
+
+  mainNav.querySelectorAll("a").forEach(function (link) {
+    link.addEventListener("click", function () {
+      mainNav.classList.remove("open");
+      menuToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+})();
+
+
 /* SHOP / CART */
 /* =====================================================
    SURU COLLECTION — SHOP / CART
@@ -1597,32 +1624,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
-  /* =====================================================
-     MAIN NAVIGATION / YEAR
-  ===================================================== */
-  const menuToggle = $("menuToggle");
-  const mainNav = $("mainNav");
-
-  if (menuToggle && mainNav) {
-    menuToggle.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      const open = mainNav.classList.toggle("open");
-      menuToggle.setAttribute("aria-expanded", String(open));
-    });
-
-    mainNav.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", function () {
-        mainNav.classList.remove("open");
-        menuToggle.setAttribute("aria-expanded", "false");
-      });
-    });
-  }
-
-  const year = $("year");
-  if (year) year.textContent = new Date().getFullYear();
-
-  async function getProfile() {
+      async function getProfile() {
     const { data: userResult, error: userError } = await client.auth.getUser();
     const authUser = userResult?.user || null;
     if (!authUser?.id) {
@@ -8547,73 +8549,6 @@ if (document.getElementById("productGrid")) {
 
 
     return response.json();
-
-  }
-
-
-  /* =========================================================
-     MOBILE MENU
-     ========================================================= */
-
-  const menuToggle =
-    document.getElementById(
-      "menuToggle"
-    );
-
-  const mainNav =
-    document.getElementById(
-      "mainNav"
-    );
-
-
-  if (
-    menuToggle &&
-    mainNav
-  ) {
-
-    menuToggle.addEventListener(
-      "click",
-      function () {
-
-        const open =
-          mainNav.classList.toggle(
-            "open"
-          );
-
-
-        menuToggle.setAttribute(
-          "aria-expanded",
-          String(open)
-        );
-
-      }
-    );
-
-
-    mainNav
-      .querySelectorAll("a")
-      .forEach(
-        function (link) {
-
-          link.addEventListener(
-            "click",
-            function () {
-
-              mainNav.classList.remove(
-                "open"
-              );
-
-
-              menuToggle.setAttribute(
-                "aria-expanded",
-                "false"
-              );
-
-            }
-          );
-
-        }
-      );
 
   }
 
