@@ -3775,7 +3775,10 @@ a {
 }
 .account-dropdown a:hover,
 .account-logout:hover{background:var(--cream-dark);color:var(--maroon)}
-.account-dropdown-separated{border-top:1px solid var(--line)!important;border-radius:0!important}
+.account-dropdown-divider{height:1px;background:var(--line);margin:4px 0}
+.account-dropdown .account-dropdown-divider + a,
+.account-dropdown .account-dropdown-divider + .account-logout{border-top:0!important}
+.account-dropdown a::after{display:none!important}
 .account-logout{margin-top:0}
   .logout-icon{font-size:15px;line-height:1;margin-right:7px;display:inline-flex;align-items:center;justify-content:center}
 @media(max-width:760px){
