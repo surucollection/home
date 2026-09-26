@@ -53,8 +53,8 @@ function Header(){
         </button>
         {accountOpen&&<div className="account-dropdown">
           <div className="account-dropdown-profile"><span className="account-avatar large">{initial}</span><div><strong>{account.email||"—"}</strong><small>{account.phone||"—"}</small></div></div>
-          <div className="account-dropdown-divider"/>
           <a href="/account/" onClick={()=>setAccountOpen(false)}>My Account</a>
+          <div className="account-dropdown-divider"/>
           <a href="/orders/" onClick={()=>setAccountOpen(false)}>My Orders</a>
           <div className="account-dropdown-divider"/>
           <button type="button" className="account-logout" onClick={logout}><i className="fa fa-sign-out logout-icon" aria-hidden="true"></i>Logout</button>
