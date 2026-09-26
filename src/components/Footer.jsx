@@ -17,7 +17,15 @@ const quickLinks = [
 const supportLinks = [
   ["/account.html", "My Account"],
   ["/order.html", "Track Order"],
-  ["/contact.html", "Contact Support"]
+  ["/contact.html", "Contact Support"],
+  ["/contact.html", "Shipping Information"]
+];
+
+const services = [
+  ["fas fa-truck-fast", "Nepal-wide Delivery", "Reliable doorstep delivery"],
+  ["fas fa-money-bill-wave", "Cash on Delivery", "Pay when your order arrives"],
+  ["fas fa-credit-card", "Online Payment", "Convenient & secure checkout"],
+  ["fas fa-headset", "Personal Support", "We're happy to help"]
 ];
 
 export default function Footer() {
@@ -25,7 +33,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-main">
         <div className="footer-grid">
-          <div className="footer-brand">
+          <section className="footer-brand">
             <img
               src="/assets/suru-logo-official.png"
               className="footer-logo"
@@ -39,35 +47,30 @@ export default function Footer() {
 
             <div className="social-links" aria-label="Social media">
               {socialLinks.map(([href, label, icon]) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={label}
-                >
+                <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}>
                   <i className={icon} />
                 </a>
               ))}
             </div>
+          </section>
+
+          <div className="footer-links-group">
+            <section className="footer-column">
+              <h3>Explore</h3>
+              {quickLinks.map(([href, label]) => (
+                <a key={label} href={href}>{label}</a>
+              ))}
+            </section>
+
+            <section className="footer-column">
+              <h3>Customer Care</h3>
+              {supportLinks.map(([href, label]) => (
+                <a key={label} href={href}>{label}</a>
+              ))}
+            </section>
           </div>
 
-          <div className="footer-column">
-            <h3>Explore</h3>
-            {quickLinks.map(([href, label]) => (
-              <a key={label} href={href}>{label}</a>
-            ))}
-          </div>
-
-          <div className="footer-column">
-            <h3>Customer Care</h3>
-            {supportLinks.map(([href, label]) => (
-              <a key={label} href={href}>{label}</a>
-            ))}
-            <a href="/contact.html">Shipping Information</a>
-          </div>
-
-          <div className="footer-column footer-contact">
+          <section className="footer-column footer-contact">
             <h3>Get In Touch</h3>
             <a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer">
               <i className="fab fa-whatsapp" />
@@ -81,41 +84,21 @@ export default function Footer() {
               <i className="fas fa-clock" />
               <span>We're here to help</span>
             </p>
-          </div>
+          </section>
         </div>
 
         <div className="footer-services" aria-label="Shopping benefits">
-          <div className="footer-service">
-            <span className="footer-service-icon"><i className="fas fa-truck-fast" /></span>
-            <div>
-              <strong>Nepal-wide Delivery</strong>
-              <span>Reliable doorstep delivery</span>
+          {services.map(([icon, title, text]) => (
+            <div className="footer-service" key={title}>
+              <span className="footer-service-icon">
+                <i className={icon} />
+              </span>
+              <div>
+                <strong>{title}</strong>
+                <span>{text}</span>
+              </div>
             </div>
-          </div>
-
-          <div className="footer-service">
-            <span className="footer-service-icon"><i className="fas fa-money-bill-wave" /></span>
-            <div>
-              <strong>Cash on Delivery</strong>
-              <span>Pay when your order arrives</span>
-            </div>
-          </div>
-
-          <div className="footer-service">
-            <span className="footer-service-icon"><i className="fas fa-credit-card" /></span>
-            <div>
-              <strong>Online Payment</strong>
-              <span>Convenient & secure checkout</span>
-            </div>
-          </div>
-
-          <div className="footer-service">
-            <span className="footer-service-icon"><i className="fas fa-headset" /></span>
-            <div>
-              <strong>Personal Support</strong>
-              <span>We're happy to help</span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
