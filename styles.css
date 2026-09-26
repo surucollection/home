@@ -3560,3 +3560,14 @@ a {
 
 
 .required-star{color:var(--maroon);font-weight:800;margin-left:2px}.optional-label{color:var(--muted);font-size:12px;font-weight:500;margin-left:3px}
+
+
+.customer-admin-detail{margin-top:18px}
+.customer-admin-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.customer-edit-form{margin:18px 0 26px}
+.customer-edit-form .form-grid{margin-bottom:14px}
+.customer-edit-form small{font-weight:400;opacity:.7}
+@media(max-width:700px){
+  .customer-admin-actions{width:100%}
+  .customer-admin-actions button{flex:1}
+}
