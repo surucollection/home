@@ -1,0 +1,8 @@
+import React,{useEffect,useState} from "react";
+import { money } from "../../lib/api.js";
+
+export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
+  const[e,setE]=useState({...p});
+  useEffect(()=>setE({...p}),[p]);
+  return <div className="product-admin-card"><small>{p.product_code} · {p.category}</small><h3>{p.name}</h3>{editing?<div className="admin-form"><div className="form-grid">{[["product_code","Product Code"],["name","Product Name"],["category","Category"],["price","Price"],["moq","MOQ"],["fabric","Fabric"],["color","Colour"],["pattern","Pattern"]].map(([k,l])=><label key={k}>{l}<input value={e[k]??""} onChange={x=>setE({...e,[k]:x.target.value})}/></label>)}</div><label>Description<textarea value={e.description||""} onChange={x=>setE({...e,description:x.target.value})}/></label><div className="check-row"><label><input type="checkbox" checked={!!e.is_active} onChange={x=>setE({...e,is_active:x.target.checked})}/> Active</label><label><input type="checkbox" checked={!!e.is_featured} onChange={x=>setE({...e,is_featured:x.target.checked})}/> Featured</label></div><button className="primary" onClick={()=>saveProduct(e)}>Save Product</button> <button className="secondary" onClick={()=>setEditing(null)}>Cancel</button></div>:<><div><b>{money(p.price)}</b> · MOQ: {p.moq}</div><p><span className={p.is_active?"badge active":"badge inactive"}>{p.is_active?"Active":"Inactive"}</span> {p.is_featured&&<span className="badge">Featured</span>}</p><button className="primary" onClick={()=>setEditing(p)}>Edit Product</button></>}</div>
+}
