@@ -84,6 +84,33 @@
 </dialog>
 
 <script src="app.js"></script>
+<script>
+(function () {
+  function initSuruMobileMenu() {
+    var button = document.getElementById("menuToggle");
+    var nav = document.getElementById("mainNav");
+    if (!button || !nav || button.dataset.menuBound === "true") return;
+    button.dataset.menuBound = "true";
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var isOpen = nav.classList.toggle("open");
+      button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+    nav.querySelectorAll("a").forEach(function (link) {
+      link.addEventListener("click", function () {
+        nav.classList.remove("open");
+        button.setAttribute("aria-expanded", "false");
+      });
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSuruMobileMenu);
+  } else {
+    initSuruMobileMenu();
+  }
+})();
+</script>
 </body>
 </html>
 <dialog class="variant-modal" id="variantModal">
