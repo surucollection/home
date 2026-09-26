@@ -27,78 +27,22 @@
 <body>
 
 
-<header class="header">
-
-  <div class="header-inner">
-
-
-    <a
-      href="index.html"
-      class="logo-link"
-    >
-
-      <img
-        src="assets/suru-logo-official.png"
-        alt="Suru Collection"
-      >
-
+<header class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand" aria-label="Suru Collection home">
+      <img src="assets/suru-logo-official.png" alt="Suru Collection">
     </a>
-
-
-    <button
-      class="menu-btn"
-      aria-label="Toggle navigation"
-      aria-expanded="false"
-      type="button"
-    >
-      ☰
-    </button>
-
-
-    <nav class="main-nav">
-
-      <a href="index.html">
-        Home
-      </a>
-
-      <a href="index.html#about">
-        About Us
-      </a>
-
-      <a href="index.html#collection">
-        Our Collection
-      </a>
-
-      <a href="index.html#products">
-        Products
-      </a>
-
-      <a href="index.html#contact">
-        Contact
-      </a>
-
-      <a
-        class="cta"
-        href="index.html#contact"
-      >
-        Enquire Now
-      </a>
-
+    <button id="menuToggle" class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <nav id="mainNav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="about.html">About Us</a>
+      <a href="index.html#collection">Our Collection</a>
+      <a href="products.html">Products</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html" class="account-link">My Account</a>
     </nav>
-
-
-    <a
-      href="order.html"
-      class="cart-link header-cart"
-      aria-label="Shopping cart"
-    >
-      Cart
-      <span id="cartCount">0</span>
-    </a>
-
-
+    <a href="order.html" class="cart-link" aria-label="Shopping cart">🛍️<span id="cartCount">0</span></a>
   </div>
-
 </header>
 
 
