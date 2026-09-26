@@ -6098,7 +6098,7 @@ a {
   .sc-footer-main{width:calc(100% - 28px)}
   .sc-footer-content{
     grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);
-    grid-template-rows:1fr 1fr 1fr;
+    grid-template-rows:repeat(3,minmax(34px,auto));
     min-height:0;
     padding:25px 8px 18px;
     column-gap:0;
