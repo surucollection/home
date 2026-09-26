@@ -93,7 +93,8 @@ const openOrder=async(o)=>{setSelectedOrder(o)};
  const displayedOrders=orderTab==="cancelled"?cancelledOrders:activeOrders;
  const closeOrder=()=>setSelectedOrder(null);
  if(busy)return <><Header/><main className="page"><section className="account-card"><div className="product-loading">Loading account…</div></section></main><Footer/></>;
- if(!profile)return <><Header/><main className="page"><section className="account-card"><h1>Welcome, Customer</h1><div className="message error">Your login is active, but your customer profile could not be found.</div>return <><Header/><main className="page"><section className="account-card"><h1>Welcome, {profile.name||"Customer"}</h1>
+ if(!profile)return <><Header/><main className="page"><section className="account-card"><h1>Welcome, Customer</h1><div className="message error">Your login is active, but your customer profile could not be found.</div>{!ordersOnly&&<button className="btn secondary" onClick={logout}>Logout</button>}</section></main><Footer/></>;
+ return <><Header/><main className="page"><section className="account-card"><h1>Welcome, {profile.name||"Customer"}</h1>
  {!ordersOnly&&<> <h2>My Profile</h2><div className="profile-grid">{[["Name",profile.name],["Email",profile.email||session.user.email],["Phone",profile.phone],["Address",profile.address],["City",profile.city],["District",profile.district],["Province",profile.province],["Postal Code",profile.postal_code],["NCM Delivery Branch",profile.ncm_destination_branch]].map(([l,v])=><div className="profile-item" key={l}><b>{l}</b><span>{v||"—"}</span></div>)}</div>
  <div className="account-edit-trigger"><button className="btn secondary" type="button" onClick={()=>{setEditing(true);setMsg("")}}>Edit Details</button></div>
 
