@@ -34,23 +34,25 @@ export default function Footer() {
       <div className="footer-main">
         <div className="footer-grid">
           <section className="footer-brand">
-            <img
-              src="/assets/suru-logo-official.png"
-              className="footer-logo"
-              alt="Suru Collection"
-            />
-            <p className="footer-tagline">Traditional elegance for every occasion.</p>
-            <p className="footer-description">
-              Discover thoughtfully selected traditional and ethnic wear for
-              every special occasion.
-            </p>
+            <div className="footer-brand-content">
+              <img
+                src="/assets/suru-logo-official.png"
+                className="footer-logo"
+                alt="Suru Collection"
+              />
+              <p className="footer-tagline">Traditional elegance for every occasion.</p>
+              <p className="footer-description">
+                Discover thoughtfully selected traditional and ethnic wear for
+                every special occasion.
+              </p>
 
-            <div className="social-links" aria-label="Social media">
-              {socialLinks.map(([href, label, icon]) => (
-                <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}>
-                  <i className={icon} />
-                </a>
-              ))}
+              <div className="social-links" aria-label="Social media">
+                {socialLinks.map(([href, label, icon]) => (
+                  <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}>
+                    <i className={icon} />
+                  </a>
+                ))}
+              </div>
             </div>
           </section>
 
