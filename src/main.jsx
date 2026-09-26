@@ -53,7 +53,7 @@ function Product(){
 function Order(){
  const[cart,setCart]=useState(()=>readCart()),[name,setName]=useState(""),[phone,setPhone]=useState(""),[address,setAddress]=useState(""),[city,setCity]=useState(""),[payment,setPayment]=useState("Cash on Delivery"),[paymentRef,setPaymentRef]=useState(""),[busy,setBusy]=useState(false),[msg,setMsg]=useState("");
  useEffect(()=>{const f=()=>setCart(readCart());addEventListener("suruCartChanged",f);return()=>removeEventListener("suruCartChanged",f)},[]);
- useEffect(()=>{(async()=>{try{const{data}=await supabase.auth.getSession();if(!data.session){location.href="login.html?return=order";return}const{data:p}=await supabase.rpc("my_customer_profile");if(!p){await supabase.auth.signOut();location.href="login.html?return=order";return}if(!name)setName(p.name||"");if(!phone)setPhone(p.phone||"");if(!address)setAddress(p.address||"");if(!city)setCity([p.city,p.district].filter(Boolean).join(", "))}catch{location.href="login.html?return=order"}})()},[]);
+ useEffect(()=>{(async()=>{try{const{data}=await supabase.auth.getSession();if(!data.session)return;const{data:p}=await supabase.rpc("my_customer_profile");if(!p)return;if(!name)setName(p.name||"");if(!phone)setPhone(p.phone||"");if(!address)setAddress(p.address||"");if(!city)setCity([p.city,p.district].filter(Boolean).join(", "))}catch{}})()},[]);
  const total=useMemo(()=>cart.reduce((n,x)=>n+Number(x.price||0)*Number(x.quantity??x.qty??0),0),[cart]);
  const remove=item=>setCart(removeCart(item));
  const clear=()=>setCart(clearCart());
