@@ -1,10 +1,13 @@
-import React from "react";
+import React,{useState} from "react";
 import { money } from "../lib/api.js";
 import { addCart } from "../lib/cart.js";
 
 export default function ProductCard({product,image}){
   const href="/product?code="+encodeURIComponent(product.product_code);
-  const add=()=>{
+  const[added,setAdded]=useState(false);
+  const add=(e)=>{
+    e?.preventDefault();
+    e?.stopPropagation();
     addCart({
       product_id:product.id,
       code:product.product_code,
@@ -15,6 +18,8 @@ export default function ProductCard({product,image}){
       color:product.color||null,
       quantity:1
     });
+    setAdded(true);
+    window.setTimeout(()=>setAdded(false),1200);
   };
   return <article className="product-card">
     <a className="product-image" href={href}>
@@ -25,7 +30,7 @@ export default function ProductCard({product,image}){
       <h3><a href={href}>{product.name}</a></h3>
       <div className="product-price">{money(product.price)}{product.compare_at_price&&<span className="compare-price">{money(product.compare_at_price)}</span>}</div>
       <div className="product-card-actions">
-        <button type="button" className="secondary-button" onClick={add}>Add to Cart</button>
+        <button type="button" className="secondary-button" onClick={add}>{added?"Added ✓":"Add to Cart"}</button>
         <a className="secondary-button" href={href}>View Details</a>
       </div>
     </div>
