@@ -3694,3 +3694,5 @@ a {
 @media(max-width:700px){.cancellation-review{min-width:150px}.cancellation-pending,.cancellation-rejected{white-space:normal}}
 
 .cancellation-note{margin-top:12px;padding:11px 13px;border-radius:10px;background:#faf6f1;color:#555;font-size:.9rem;line-height:1.45}
+
+.orders-tabs{display:flex;gap:8px;margin:0 0 18px;border-bottom:1px solid #eee5dc;padding-bottom:8px}.orders-tab{border:1px solid #e4d8cc;background:#fff;color:#76292d;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer}.orders-tab.active{background:#76292d;color:#fff;border-color:#76292d}.orders-tab:hover{background:#f8f1eb}.orders-tab.active:hover{background:#632126}@media(max-width:700px){.orders-tabs{overflow-x:auto;flex-wrap:nowrap}.orders-tab{white-space:nowrap;flex:0 0 auto}}
