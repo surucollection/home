@@ -6248,3 +6248,184 @@ a {
   .sc-footer-service strong{font-size:7.5px}
   .sc-footer-service div span{font-size:6.5px}
 }
+
+
+/* =========================================================
+   FINAL PRODUCT CARD REDESIGN
+   ========================================================= */
+.product-card{
+  position:relative;
+  background:#fffdfb;
+  border:1px solid #eaded7;
+  border-radius:18px;
+  box-shadow:0 8px 24px rgba(83,48,50,.08);
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+}
+.product-card:hover{
+  transform:translateY(-4px);
+  border-color:#d9c1b9;
+  box-shadow:0 16px 34px rgba(83,48,50,.13);
+}
+.product-card .product-image{
+  position:relative;
+  aspect-ratio:1/1.08;
+  background:#f7efe9;
+  border-radius:18px 18px 0 0;
+}
+.product-card .product-image::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(42,30,32,0) 68%,rgba(42,30,32,.08) 100%);
+}
+.product-card .product-image img{
+  transition:transform .45s ease;
+}
+.product-card:hover .product-image img{
+  transform:scale(1.035);
+}
+.product-card-content{
+  padding:16px 16px 15px;
+}
+.product-category{
+  display:inline-flex;
+  align-items:center;
+  min-height:22px;
+  margin:0 0 8px;
+  padding:4px 9px;
+  border-radius:999px;
+  background:#f5e8df;
+  color:#8d4d55;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.09em;
+}
+.product-card-content h3{
+  min-height:2.7em;
+  margin:0 0 9px;
+  color:#352628;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:19px;
+  font-weight:500;
+  line-height:1.35;
+  -webkit-line-clamp:2;
+}
+.product-card-content h3 a{
+  color:inherit;
+  text-decoration:none;
+}
+.product-card-content h3 a:hover{color:var(--maroon)}
+.product-card .product-price{
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+  min-height:24px;
+  margin:0 0 14px;
+  color:var(--maroon);
+  font-size:18px;
+  font-weight:800;
+}
+.product-card .compare-price{
+  margin:0;
+  color:#a59494;
+  font-size:12px;
+  font-weight:500;
+}
+.product-card-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  min-height:0;
+  margin-top:auto;
+}
+.product-card-actions>*{
+  width:100%;
+  min-width:0;
+  flex:unset!important;
+}
+.product-card-actions .secondary-button,
+.product-card-actions .buy-now-button{
+  min-height:40px;
+  padding:9px 10px;
+  border-radius:9px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+}
+.product-card-actions .secondary-button{
+  border:1px solid #d7c2b9;
+  background:#fffaf6;
+  color:var(--maroon);
+}
+.product-card-actions .secondary-button:hover{
+  background:#f7eee8;
+  border-color:#cbaaa1;
+}
+.product-card-actions .buy-now-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--maroon);
+  background:var(--maroon);
+  color:#fff;
+  text-decoration:none;
+}
+.product-card-actions .buy-now-button:hover{
+  background:var(--maroon-dark);
+  border-color:var(--maroon-dark);
+}
+.product-card .product-image-placeholder{
+  background:linear-gradient(135deg,#f8eee7,#f1e2da);
+  color:#9a7778;
+  font-family:Georgia,"Times New Roman",serif;
+}
+
+/* Product cards — responsive refinement */
+@media (max-width:1000px){
+  .product-card-content{padding:13px}
+  .product-card-content h3{font-size:16px}
+  .product-card .product-price{font-size:15px}
+  .product-card-actions .secondary-button,
+  .product-card-actions .buy-now-button{
+    min-height:38px;
+    font-size:11px;
+    padding:8px 6px;
+  }
+}
+@media (max-width:430px){
+  .product-card{
+    border-radius:14px;
+    box-shadow:0 5px 16px rgba(83,48,50,.07);
+  }
+  .product-card:hover{transform:none}
+  .product-card .product-image{border-radius:14px 14px 0 0}
+  .product-card-content{padding:10px}
+  .product-category{
+    min-height:19px;
+    margin-bottom:6px;
+    padding:3px 7px;
+    font-size:8px;
+  }
+  .product-card-content h3{
+    min-height:2.65em;
+    margin-bottom:7px;
+    font-size:14px;
+  }
+  .product-card .product-price{
+    min-height:20px;
+    margin-bottom:10px;
+    font-size:14px;
+  }
+  .product-card .compare-price{
+    font-size:10px;
+  }
+  .product-card-actions{gap:6px}
+  .product-card-actions .secondary-button,
+  .product-card-actions .buy-now-button{
+    min-height:36px;
+    border-radius:8px;
+    font-size:10px;
+    padding:7px 4px;
+  }
+}
