@@ -3,7 +3,8 @@ import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
 
-const staticFiles = [
+const htmlEntries = [
+  "index.html",
   "about.html",
   "account.html",
   "admin.html",
@@ -12,14 +13,12 @@ const staticFiles = [
   "order.html",
   "product.html",
   "products.html",
-  "register.html",
-  "app.js",
-  "styles.css"
+  "register.html"
 ];
 
-function copyStaticSiteFiles() {
+function copyRuntimeFiles() {
   return {
-    name: "copy-static-site-files",
+    name: "copy-runtime-files",
     closeBundle() {
       const root = process.cwd();
       const out = path.resolve(root, "dist");
@@ -38,10 +37,8 @@ function copyStaticSiteFiles() {
         fs.copyFileSync(src, dest);
       };
 
-      for (const file of staticFiles) {
-        copy(path.join(root, file), path.join(out, file));
-      }
-
+      copy(path.join(root, "app.js"), path.join(out, "app.js"));
+      copy(path.join(root, "styles.css"), path.join(out, "styles.css"));
       copy(path.join(root, "assets"), path.join(out, "assets"));
     }
   };
@@ -49,10 +46,15 @@ function copyStaticSiteFiles() {
 
 export default defineConfig({
   base: "./",
-  plugins: [react(), copyStaticSiteFiles()],
+  plugins: [react(), copyRuntimeFiles()],
   build: {
     sourcemap: false,
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: Object.fromEntries(
+        htmlEntries.map((file) => [file.replace(".html", ""), path.resolve(process.cwd(), file)])
+      )
+    }
   },
   server: {
     host: true
