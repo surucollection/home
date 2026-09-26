@@ -11546,50 +11546,6 @@ const lineTotal =
 
 
   /* =====================================================
-     NAVIGATION
-  ===================================================== */
-
-  const menuButton =
-    document.querySelector(
-      ".menu-btn"
-    );
-
-
-  const navigation =
-    document.querySelector(
-      ".main-nav"
-    );
-
-
-  if (
-    menuButton &&
-    navigation
-  ) {
-
-    menuButton.addEventListener(
-      "click",
-      function () {
-
-        const open =
-          navigation.classList.toggle(
-            "open"
-          );
-
-
-        menuButton.setAttribute(
-          "aria-expanded",
-          open
-            ? "true"
-            : "false"
-        );
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
      YEAR
   ===================================================== */
 
@@ -11677,58 +11633,6 @@ if (document.getElementById("productRoot")) {
 (function () {
 
   "use strict";
-
-
-  /* Mobile navigation */
-
-  const menuButton =
-    document.querySelector(".menu-btn");
-
-  const navigation =
-    document.querySelector(".main-nav");
-
-
-  if (menuButton && navigation) {
-
-    menuButton.addEventListener(
-      "click",
-      function () {
-
-        const open =
-          navigation.classList.toggle("open");
-
-        menuButton.setAttribute(
-          "aria-expanded",
-          open ? "true" : "false"
-        );
-
-      }
-    );
-
-
-    navigation
-      .querySelectorAll("a")
-      .forEach(function (link) {
-
-        link.addEventListener(
-          "click",
-          function () {
-
-            navigation.classList.remove(
-              "open"
-            );
-
-            menuButton.setAttribute(
-              "aria-expanded",
-              "false"
-            );
-
-          }
-        );
-
-      });
-
-  }
 
 
   const year =
