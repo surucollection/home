@@ -3546,3 +3546,14 @@ a {
 .buy-now-button{border:1px solid var(--maroon);background:var(--maroon);color:#fff;box-shadow:0 8px 20px rgba(118,41,45,.14)}
 .buy-now-button:hover{background:var(--maroon-dark);border-color:var(--maroon-dark)}
 @media(max-width:480px){.product-action-buttons{grid-template-columns:1fr}}
+
+
+/* Order confirmation */
+.order-success-card{width:min(620px,100%);margin:20px auto;padding:48px 30px;text-align:center;background:var(--white);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.order-success-icon{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;background:var(--maroon);color:#fff;font-size:32px;font-weight:800}
+.order-success-card h1{margin:4px 0 10px;color:var(--maroon);font-family:Georgia,"Times New Roman",serif;font-size:34px}
+.order-success-card>p:not(.eyebrow){font-size:16px}
+.order-success-actions{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:24px;flex-wrap:wrap}
+.order-success-actions .hero-btn{display:inline-flex;align-items:center;justify-content:center}
+.order-success-actions .text-button{margin:0}
+@media(max-width:600px){.order-success-card{padding:38px 20px}.order-success-card h1{font-size:29px}.order-success-actions{flex-direction:column}.order-success-actions .hero-btn,.order-success-actions .text-button{width:100%;text-align:center}}
