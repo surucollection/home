@@ -6,9 +6,7 @@ import path from "node:path";
 const htmlEntries = [
   "index.html",
   "about.html",
-  "account.html",
   "account/index.html",
-  "orders.html",
   "orders/index.html",
   "admin.html",
   "contact.html",
