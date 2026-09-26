@@ -19,8 +19,7 @@ const supportLinks = [
   ["/order.html", "Track Order"],
   ["/contact.html", "Shipping Policy"],
   ["/contact.html", "Return & Exchange"],
-  ["/contact.html", "Terms & Conditions"],
-  ["/contact.html", "Privacy Policy"]
+  ["/contact.html", "Terms & Conditions"]
 ];
 
 const services = [
