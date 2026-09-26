@@ -3776,6 +3776,7 @@ a {
 .account-dropdown a:hover,
 .account-logout:hover{background:var(--cream-dark);color:var(--maroon)}
 .account-logout{margin-top:5px}
+  .logout-icon{font-size:15px;line-height:1;margin-right:7px;display:inline-flex;align-items:center;justify-content:center}
 @media(max-width:760px){
   .account-menu{display:block}
   .account-menu-toggle{width:100%;justify-content:flex-start;padding:13px 5px;border-bottom:1px solid var(--line)}
