@@ -3692,3 +3692,5 @@ a {
 .cancellation-review small{display:block;overflow-wrap:anywhere;line-height:1.35}
 .cancellation-review button{font-size:.78rem;padding:7px 10px}
 @media(max-width:700px){.cancellation-review{min-width:150px}.cancellation-pending,.cancellation-rejected{white-space:normal}}
+
+.cancellation-note{margin-top:12px;padding:11px 13px;border-radius:10px;background:#faf6f1;color:#555;font-size:.9rem;line-height:1.45}
