@@ -1196,7 +1196,6 @@ a {
   .product-card-content { padding:12px; }
   .product-card h3 { font-size:16px; }
   .product-price { font-size:14px; }
-  .product-card .add-cart { min-height:40px; font-size:12px; }
   .checkout-grid { gap:20px; }
   .variant-modal { width:calc(100% - 20px); }
   .variant-modal-inner { padding:18px; }
