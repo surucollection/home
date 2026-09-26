@@ -5,10 +5,62 @@ import { supabase } from "../lib/api.js";
 function Header(){
   const[count,setCount]=useState(()=>readCart().reduce((n,x)=>n+Number(x.quantity||x.qty||0),0));
   const[open,setOpen]=useState(false);
+  const[accountOpen,setAccountOpen]=useState(false);
   const[loggedIn,setLoggedIn]=useState(false);
-  const customerPage=document.body?.classList.contains("customer-page");
-  useEffect(()=>{let mounted=true;supabase.auth.getSession().then(({data})=>{if(mounted)setLoggedIn(!!data.session)});const{data:sub}=supabase.auth.onAuthStateChange((_event,session)=>{if(mounted)setLoggedIn(!!session)});return()=>{mounted=false;sub.subscription.unsubscribe()};},[]);
-  useEffect(()=>{const f=()=>setCount(readCart().reduce((n,x)=>n+Number(x.quantity||x.qty||0),0));addEventListener("storage",f);addEventListener("suruCartChanged",f);return()=>{removeEventListener("storage",f);removeEventListener("suruCartChanged",f)}},[]);
-  return <header className="nav"><div className="nav-inner"><a className="brand" href="/"><img src="/assets/suru-logo-official.png" alt="Suru Collection"/></a><button className="menu-toggle" onClick={()=>setOpen(!open)} aria-expanded={open}>☰</button><nav className={open?"open":""}><a href="/">Home</a><a href="/about.html">About Us</a><a href="/products.html">Products</a><a href="/contact.html">Contact</a>{(loggedIn||customerPage)&&<a href="/orders/">My Orders</a>}<a href="/account/">My Account</a></nav><a href="/order.html" className="cart-link">🛍️<span>{count}</span></a></div></header>
+  const[account,setAccount]=useState({name:"",phone:"",email:""});
+  useEffect(()=>{
+    let mounted=true;
+    const load=async(session)=>{
+      if(!session){
+        if(mounted){setLoggedIn(false);setAccount({name:"",phone:"",email:""});setAccountOpen(false)}
+        return;
+      }
+      if(mounted)setLoggedIn(true);
+      const{data}=await supabase.rpc("my_customer_profile");
+      if(mounted){
+        let p=data;
+        if(typeof p==="string"){try{p=JSON.parse(p)}catch{}}
+        setAccount({name:p?.name||session.user.user_metadata?.name||"Account",phone:p?.phone||session.user.user_metadata?.phone||"",email:session.user.email||""});
+      }
+    };
+    supabase.auth.getSession().then(({data})=>load(data.session));
+    const{data:sub}=supabase.auth.onAuthStateChange((_event,session)=>load(session));
+    return()=>{mounted=false;sub.subscription.unsubscribe()};
+  },[]);
+  useEffect(()=>{
+    const f=()=>setCount(readCart().reduce((n,x)=>n+Number(x.quantity||x.qty||0),0));
+    addEventListener("storage",f);addEventListener("suruCartChanged",f);
+    return()=>{removeEventListener("storage",f);removeEventListener("suruCartChanged",f)}
+  },[]);
+  useEffect(()=>{
+    const close=e=>{
+      if(!e.target.closest?.(".account-menu"))setAccountOpen(false);
+    };
+    document.addEventListener("click",close);
+    return()=>document.removeEventListener("click",close);
+  },[]);
+  async function logout(){setAccountOpen(false);await supabase.auth.signOut();location.href="/login.html"}
+  const initial=(account.name||"A").trim().charAt(0).toUpperCase();
+  return <header className="nav"><div className="nav-inner">
+    <a className="brand" href="/"><img src="/assets/suru-logo-official.png" alt="Suru Collection"/></a>
+    <button className="menu-toggle" onClick={()=>setOpen(!open)} aria-expanded={open}>☰</button>
+    <nav className={open?"open":""}>
+      <a href="/">Home</a><a href="/about.html">About Us</a><a href="/products.html">Products</a><a href="/contact.html">Contact</a>
+      {!loggedIn?<a href="/login.html">Login</a>:<div className="account-menu">
+        <button type="button" className="account-menu-toggle" onClick={e=>{e.stopPropagation();setAccountOpen(!accountOpen)}} aria-expanded={accountOpen}>
+          <span className="account-avatar">{initial}</span><span className="account-menu-name">{account.name||"Account"}</span><span className="account-menu-arrow">⌄</span>
+        </button>
+        {accountOpen&&<div className="account-dropdown">
+          <div className="account-dropdown-profile"><span className="account-avatar large">{initial}</span><div><strong>{account.name||"Account"}</strong><small>{account.phone||"—"}</small></div></div>
+          <div className="account-dropdown-divider"/>
+          <a href="/account/" onClick={()=>setAccountOpen(false)}>My Account</a>
+          <a href="/orders/" onClick={()=>setAccountOpen(false)}>My Orders</a>
+          <div className="account-dropdown-divider"/>
+          <button type="button" className="account-logout" onClick={logout}>Logout</button>
+        </div>}
+      </div>}
+    </nav>
+    <a href="/order.html" className="cart-link">🛍️<span>{count}</span></a>
+  </div></header>
 }
 export default Header;
