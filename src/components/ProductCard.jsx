@@ -3,7 +3,7 @@ import { money, norm, get } from "../lib/api.js";
 import { addCart } from "../lib/cart.js";
 
 export default function ProductCard({product,image,variants=[]}){
-  const href="/product?code="+encodeURIComponent(product.product_code);
+  const href="/product.html?code="+encodeURIComponent(product.product_code);
   const[added,setAdded]=useState(false),[open,setOpen]=useState(false),[size,setSize]=useState(""),[colour,setColour]=useState(""),[qty,setQty]=useState(1);
   const sizes=useMemo(()=>[...new Set(variants.map(v=>v.size).filter(Boolean))],[variants]);
   const colours=useMemo(()=>[...new Set(variants.map(v=>v.color).filter(Boolean))],[variants]);
