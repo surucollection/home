@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const socialLinks = [
   ["https://www.instagram.com/surucollectionnepal/", "Instagram", "fab fa-instagram"],
@@ -9,119 +9,164 @@ const socialLinks = [
 
 const quickLinks = [
   ["/", "Home"],
-  ["/products.html", "Products"],
+  ["/products.html", "All Products"],
+  ["/products.html", "New Arrivals"],
+  ["/products.html", "Best Sellers"],
   ["/about.html", "About Us"],
-  ["/contact.html", "Contact"]
+  ["/contact.html", "Contact Us"]
 ];
 
 const supportLinks = [
-  ["/account.html", "My Account"],
   ["/order.html", "Track Order"],
-  ["/contact.html", "Contact Support"],
-  ["/contact.html", "Shipping Information"]
+  ["/contact.html", "Shipping Policy"],
+  ["/contact.html", "Return & Exchange"],
+  ["/contact.html", "Size Guide"],
+  ["/contact.html", "FAQs"],
+  ["/contact.html", "Terms & Conditions"],
+  ["/contact.html", "Privacy Policy"]
 ];
 
 const services = [
-  ["fas fa-truck-fast", "Nepal-wide Delivery"],
-  ["fas fa-money-bill-wave", "Cash on Delivery"],
-  ["fas fa-credit-card", "Online Payment"],
-  ["fas fa-headset", "Personal Support"]
+  ["fas fa-truck-fast", "Fast & Reliable Delivery", "Across Nepal"],
+  ["fas fa-shield-halved", "Secure Payments", "100% Safe & Secure"],
+  ["fas fa-gift", "Premium Quality", "Handpicked Collections"],
+  ["fas fa-headset", "Customer Support", "Always Here to Help"]
 ];
 
-export default function Footer() {
+function FooterSection({ title, links, open, onToggle }) {
   return (
-    <footer className="footer">
-      <div className="footer-main">
-        <div className="footer-grid">
-          <section className="footer-brand">
-            <div className="footer-brand-content">
-              <img
-                src="/assets/suru-logo-official.png"
-                className="footer-logo"
-                alt="Suru Collection"
-              />
+    <section className={`sc-footer-section ${open ? "is-open" : ""}`}>
+      <button
+        className="sc-footer-section-title"
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        <span>{title}</span>
+        <span className="sc-footer-plus" aria-hidden="true">
+          {open ? "−" : "+"}
+        </span>
+      </button>
 
-              <p className="footer-tagline">
-                Traditional elegance for every occasion.
-              </p>
+      <div className="sc-footer-section-rule" />
 
-              <p className="footer-description">
-                Discover thoughtfully selected traditional and ethnic wear,
-                made to bring timeless style to every occasion.
-              </p>
+      <div className="sc-footer-links">
+        {links.map(([href, label]) => (
+          <a key={label} href={href}>{label}</a>
+        ))}
+      </div>
+    </section>
+  );
+}
 
-              <div className="social-links" aria-label="Social media">
-                {socialLinks.map(([href, label, icon]) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={label}
-                  >
-                    <i className={icon} />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </section>
+export default function Footer() {
+  const [openSection, setOpenSection] = useState(null);
 
-          <section className="footer-column">
-            <h3>Explore</h3>
-            <div className="footer-link-list">
-              {quickLinks.map(([href, label]) => (
-                <a key={label} href={href}>{label}</a>
+  const toggleSection = (section) => {
+    setOpenSection((current) => current === section ? null : section);
+  };
+
+  return (
+    <footer className="sc-footer">
+      <div className="sc-footer-main">
+        <div className="sc-footer-content">
+          <section className="sc-footer-brand">
+            <img
+              src="/assets/suru-logo-official.png"
+              className="sc-footer-logo"
+              alt="Suru Collection"
+            />
+
+            <p className="sc-footer-tagline">Traditional &amp; Ethnic Wear</p>
+
+            <p className="sc-footer-description">
+              Bringing you beautiful traditional and ethnic wear with quality,
+              comfort and timeless style.
+            </p>
+
+            <div className="sc-footer-socials" aria-label="Social media">
+              {socialLinks.map(([href, label, icon]) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                >
+                  <i className={icon} />
+                </a>
               ))}
             </div>
           </section>
 
-          <section className="footer-column">
-            <h3>Customer Care</h3>
-            <div className="footer-link-list">
-              {supportLinks.map(([href, label]) => (
-                <a key={label} href={href}>{label}</a>
-              ))}
-            </div>
-          </section>
+          <div className="sc-footer-nav">
+            <FooterSection
+              title="Quick Links"
+              links={quickLinks}
+              open={openSection === "quick"}
+              onToggle={() => toggleSection("quick")}
+            />
+            <FooterSection
+              title="Customer Support"
+              links={supportLinks}
+              open={openSection === "support"}
+              onToggle={() => toggleSection("support")}
+            />
+          </div>
 
-          <section className="footer-column footer-contact">
-            <h3>Get In Touch</h3>
-
-            <a
-              href="https://wa.me/9779740381427"
-              target="_blank"
-              rel="noreferrer"
+          <section className="sc-footer-contact">
+            <button
+              className="sc-footer-section-title"
+              type="button"
+              aria-expanded={openSection === "contact"}
+              onClick={() => toggleSection("contact")}
             >
-              <i className="fab fa-whatsapp" />
-              <span>+977 9740381427</span>
-            </a>
+              <span>Contact Us</span>
+              <span className="sc-footer-plus" aria-hidden="true">
+                {openSection === "contact" ? "−" : "+"}
+              </span>
+            </button>
 
-            <p>
-              <i className="fas fa-location-dot" />
-              <span>Gaur, Rautahat, Nepal</span>
-            </p>
+            <div className="sc-footer-section-rule" />
 
-            <p>
-              <i className="fas fa-clock" />
-              <span>We're here to help</span>
-            </p>
+            <div className="sc-footer-contact-details">
+              <a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer">
+                <i className="fas fa-location-dot" />
+                <span>Gaur, Rautahat, Nepal</span>
+              </a>
+              <a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer">
+                <i className="fab fa-whatsapp" />
+                <span>+977 9740381427</span>
+              </a>
+              <a href="mailto:surucollectionnepal@gmail.com">
+                <i className="fas fa-envelope" />
+                <span>surucollectionnepal@gmail.com</span>
+              </a>
+              <p>
+                <i className="fas fa-clock" />
+                <span>Sun - Fri: 9:00 AM - 7:00 PM</span>
+              </p>
+            </div>
           </section>
         </div>
 
-        <div className="footer-services" aria-label="Shopping benefits">
-          {services.map(([icon, title]) => (
-            <div className="footer-service" key={title}>
-              <span className="footer-service-icon">
+        <div className="sc-footer-services">
+          {services.map(([icon, title, subtitle]) => (
+            <div className="sc-footer-service" key={title}>
+              <span className="sc-footer-service-icon">
                 <i className={icon} />
               </span>
-              <strong>{title}</strong>
+              <div>
+                <strong>{title}</strong>
+                <span>{subtitle}</span>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} Suru Collection. All rights reserved.</span>
+      <div className="sc-footer-bottom">
+        <span>© {new Date().getFullYear()} Suru Collection. All Rights Reserved.</span>
         <span>Made with <i className="fas fa-heart" /> in Nepal</span>
       </div>
     </footer>
