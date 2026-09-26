@@ -1,178 +1,56 @@
-import React, { useEffect } from "react";
-import { createRoot } from "react-dom/client";
-import "./styles.css";
+import React,{useEffect,useMemo,useState} from "react";
+import{createRoot}from"react-dom/client";
+import"./styles.css";
 
-const supabaseUrl = "https://vkycraymxhkqxgpcpdzw.supabase.co";
-const supabaseKey = "sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC";
+const API="https://vkycraymxhkqxgpcpdzw.supabase.co/rest/v1/";
+const KEY="sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC";
+const CART="suruCart";
 
-function loadScript(src, id) {
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById(id);
-    if (existing) {
-      if (existing.dataset.loaded === "true") return resolve();
-      existing.addEventListener("load", resolve, { once: true });
-      existing.addEventListener("error", reject, { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = id;
-    script.src = src;
-    script.async = false;
-    script.onload = () => {
-      script.dataset.loaded = "true";
-      resolve();
-    };
-    script.onerror = () => reject(new Error("Unable to load " + src));
-    document.head.appendChild(script);
-  });
+async function get(table,params={}){
+  const u=new URL(API+table);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+  const r=await fetch(u,{headers:{apikey:KEY,Authorization:"Bearer "+KEY,Accept:"application/json"}});
+  if(!r.ok)throw new Error((await r.json().catch(()=>({}))).message||"Request failed");
+  return r.json();
 }
-
-function Home() {
-  useEffect(() => {
-    window.SURU_SUPABASE_URL = supabaseUrl;
-    window.SURU_SUPABASE_KEY = supabaseKey;
-
-    loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", "suru-supabase")
-      .then(() => loadScript("./app.js", "suru-app"))
-      .catch(error => console.error("Suru Collection startup error:", error));
-  }, []);
-
-  return (
-    <>
-      <header className="nav">
-        <div className="nav-inner">
-          <a className="brand" href="index.html" aria-label="Suru Collection home">
-            <img src="assets/suru-logo-official.png" alt="Suru Collection" />
-          </a>
-          <button id="menuToggle" className="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">☰</button>
-          <nav id="mainNav" aria-label="Main navigation">
-            <a href="index.html">Home</a>
-            <a href="about.html">About Us</a>
-            <a href="#collection">Our Collection</a>
-            <a href="products.html">Products</a>
-            <a href="contact.html">Contact</a>
-            <a href="login.html" className="account-link">My Account</a>
-          </nav>
-          <a href="order.html" className="cart-link" aria-label="Shopping cart">🛍️<span id="cartCount">0</span></a>
-        </div>
-      </header>
-
-      <main>
-        <section className="hero">
-          <div className="hero-content">
-            <p className="eyebrow">SURU COLLECTION</p>
-            <h1>More Than Fashion.<br /><em>It's a Feeling.</em></h1>
-            <p>Discover thoughtfully selected traditional and ethnic wear designed to make every occasion feel special.</p>
-            <a className="hero-button" href="products.html">Explore Collection</a>
-          </div>
-        </section>
-
-        <section id="collection" className="section">
-          <div className="section-heading">
-            <p className="eyebrow">OUR COLLECTION</p>
-            <h2>Made for Every Celebration</h2>
-            <p>Explore timeless silhouettes, festive favourites and elegant everyday styles.</p>
-          </div>
-          <div className="collection-grid">
-            {[
-              ["cat-sarees.jpg", "Sarees", "Elegant drapes for every occasion."],
-              ["cat-lehengas.jpg", "Lehengas", "Festive looks with timeless charm."],
-              ["cat-suits.jpg", "Suits", "Classic ethnic styles for every day."],
-              ["cat-gowns.jpg", "Gowns", "Graceful styles for special moments."],
-              ["cat-kurtis.jpg", "Kurtis", "Beautiful comfort for everyday elegance."],
-              ["cat-dupatta.jpg", "Dupattas", "Finishing touches that complete the look."],
-              ["cat-accessories.jpg", "Accessories", "Details that add a little more sparkle."]
-            ].map(([image, name, description]) => (
-              <a className="collection-card" href="products.html" key={name}>
-                <div className="collection-image">
-                  <img src={"assets/" + image} alt={name} loading="lazy" />
-                </div>
-                <div className="collection-content">
-                  <h3>{name}</h3>
-                  <p>{description}</p>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-
-        <section id="products" className="section shop-section">
-          <div className="section-heading">
-            <p className="eyebrow">SHOP SURU</p>
-            <h2>Our Products</h2>
-            <p>Choose a product to view its details, available options and stock.</p>
-          </div>
-          <div id="productGrid" className="product-grid">
-            <div className="product-loading">Loading products…</div>
-          </div>
-        </section>
-      </main>
-
-      <dialog id="variantModal" className="variant-modal">
-        <div className="variant-modal-inner">
-          <div className="variant-modal-header">
-            <div>
-              <h2 id="variantProductName"></h2>
-              <div id="variantProductCode" className="variant-modal-code"></div>
-            </div>
-            <button id="variantClose" className="variant-close" type="button" aria-label="Close">×</button>
-          </div>
-          <div className="variant-modal-product">
-            <img id="variantProductImage" src="" alt="" />
-            <div className="variant-modal-product-info">
-              <div id="variantProductCategory" className="variant-modal-category"></div>
-              <div id="variantProductPrice" className="variant-modal-price"></div>
-            </div>
-          </div>
-          <div id="variantColourField" className="variant-field">
-            <label htmlFor="variantColour">Colour</label>
-            <select id="variantColour"><option value="">Select Colour</option></select>
-          </div>
-          <div id="variantFixedColourField" className="variant-field">
-            <label>Colour</label>
-            <div id="variantFixedColour" className="variant-fixed-value"></div>
-          </div>
-          <div id="variantSizeField" className="variant-field">
-            <label htmlFor="variantSize">Size</label>
-            <select id="variantSize"><option value="">Select Size</option></select>
-          </div>
-          <div id="variantFixedOptionField" className="variant-field">
-            <label>Option</label>
-            <div id="variantFixedOption" className="variant-fixed-value"></div>
-          </div>
-          <div className="variant-field">
-            <label htmlFor="variantQuantity">Quantity</label>
-            <input id="variantQuantity" type="number" min="1" defaultValue="1" inputMode="numeric" />
-          </div>
-          <div id="variantStock" className="variant-stock" aria-live="polite"></div>
-          <div id="variantModalMessage" className="variant-modal-message" aria-live="polite"></div>
-          <div className="variant-modal-actions">
-            <button id="variantCancelButton" className="secondary-button" type="button">Cancel</button>
-            <button id="variantAddButton" className="buy-button" type="button">Add to Cart</button>
-          </div>
-        </div>
-      </dialog>
-
-      <footer className="footer">
-        <div className="footer-grid">
-          <div className="footer-brand-social">
-            <img src="assets/suru-logo-official.png" className="footer-logo" alt="Suru Collection" />
-            <div className="social-links">
-              <a href="https://www.instagram.com/surucollectionnepal/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-              <a href="https://www.facebook.com/surucollectionnepal" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-              <a href="https://www.tiktok.com/@surucollectionnepal" target="_blank" rel="noopener noreferrer" aria-label="TikTok"><i className="fab fa-tiktok"></i></a>
-              <a href="https://wa.me/9779740381427" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
-            </div>
-          </div>
-          <div><h3>Quick Links</h3><a href="index.html">Home</a><a href="about.html">About Us</a><a href="products.html">Products</a><a href="contact.html">Contact</a></div>
-          <div><h3>Our Location</h3><p>Gaur, Rautahat<br />Nepal</p></div>
-          <div><h3>Suru Collection</h3><p>Traditional elegance for every occasion.</p><p>Inspired by Suruchi Sahani</p></div>
-        </div>
-        <div className="footer-bottom">© <span id="year"></span> Suru Collection. All rights reserved.</div>
-      </footer>
-    </>
-  );
+const money=v=>"NPR "+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const norm=v=>String(v??"").trim().toLowerCase();
+const readCart=()=>{try{const x=JSON.parse(localStorage.getItem(CART)||"[]");return Array.isArray(x)?x:[]}catch{return[]}};
+const saveCart=c=>{localStorage.setItem(CART,JSON.stringify(c));window.dispatchEvent(new Event("suruCartChanged"))};
+function addCart(item){
+  const c=readCart(), key=x=>[x.product_id||x.code||"",x.size||"",x.color||""].join("::");
+  const i=c.findIndex(x=>key(x)===key(item));
+  if(i>=0)c[i].quantity=(Number(c[i].quantity)||0)+(Number(item.quantity)||1);else c.push({...item,quantity:Number(item.quantity)||1});
+  c.forEach(x=>x.qty=x.quantity);saveCart(c);
 }
-
-createRoot(document.getElementById("root")).render(<Home />);
+function Header(){
+  const[count,setCount]=useState(()=>readCart().reduce((n,x)=>n+Number(x.quantity||x.qty||0),0));
+  const[open,setOpen]=useState(false);
+  useEffect(()=>{const f=()=>setCount(readCart().reduce((n,x)=>n+Number(x.quantity||x.qty||0),0));addEventListener("storage",f);addEventListener("suruCartChanged",f);return()=>{removeEventListener("storage",f);removeEventListener("suruCartChanged",f)}},[]);
+  return <header className="nav"><div className="nav-inner"><a className="brand" href="index.html"><img src="assets/suru-logo-official.png" alt="Suru Collection"/></a><button className="menu-toggle" onClick={()=>setOpen(!open)} aria-expanded={open}>☰</button><nav className={open?"open":""}><a href="index.html">Home</a><a href="about.html">About Us</a><a href="index.html#collection">Our Collection</a><a href="products.html">Products</a><a href="contact.html">Contact</a><a href="login.html">My Account</a></nav><a href="order.html" className="cart-link">🛍️<span>{count}</span></a></div></header>
+}
+function Footer(){return <footer className="footer"><div className="footer-grid"><div className="footer-brand-social"><img src="assets/suru-logo-official.png" className="footer-logo" alt="Suru Collection"/><div className="social-links"><a href="https://www.instagram.com/surucollectionnepal/" target="_blank" rel="noreferrer" aria-label="Instagram"><i className="fab fa-instagram"/></a><a href="https://www.facebook.com/surucollectionnepal" target="_blank" rel="noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"/></a><a href="https://www.tiktok.com/@surucollectionnepal" target="_blank" rel="noreferrer" aria-label="TikTok"><i className="fab fa-tiktok"/></a><a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"/></a></div></div><div><h3>Quick Links</h3><a href="index.html">Home</a><a href="about.html">About Us</a><a href="products.html">Products</a><a href="contact.html">Contact</a></div><div><h3>Our Location</h3><p>Gaur, Rautahat<br/>Nepal</p></div><div><h3>Suru Collection</h3><p>Traditional elegance for every occasion.</p><p>Inspired by Suruchi Sahani</p></div></div><div className="footer-bottom">© {new Date().getFullYear()} Suru Collection. All rights reserved.</div></footer>}
+function Hero({eyebrow,title,text}){return <section className="page-hero"><div className="section-heading"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p>{text}</p></div></section>}
+const cats=[["cat-sarees.jpg","Sarees","Elegant drapes for every occasion."],["cat-lehengas.jpg","Lehengas","Festive looks with timeless charm."],["cat-suits.jpg","Suits","Classic ethnic styles for every day."],["cat-gowns.jpg","Gowns","Graceful styles for special moments."],["cat-kurtis.jpg","Kurtis","Beautiful comfort for everyday elegance."],["cat-dupatta.jpg","Dupattas","Finishing touches that complete the look."],["cat-accessories.jpg","Accessories","Details that add a little more sparkle."]];
+function ProductsGrid({limit}){
+  const[p,setP]=useState([]),[im,setIm]=useState([]),[err,setErr]=useState("");
+  useEffect(()=>{let ok=true;(async()=>{try{const products=await get("products",{select:"id,product_code,name,category,price,compare_at_price,is_active",is_active:"eq.true",order:"created_at.desc"});const imgs=await Promise.all((products||[]).map(x=>get("product_images",{select:"image_url,alt_text,is_main,sort_order",product_id:"eq."+x.id,order:"sort_order.asc"}).catch(()=>[])));if(ok){setP(products||[]);setIm(imgs.flat())}}catch(e){if(ok)setErr(e.message)}})();return()=>{ok=false}},[]);
+  if(err)return <div className="product-loading">{err}</div>;if(!p.length)return <div className="product-loading">Loading products…</div>;
+  return <div className="product-grid">{(limit?p.slice(0,limit):p).map(x=>{const img=im.find(i=>i.product_id===x.id&&i.is_main)||im.find(i=>i.product_id===x.id);return <article className="product-card" key={x.id}><a className="product-image" href={"product.html?code="+encodeURIComponent(x.product_code)}>{img?<img src={img.image_url} alt={img.alt_text||x.name} loading="lazy"/>:<div className="product-image-placeholder">Suru Collection</div>}</a><div className="product-card-content">{x.category&&<div className="product-category">{x.category}</div>}<h3><a href={"product.html?code="+encodeURIComponent(x.product_code)}>{x.name}</a></h3><div className="product-price">{money(x.price)}{x.compare_at_price&&<span className="compare-price">{money(x.compare_at_price)}</span>}</div><div className="product-card-actions"><a className="secondary-button" href={"product.html?code="+encodeURIComponent(x.product_code)}>View Details</a></div></div></article>})}</div>
+}
+function Home(){return <><Header/><main><section className="hero"><div className="hero-content"><p className="eyebrow">SURU COLLECTION</p><h1>More Than Fashion.<br/><em>It's a Feeling.</em></h1><p>Discover thoughtfully selected traditional and ethnic wear designed to make every occasion feel special.</p><a className="hero-button" href="products.html">Explore Collection</a></div></section><section id="collection" className="section"><div className="section-heading"><p className="eyebrow">OUR COLLECTION</p><h2>Made for Every Celebration</h2><p>Explore timeless silhouettes, festive favourites and elegant everyday styles.</p></div><div className="collection-grid">{cats.map(([i,n,d])=><a className="collection-card" href="products.html" key={n}><div className="collection-image"><img src={"assets/"+i} alt={n} loading="lazy"/></div><div className="collection-content"><h3>{n}</h3><p>{d}</p></div></a>)}</div></section><section id="products" className="section shop-section"><div className="section-heading"><p className="eyebrow">SHOP SURU</p><h2>Our Products</h2><p>Choose a product to view its details, available options and stock.</p></div><ProductsGrid limit={8}/></section></main><Footer/></>}
+function About(){return <><Header/><main><Hero eyebrow="ABOUT SURU COLLECTION" title="Tradition, with a modern feeling." text="Discover the story, inspiration and thoughtful approach behind Suru Collection."/><section className="section story-section"><div className="story-grid"><div className="story-image"><img src="assets/story.jpg" alt="Suru Collection"/></div><div className="story-content"><p className="eyebrow">OUR STORY</p><h2>Tradition, with a modern feeling.</h2><p>Suru Collection brings together beautiful traditional and ethnic wear selected for women who want to celebrate culture while expressing their own style.</p><p>From everyday elegance to festive occasions, every piece is chosen with care, comfort and occasion in mind.</p><p className="story-signature">Inspired by Suruchi Sahani</p></div></div></section></main><Footer/></>}
+function Contact(){return <><Header/><main><Hero eyebrow="CONTACT SURU COLLECTION" title="We'd love to hear from you." text="Get in touch for product enquiries, availability, new collections and more."/><section className="section contact-page-section"><div className="contact-grid"><div className="contact-card"><p className="eyebrow">VISIT US</p><h2>Suru Collection</h2><p>Gaur, Rautahat<br/>Nepal</p></div></div></section></main><Footer/></>}
+function Products(){return <><Header/><main><Hero eyebrow="SHOP SURU" title="Our Products" text="Explore our complete collection of traditional and ethnic wear."/><section className="section shop-section products-page-section"><ProductsGrid/></section></main><Footer/></>}
+function Product(){
+ const code=new URLSearchParams(location.search).get("code")||new URLSearchParams(location.search).get("product")||"";
+ const[p,setP]=useState(null),[imgs,setImgs]=useState([]),[vars,setVars]=useState([]),[main,setMain]=useState(""),[size,setSize]=useState(""),[colour,setColour]=useState(""),[qty,setQty]=useState(1),[msg,setMsg]=useState(""),[loadErr,setLoadErr]=useState("");
+ useEffect(()=>{(async()=>{try{const ps=await get("products",{select:"id,product_code,name,category,description,price,compare_at_price,moq,fabric,color,pattern,is_active",product_code:"eq."+code,is_active:"eq.true"});const x=ps[0];if(!x)throw Error("This product is unavailable.");const [images,variants]=await Promise.all([get("product_images",{select:"image_url,alt_text,is_main,sort_order",product_id:"eq."+x.id,order:"sort_order.asc"}),get("product_sizes",{select:"id,size,color,stock,is_active",product_id:"eq."+x.id,is_active:"eq.true",order:"size.asc"})]);setP(x);setImgs(images||[]);setVars(variants||[]);setMain((images.find(i=>i.is_main)||images[0])?.image_url||"")}catch(e){setLoadErr(e.message)}})()},[code]);
+ const sizes=useMemo(()=>[...new Set(vars.map(v=>v.size).filter(Boolean))],[vars]),colours=useMemo(()=>[...new Set(vars.map(v=>v.color).filter(Boolean))],[vars]);
+ useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
+ const variant=useMemo(()=>{if(!vars.length)return null;if(!sizes.length&&!colours.length)return vars.find(v=>!v.size&&!v.color)||vars[0];return vars.find(v=>(!sizes.length||norm(v.size)===norm(size))&&(!colours.length||norm(v.color||p?.color)===norm(colour)))||null},[vars,sizes,colours,size,colour,p]);
+ const add=()=>{if(vars.length&&(!variant||Number(variant.stock||0)<=0)){setMsg("Please select an available option.");return}const stock=Number(variant?.stock||0),q=Math.max(1,Math.min(Number(qty)||1,stock||Number(qty)||1));addCart({product_id:p.id,code:p.product_code,name:p.name,price:Number(p.price||0),image:main,size:variant?.size||size||null,color:variant?.color||colour||p.color||null,quantity:q});setMsg("Added to cart successfully.")};
+ return <><Header/><main className="product-page">{loadErr?<div className="product-loading-page"><h2>Unable to load product</h2><p>{loadErr}</p></div>:!p?<div className="product-loading-page">Loading product…</div>:<div className="product-layout"><div className="product-gallery"><div className="product-main-image"><img src={main} alt={p.name}/></div>{imgs.length>1&&<div className="product-thumbnails">{imgs.map(i=><button type="button" key={i.image_url} className={main===i.image_url?"product-thumb active":"product-thumb"} onClick={()=>setMain(i.image_url)}><img src={i.image_url} alt={i.alt_text||p.name}/></button>)}</div>}</div><div className="product-info"><div className="product-code">{p.product_code}</div><h1>{p.name}</h1><div className="product-price">{money(p.price)}{p.compare_at_price&&<span className="compare-price">{money(p.compare_at_price)}</span>}</div>{p.description&&<div className="product-description">{p.description}</div>}<div className="product-details">{p.category&&<div><strong>Category:</strong> {p.category}</div>}{p.fabric&&<div><strong>Fabric:</strong> {p.fabric}</div>}{p.color&&<div><strong>Colour:</strong> {p.color}</div>}{p.pattern&&<div><strong>Pattern:</strong> {p.pattern}</div>}{p.moq&&<div><strong>MOQ:</strong> {p.moq}</div>}</div>{colours.length>1&&<label className="field">Colour<select value={colour} onChange={e=>{setColour(e.target.value);setSize("")}}><option value="">Select Colour</option>{colours.map(x=><option key={x}>{x}</option>)}</select></label>}{colours.length===1&&<div className="variant-field"><label>Colour</label><div className="variant-fixed-value">{colours[0]}</div></div>}{sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=><option key={x}>{x}</option>)}</select></label>}<label className="field">Quantity<input type="number" min="1" max={variant?.stock||undefined} value={qty} onChange={e=>setQty(e.target.value)}/></label><div className="variant-stock">{variant?variant.stock+" item(s) available":vars.length?"Select an available option.":"Stock information is not configured."}</div>{msg&&<div className="variant-modal-message show">{msg}</div>}<button className="buy-button" type="button" onClick={add}>Add to Cart</button></div></div>}</main><Footer/></>
+}
+function App(){const p=location.pathname.replace(/\/+$/,"")||"/";if(p.endsWith("/about.html"))return <About/>;if(p.endsWith("/contact.html"))return <Contact/>;if(p.endsWith("/products.html"))return <Products/>;if(p.endsWith("/product.html"))return <Product/>;return <Home/>}
+createRoot(document.getElementById("root")).render(<App/>);
