@@ -34,9 +34,9 @@ const services = [
   ["fas fa-headset", "Customer Support", "Always Here to Help"]
 ];
 
-function FooterSection({ title, links, open, onToggle }) {
+function FooterSection({ title, sectionKey, open, onToggle, links = [], contactDetails = null }) {
   return (
-    <section className={`sc-footer-section ${open ? "is-open" : ""}`}>
+    <section className={`sc-footer-section ${contactDetails ? "sc-footer-contact" : ""} ${open ? "is-open" : ""}`}>
       <button
         className="sc-footer-section-title"
         type="button"
@@ -51,11 +51,34 @@ function FooterSection({ title, links, open, onToggle }) {
 
       <div className="sc-footer-section-rule" />
 
-      <div className="sc-footer-links">
-        {links.map(([href, label]) => (
-          <a key={label} href={href}>{label}</a>
-        ))}
-      </div>
+      {contactDetails ? (
+        <div className="sc-footer-contact-details">
+          {contactDetails.map(({ type = "link", href, icon, text }) =>
+            type === "text" ? (
+              <p key={text}>
+                <i className={icon} />
+                <span>{text}</span>
+              </p>
+            ) : (
+              <a
+                key={text}
+                href={href}
+                target={href?.startsWith("http") ? "_blank" : undefined}
+                rel={href?.startsWith("http") ? "noreferrer" : undefined}
+              >
+                <i className={icon} />
+                <span>{text}</span>
+              </a>
+            )
+          )}
+        </div>
+      ) : (
+        <div className="sc-footer-links">
+          {links.map(([href, label]) => (
+            <a key={label} href={href}>{label}</a>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -103,52 +126,32 @@ export default function Footer() {
           <div className="sc-footer-nav">
             <FooterSection
               title="Quick Links"
+              sectionKey="quick"
               links={quickLinks}
               open={openSection === "quick"}
               onToggle={() => toggleSection("quick")}
             />
             <FooterSection
               title="Customer Support"
+              sectionKey="support"
               links={supportLinks}
               open={openSection === "support"}
               onToggle={() => toggleSection("support")}
             />
           </div>
 
-          <section className="sc-footer-contact">
-            <button
-              className="sc-footer-section-title"
-              type="button"
-              aria-expanded={openSection === "contact"}
-              onClick={() => toggleSection("contact")}
-            >
-              <span>Contact Us</span>
-              <span className="sc-footer-plus" aria-hidden="true">
-                {openSection === "contact" ? "−" : "+"}
-              </span>
-            </button>
-
-            <div className="sc-footer-section-rule" />
-
-            <div className="sc-footer-contact-details">
-              <a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer">
-                <i className="fas fa-location-dot" />
-                <span>Gaur, Rautahat, Nepal</span>
-              </a>
-              <a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer">
-                <i className="fab fa-whatsapp" />
-                <span>+977 9740381427</span>
-              </a>
-              <a href="mailto:surucollectionnepal@gmail.com">
-                <i className="fas fa-envelope" />
-                <span>surucollectionnepal@gmail.com</span>
-              </a>
-              <p>
-                <i className="fas fa-clock" />
-                <span>Sun - Fri: 9:00 AM - 7:00 PM</span>
-              </p>
-            </div>
-          </section>
+          <FooterSection
+            title="Contact Us"
+            sectionKey="contact"
+            open={openSection === "contact"}
+            onToggle={() => toggleSection("contact")}
+            contactDetails={[
+              { href: "https://wa.me/9779740381427", icon: "fas fa-location-dot", text: "Gaur, Rautahat, Nepal" },
+              { href: "https://wa.me/9779740381427", icon: "fab fa-whatsapp", text: "+977 9740381427" },
+              { href: "mailto:surucollectionnepal@gmail.com", icon: "fas fa-envelope", text: "surucollectionnepal@gmail.com" },
+              { type: "text", icon: "fas fa-clock", text: "Sun - Fri: 9:00 AM - 7:00 PM" }
+            ]}
+          />
         </div>
 
         <div className="sc-footer-services">
