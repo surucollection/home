@@ -3755,7 +3755,6 @@ a {
 .account-dropdown-profile div{min-width:0;display:flex;flex-direction:column;gap:3px}
 .account-dropdown-profile strong{font-size:14px;color:#4c3838;overflow:hidden;text-overflow:ellipsis}
 .account-dropdown-profile small{font-size:12px;color:var(--muted)}
-.account-dropdown-divider{height:1px;background:var(--line);margin:0 0 5px}
 .account-dropdown a,
 .account-logout{
   display:flex;
@@ -3776,7 +3775,8 @@ a {
 }
 .account-dropdown a:hover,
 .account-logout:hover{background:var(--cream-dark);color:var(--maroon)}
-.account-logout{margin-top:5px}
+.account-dropdown-separated{border-top:1px solid var(--line)!important;border-radius:0!important}
+.account-logout{margin-top:0}
   .logout-icon{font-size:15px;line-height:1;margin-right:7px;display:inline-flex;align-items:center;justify-content:center}
 @media(max-width:760px){
   .account-menu{display:block}
