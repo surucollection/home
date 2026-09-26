@@ -6778,3 +6778,21 @@ a {
   .product-page .product-action-buttons .buy-button,
   .product-page .product-action-buttons .buy-now-button{font-size:10px}
 }
+
+
+/* Policies page */
+.policy-page{max-width:1120px;margin:0 auto;padding:48px 22px 80px;color:var(--text,#33282b)}
+.policy-hero{text-align:center;max-width:760px;margin:0 auto 38px}
+.policy-hero .eyebrow{margin:0 0 8px;color:var(--maroon,#76292d);font-size:12px;font-weight:700;letter-spacing:.14em}
+.policy-hero h1{margin:0;font-family:Georgia,serif;font-size:clamp(32px,5vw,48px);line-height:1.1;color:var(--maroon-dark,#5b2024)}
+.policy-hero p:last-child{margin:14px auto 0;max-width:650px;color:#75676b;line-height:1.7;font-size:15px}
+.policy-sections{display:flex;flex-direction:column;gap:18px}
+.policy-section{display:grid;grid-template-columns:62px minmax(0,1fr);gap:22px;padding:30px;background:#fffaf7;border:1px solid #eadbd5;border-radius:16px;box-shadow:0 8px 24px rgba(60,30,35,.05);scroll-margin-top:24px}
+.policy-number{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--maroon,#76292d);color:#fff;font-size:12px;font-weight:700;letter-spacing:.05em}
+.policy-section h2{margin:2px 0 14px;color:var(--maroon-dark,#5b2024);font-family:Georgia,serif;font-size:25px}
+.policy-section p{margin:0 0 14px;color:#5f5357;font-size:14px;line-height:1.75}
+.policy-section ul{margin:0;padding-left:20px;color:#5f5357;font-size:14px;line-height:1.75}
+.policy-section li+li{margin-top:8px}
+.policy-section strong{color:#49383c}
+.policy-note{margin-top:18px!important;padding:13px 15px;background:#f4e9e4;border-left:3px solid var(--maroon,#76292d);border-radius:6px;color:#554347!important}
+@media(max-width:700px){.policy-page{padding:30px 14px 55px}.policy-hero{margin-bottom:24px}.policy-hero h1{font-size:31px}.policy-hero p:last-child{font-size:13px;line-height:1.6}.policy-sections{gap:12px}.policy-section{grid-template-columns:38px minmax(0,1fr);gap:12px;padding:20px 15px}.policy-number{width:34px;height:34px;font-size:10px}.policy-section h2{font-size:21px;margin:1px 0 10px}.policy-section p,.policy-section ul{font-size:13px;line-height:1.65}.policy-section ul{padding-left:17px}.policy-section li+li{margin-top:7px}}
