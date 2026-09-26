@@ -86,27 +86,3 @@
 <script src="app.js"></script>
 </body>
 </html>
-<dialog class="variant-modal" id="variantModal">
-<div class="variant-modal-inner">
-<div class="variant-modal-header">
-<div><h2 id="variantProductName"></h2><div class="variant-modal-code" id="variantProductCode"></div></div>
-<button aria-label="Close" class="variant-close" id="variantClose" type="button">×</button>
-</div>
-<div class="variant-modal-product">
-<img alt="" id="variantProductImage" src=""/>
-<div class="variant-modal-product-info"><div class="variant-modal-category" id="variantProductCategory"></div><div class="variant-modal-price" id="variantProductPrice"></div></div>
-</div>
-<div class="variant-field" id="variantColourField"><label for="variantColour">Colour</label><select id="variantColour"><option value="">Select Colour</option></select></div>
-<div class="variant-field" id="variantFixedColourField"><label>Colour</label><div class="variant-fixed-value" id="variantFixedColour"></div></div>
-<div class="variant-field" id="variantSizeField"><label for="variantSize">Size</label><select id="variantSize"><option value="">Select Size</option></select></div>
-<div class="variant-field" id="variantFixedOptionField"><label>Option</label><div class="variant-fixed-value" id="variantFixedOption"></div></div>
-<div class="variant-field"><label for="variantQuantity">Quantity</label><input id="variantQuantity" inputmode="numeric" min="1" type="number" value="1"/></div>
-<div aria-live="polite" class="variant-stock" id="variantStock"></div>
-<div aria-live="polite" class="variant-modal-message" id="variantModalMessage"></div>
-<div class="variant-modal-actions">
-<button class="secondary-button" id="variantCancelButton" type="button">Cancel</button>
-<button class="buy-button" id="variantAddButton" type="button">Add to Cart</button>
-</div>
-</div>
-</dialog>
-
