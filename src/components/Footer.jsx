@@ -11,8 +11,6 @@ const socialLinks = [
 const quickLinks = [
   ["/", "Home"],
   ["/products.html", "All Products"],
-  ["/products.html", "New Arrivals"],
-  ["/products.html", "Best Sellers"],
   ["/about.html", "About Us"],
   ["/contact.html", "Contact Us"]
 ];
@@ -21,8 +19,6 @@ const supportLinks = [
   ["/order.html", "Track Order"],
   ["/contact.html", "Shipping Policy"],
   ["/contact.html", "Return & Exchange"],
-  ["/contact.html", "Size Guide"],
-  ["/contact.html", "FAQs"],
   ["/contact.html", "Terms & Conditions"],
   ["/contact.html", "Privacy Policy"]
 ];
