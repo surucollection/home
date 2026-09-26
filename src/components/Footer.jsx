@@ -1,5 +1,6 @@
 import "../styles.css";
-import React, { useState } from "react";\n
+import React, { useState } from "react";
+
 const socialLinks = [
   ["https://www.instagram.com/surucollectionnepal/", "Instagram", "fab fa-instagram"],
   ["https://www.facebook.com/surucollectionnepal", "Facebook", "fab fa-facebook-f"],
