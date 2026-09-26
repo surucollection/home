@@ -14,6 +14,7 @@ const htmlEntries = [
   "order.html",
   "product.html",
   "products.html",
+  "policy.html",
   "register.html"
 ];
 
