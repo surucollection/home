@@ -3635,3 +3635,25 @@ a {
  .tracking-box{align-items:stretch;flex-direction:column}
  .tracking-box .btn{width:100%}
 }
+
+/* Selector coverage fixes */
+.account-card{
+  width:min(1000px,100%);
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:30px;
+}
+.account-card h1{margin:0 0 28px;color:var(--maroon);font-family:Georgia,"Times New Roman",serif;font-weight:500;}
+.account-card h2{margin:26px 0 12px;color:#3a2727;font-family:Georgia,"Times New Roman",serif;font-weight:500;}
+.account-edit-trigger{display:flex;justify-content:flex-end;margin:0 0 10px;}
+.edit-card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;}
+.variant-fixed-value{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);}
+.table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.table-wrap table{width:100%;min-width:650px;border-collapse:collapse;}
+.table-wrap th,.table-wrap td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+@media(max-width:600px){
+  .account-card{padding:20px 16px;border-radius:14px;}
+  .edit-card-header{align-items:flex-start;}
+}
