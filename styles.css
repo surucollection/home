@@ -457,30 +457,6 @@ a {
   min-width: 0;
 }
 
-.product-card-image {
-  display: block;
-
-  aspect-ratio: 4 / 5;
-
-  overflow: hidden;
-
-  background: #f5eee8;
-}
-
-.product-card-image img {
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-
-  transition: transform .3s ease;
-}
-
-.product-card:hover
-.product-card-image img {
-  transform: scale(1.035);
-}
-
 .product-card-content {
   display: flex;
   flex-direction: column;
@@ -551,36 +527,6 @@ a {
 
 .product-card-actions > * {
   flex: 1 1 140px;
-}
-
-.buy-button {
-  min-height: 43px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0 13px;
-
-  border: 0;
-  border-radius: 7px;
-
-  background: var(--maroon);
-  color: white;
-
-  font-size: 13px;
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    background .2s ease,
-    transform .2s ease;
-}
-
-.buy-button:hover {
-  background: var(--maroon-dark);
-  transform: translateY(-1px);
 }
 
 .product-loading {
@@ -681,10 +627,6 @@ a {
    CONTACT
    ========================================================= */
 
-.contact-section {
-  padding-bottom: 100px;
-}
-
 .contact-grid {
   display: grid;
 
@@ -710,33 +652,12 @@ a {
   text-align: center;
 }
 
-.contact-card h3 {
-  margin: 0 0 10px;
-
-  color: var(--maroon);
-
-  font-family:
-    Georgia,
-    "Times New Roman",
-    serif;
-
-  font-size: 23px;
-  font-weight: 500;
-}
-
 .contact-card p {
   margin: 0 0 18px;
 
   color: var(--muted);
 
   font-size: 14px;
-}
-
-.contact-card a {
-  color: var(--maroon);
-
-  font-size: 14px;
-  font-weight: 700;
 }
 
 
@@ -964,11 +885,6 @@ a {
   .product-card-actions > * {
     width: 100%;
     flex: none;
-  }
-
-  .buy-button {
-    width: 100%;
-    min-height: 41px;
   }
 
 
@@ -1239,11 +1155,6 @@ a {
 .variant-modal-message { min-height:20px; margin-top:10px; color:#5e4b4b; font-size:13px; }
 .variant-modal-message.error { color:#a12828; }
 
-/* Existing product-card compatibility */
-.product-image { display:block; aspect-ratio:4/5; overflow:hidden; background:#f5eee8; }
-.product-image img { width:100%; height:100%; object-fit:cover; }
-.product-card .add-cart { width:100%; min-height:43px; padding:0 13px; border:0; border-radius:7px; background:var(--maroon); color:#fff; font-size:13px; font-weight:700; cursor:pointer; }
-.product-card .add-cart:hover { background:var(--maroon-dark); }
 
 /* Mobile */
 @media (max-width:900px) {
@@ -1255,8 +1166,6 @@ a {
   .footer-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:700px) {
-  .topbar-inner { width:calc(100% - 28px); font-size:10px; }
-  .topbar-inner span:last-child { display:none; }
   .nav-inner { width: min(100% - 28px, 1200px); }
   .brand img { height:45px; max-width:155px; }
   
@@ -1268,15 +1177,11 @@ a {
   .nav .menu-toggle { display:block; order:2; margin-left:auto; }
   .nav .cart-link { order:3; }
   
-  .header 
-  .header 
   
   .collection-grid,.product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   .section,.product-page,.checkout-page { width:calc(100% - 28px); padding:55px 0; }
   .hero { min-height:580px; }
   .hero-content { width:calc(100% - 28px); padding:70px 0; }
-  #newsletterForm { flex-direction:column; }
-  #newsletterForm button { width:100%; }
   .footer { padding-left:14px; padding-right:14px; }
   .footer-grid { grid-template-columns:1fr 1fr; gap:25px 18px; }
   .footer-brand-social { grid-column:1/-1; gap:20px; }
@@ -1314,20 +1219,6 @@ a {
 .contact-card form { display:flex; gap:10px; margin-top:20px; }
 .contact-card input { flex:1; min-width:0; }
 @media (max-width:700px) { .contact-grid { grid-template-columns:1fr; } .contact-card form { flex-direction:column; } }
-
-/* Final mobile product-card alignment fix */
-.product-card-content > .add-cart,
-.product-card-content > .variant-aware-add {
-  margin-top: auto;
-}
-
-@media (max-width: 700px) {
-  .product-card-content > .add-cart,
-  .product-card-content > .variant-aware-add {
-    width: 100%;
-    margin-top: auto;
-  }
-}
 
 /* =========================================================
    FINAL HERO FIX — USE THE EXISTING hero.jpg AS-IS
