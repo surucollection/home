@@ -1123,19 +1123,6 @@ a {
    SURU COLLECTION SITE COMPATIBILITY / RESPONSIVE LAYER
    ========================================================= */
 
-.topbar {
-  background: var(--maroon);
-  color: rgba(255,255,255,.9);
-  font-size: 12px;
-  padding: 7px 0;
-}
-.topbar-inner {
-  width: min(1200px, calc(100% - 40px));
-  margin: 0 auto;
-  display:flex;
-  justify-content:space-between;
-  gap:20px;
-}
 .footer {
   padding:60px max(20px,calc((100% - 1200px)/2)) 25px;
   background:#2d1d20;
@@ -1167,10 +1154,6 @@ a {
   text-align:center;
   font-size:12px;
 }
-.newsletter-message { min-height:22px; margin-top:12px; font-size:13px; }
-.newsletter-message.success { color:#d9f0d9; }
-.newsletter-message.error { color:#ffd1d1; }
-
 /* Product / checkout pages */
 .product-page {
   width:min(1200px,calc(100% - 40px));
