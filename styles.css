@@ -3178,38 +3178,12 @@ a {
   gap: 18px;
 }
 
-.admin-page .inventory-card{
-  background: #fff;
-  border: 1px solid #eaded8;
-  border-radius: 14px;
-  padding: 20px;
-}
 
 .admin-page .inventory-card h3{
   margin: 0 0 15px;
   color: #76102f;
 }
 
-.admin-page .inventory-row{
-  display: grid;
-  grid-template-columns: 80px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee5e1;
-}
-
-.admin-page .inventory-row:last-child{
-  border-bottom: 0;
-}
-
-.admin-page .inventory-row input{
-  width: 100%;
-  height: 38px;
-  border: 1px solid #ddd0cb;
-  border-radius: 8px;
-  padding: 0 10px;
-}
 
 /* =========================
    BADGES
@@ -3503,32 +3477,6 @@ a {
 /* =========================
    NCM SHIPPING
 ========================= */
-.admin-page .ncm-cell{
-  min-width: 210px;
-  vertical-align: top;
-}
-
-.admin-page .ncm-cell select{
-  width: 100%;
-  min-width: 190px;
-  margin-bottom: 7px;
-  border: 1px solid #ddd0cb;
-  border-radius: 8px;
-  background: #fff;
-  color: #49363a;
-  padding: 8px 9px;
-  font-family: inherit;
-  font-size: 12px;
-}
-
-.admin-page .ncm-cell button{
-  margin-right: 6px;
-  margin-bottom: 5px;
-}
-
-.admin-page .ncm-cell small{
-  color: #806d70;
-}
 
 
 /* Account profile editing */
