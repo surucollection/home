@@ -1,5 +1,4 @@
-import React, { useState } from "react";\nimport "./Footer.css";
-
+import React, { useState } from "react";\n
 const socialLinks = [
   ["https://www.instagram.com/surucollectionnepal/", "Instagram", "fab fa-instagram"],
   ["https://www.facebook.com/surucollectionnepal", "Facebook", "fab fa-facebook-f"],
