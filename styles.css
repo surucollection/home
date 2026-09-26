@@ -2708,30 +2708,6 @@ a {
 
 
 /* =========================================================
-   CUSTOMER / AUTH STYLES — scoped to customer pages
-========================================================= */
-.customer-page *{box-sizing:border-box}.customer-page{margin:0;background:#f8f4ef;color:#3f2028;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}.customer-page .customer-header{background:#fffaf6;border-bottom:1px solid #eaded8;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.customer-page .customer-header img{width:110px;height:55px;object-fit:contain}.customer-page .customer-header nav{display:flex;gap:10px;align-items:center}.customer-page .customer-header a, .customer-page .btn{border:0;border-radius:9px;padding:10px 15px;text-decoration:none;background:#8d1236;color:#fff;font-weight:600;cursor:pointer}.customer-page .customer-header a.secondary, .customer-page .btn.secondary{background:#fff;color:#6d3041;border:1px solid #d8cbc6}.customer-page .page{max-width:1000px;margin:40px auto;padding:0 18px}.customer-page .auth-card, .customer-page .account-card{background:#fff;border:1px solid #eaded8;border-radius:16px;padding:28px;box-shadow:0 5px 20px rgba(70,35,40,.05)}.customer-page .auth-card{max-width:460px;margin:50px auto}.customer-page .auth-card img{display:block;width:180px;height:90px;object-fit:contain;margin:0 auto 15px}.customer-page .auth-card h1, .customer-page .account-card h1{color:#76102f}.customer-page .field{display:block;margin:14px 0;font-weight:600;font-size:13px}.customer-page .field input, .customer-page .field textarea{display:block;width:100%;margin-top:6px;padding:11px;border:1px solid #ddd0cb;border-radius:8px;background:#fff;font:inherit}.customer-page .message{min-height:22px;margin-top:12px}.customer-page .message.error{color:#b42318}.customer-page .message.success{color:#18794e}.customer-page .auth-links{text-align:center;margin-top:18px}.customer-page .auth-links a{color:#8d1236}.customer-page .profile-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:20px 0}.customer-page .profile-grid div{padding:15px;background:#faf5f1;border-radius:10px}.customer-page .profile-grid b, .customer-page .profile-grid span{display:block}.customer-page .profile-grid span{margin-top:5px;color:#705e62}.customer-page .order-card{border:1px solid #eaded8;border-radius:12px;padding:17px;margin:12px 0;background:#fff}.customer-page .order-head{display:flex;justify-content:space-between;gap:15px}.customer-page .order-head span{color:#18794e}.customer-page .order-card p, .customer-page .order-card small{color:#806d70}.customer-page .order-total{display:block;color:#7b102f;margin:12px 0}.customer-page .customer-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.customer-page .customer-profile-grid>div{background:#faf5f1;padding:12px;border-radius:9px}.customer-page .customer-profile-grid b, .customer-page .customer-profile-grid span{display:block}.customer-page .customer-profile-grid span{margin-top:5px;color:#705e62}.customer-page .customer-orders-heading{margin-top:25px}@media(max-width:650px){.customer-page .customer-header{padding:10px 12px}.customer-page .customer-header img{width:85px}.customer-page .customer-header nav a{padding:8px 10px;font-size:12px}.customer-page .page{margin:25px auto}.customer-page .auth-card, .customer-page .account-card{padding:20px}.customer-page .profile-grid, .customer-page .customer-profile-grid{grid-template-columns:1fr}}
-
-/* Email OTP step */
-.customer-page .otp-section{
-  margin: 16px 0;
-  padding: 14px;
-  background: #faf5f1;
-  border: 1px solid #d9c2c8;
-  border-radius: 10px;
-}
-.customer-page .otp-section .field{ margin: 0; }
-.customer-page .otp-section input{
-  font-size: 20px;
-  letter-spacing: 4px;
-  text-align: center;
-  font-weight: 700;
-}
-
-
-.customer-page .login-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px}.customer-page .method-option{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid rgba(0,0,0,.14);border-radius:10px;padding:12px;cursor:pointer;font-weight:600}.customer-page .method-option input{margin:0}.customer-page .method-option:has(input:checked){border-color:currentColor;box-shadow:0 0 0 1px currentColor inset}
-
-/* =========================================================
    ADMIN STYLES — scoped to the admin page
 ========================================================= */
 .admin-page *{
