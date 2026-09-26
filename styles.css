@@ -3557,3 +3557,6 @@ a {
 .order-success-actions .hero-btn{display:inline-flex;align-items:center;justify-content:center}
 .order-success-actions .text-button{margin:0}
 @media(max-width:600px){.order-success-card{padding:38px 20px}.order-success-card h1{font-size:29px}.order-success-actions{flex-direction:column}.order-success-actions .hero-btn,.order-success-actions .text-button{width:100%;text-align:center}}
+
+
+.required-star{color:var(--maroon);font-weight:800;margin-left:2px}.optional-label{color:var(--muted);font-size:12px;font-weight:500;margin-left:3px}
