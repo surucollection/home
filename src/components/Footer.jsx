@@ -17,9 +17,9 @@ const quickLinks = [
 
 const supportLinks = [
   ["/order.html", "Track Order"],
-  ["/contact.html", "Shipping Policy"],
-  ["/contact.html", "Return & Exchange"],
-  ["/contact.html", "Terms & Conditions"]
+  ["/policy.html#shipping-policy", "Shipping Policy"],
+  ["/policy.html#return-exchange-policy", "Return & Exchange"],
+  ["/policy.html#terms-conditions", "Terms & Conditions"]
 ];
 
 const services = [
