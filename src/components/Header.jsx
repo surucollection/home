@@ -7,12 +7,12 @@ function Header(){
   const[open,setOpen]=useState(false);
   const[accountOpen,setAccountOpen]=useState(false);
   const[loggedIn,setLoggedIn]=useState(false);
-  const[account,setAccount]=useState({name:"",phone:"",email:""});
+  const[account,setAccount]=useState({name:"",first_name:"",last_name:"",phone:"",email:""});
   useEffect(()=>{
     let mounted=true;
     const load=async(session)=>{
       if(!session){
-        if(mounted){setLoggedIn(false);setAccount({name:"",phone:"",email:""});setAccountOpen(false)}
+        if(mounted){setLoggedIn(false);setAccount({name:"",first_name:"",last_name:"",phone:"",email:""});setAccountOpen(false)}
         return;
       }
       if(mounted)setLoggedIn(true);
@@ -20,7 +20,7 @@ function Header(){
       if(mounted){
         let p=data;
         if(typeof p==="string"){try{p=JSON.parse(p)}catch{}}
-        setAccount({name:p?.name||session.user.user_metadata?.name||"Account",phone:p?.phone||session.user.user_metadata?.phone||"",email:session.user.email||""});
+        setAccount({name:p?.name||session.user.user_metadata?.name||"Account",first_name:p?.first_name||session.user.user_metadata?.first_name||"",last_name:p?.last_name||session.user.user_metadata?.last_name||"",phone:p?.phone||session.user.user_metadata?.phone||"",email:session.user.email||""});
       }
     };
     supabase.auth.getSession().then(({data})=>load(data.session));
@@ -40,7 +40,8 @@ function Header(){
     return()=>document.removeEventListener("click",close);
   },[]);
   async function logout(){setAccountOpen(false);await supabase.auth.signOut();location.href="/login.html"}
-  const initial=(account.name||"A").trim().charAt(0).toUpperCase();
+  const firstName=(account.first_name||account.name||"Account").trim().split(/\s+/)[0]||"Account";
+  const initial=firstName.charAt(0).toUpperCase();
   return <header className="nav"><div className="nav-inner">
     <a className="brand" href="/"><img src="/assets/suru-logo-official.png" alt="Suru Collection"/></a>
     <button className="menu-toggle" onClick={()=>setOpen(!open)} aria-expanded={open}>☰</button>
@@ -48,15 +49,15 @@ function Header(){
       <a href="/">Home</a><a href="/about.html">About Us</a><a href="/products.html">Products</a><a href="/contact.html">Contact</a>
       {!loggedIn?<a href="/login.html">Login</a>:<div className="account-menu">
         <button type="button" className="account-menu-toggle" onClick={e=>{e.stopPropagation();setAccountOpen(!accountOpen)}} aria-expanded={accountOpen}>
-          <span className="account-avatar">{initial}</span><span className="account-menu-name">{account.name||"Account"}</span><span className="account-menu-arrow">⌄</span>
+          <span className="account-avatar">{initial}</span><span className="account-menu-name">{firstName}</span><span className="account-menu-arrow">⌄</span>
         </button>
         {accountOpen&&<div className="account-dropdown">
-          <div className="account-dropdown-profile"><span className="account-avatar large">{initial}</span><div><strong>{account.name||"Account"}</strong><small>{account.phone||"—"}</small></div></div>
+          <div className="account-dropdown-profile"><span className="account-avatar large">{initial}</span><div><strong>{account.email||"—"}</strong><small>{account.phone||"—"}</small></div></div>
           <div className="account-dropdown-divider"/>
           <a href="/account/" onClick={()=>setAccountOpen(false)}>My Account</a>
           <a href="/orders/" onClick={()=>setAccountOpen(false)}>My Orders</a>
           <div className="account-dropdown-divider"/>
-          <button type="button" className="account-logout" onClick={logout}>Logout</button>
+          <button type="button" className="account-logout" onClick={logout}><span className="logout-icon" aria-hidden="true">↪</span>Logout</button>
         </div>}
       </div>}
     </nav>
