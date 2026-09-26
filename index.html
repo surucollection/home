@@ -1,15 +1,115 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#ffffff">
-<link rel="icon" type="image/png" href="/legacy/assets/suru-logo-official.png">
-<link rel="shortcut icon" href="/legacy/assets/suru-logo-official.png">
-<link rel="apple-touch-icon" href="/legacy/assets/suru-logo-official.png">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suru Collection | Traditional & Ethnic Wear</title>
+<meta name="description" content="Suru Collection — elegant traditional and ethnic wear for every occasion. Gaur, Rautahat, Nepal.">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="/legacy/styles.css">
-<title>Suru Collection</title>
+<link rel="icon" type="image/x-icon" href="assets/suru-logo-official.png">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body>
+  
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html" aria-label="Suru Collection home">
+      <img src="assets/suru-logo-official.png" alt="Suru Collection">
+    </a>
+    <button id="menuToggle" class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <nav id="mainNav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="about.html">About Us</a>
+      <a href="#collection">Our Collection</a>
+      <a href="products.html">Products</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html" class="account-link">My Account</a>
+    </nav>
+    <a href="order.html" class="cart-link" aria-label="Shopping cart">🛍️<span id="cartCount">0</span></a>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="hero-content">
+    <p class="eyebrow">SURU COLLECTION</p>
+    <h1>More Than Fashion.<br><em>It's a Feeling.</em></h1>
+    <p>Discover thoughtfully selected traditional and ethnic wear designed to make every occasion feel special.</p>
+    <a class="hero-button" href="products.html">Explore Collection</a>
+  </div>
+</section>
+
+<section id="collection" class="section">
+  <div class="section-heading">
+    <p class="eyebrow">OUR COLLECTION</p>
+    <h2>Made for Every Celebration</h2>
+    <p>Explore timeless silhouettes, festive favourites and elegant everyday styles.</p>
+  </div>
+  <div class="collection-grid">
+    <a class="collection-card" href="products.html"><div class="collection-image"><img src="assets/cat-sarees.jpg" alt="Sarees" loading="lazy"></div><div class="collection-content"><h3>Sarees</h3><p>Elegant drapes for every occasion.</p></div></a>
+    <a class="collection-card" href="products.html"><div class="collection-image"><img src="assets/cat-lehengas.jpg" alt="Lehengas" loading="lazy"></div><div class="collection-content"><h3>Lehengas</h3><p>Festive looks with timeless charm.</p></div></a>
+    <a class="collection-card" href="products.html"><div class="collection-image"><img src="assets/cat-suits.jpg" alt="Suits" loading="lazy"></div><div class="collection-content"><h3>Suits</h3><p>Classic ethnic styles for every day.</p></div></a>
+    <a class="collection-card" href="products.html"><div class="collection-image"><img src="assets/cat-gowns.jpg" alt="Gowns" loading="lazy"></div><div class="collection-content"><h3>Gowns</h3><p>Graceful styles for special moments.</p></div></a>
+    <a class="collection-card" href="products.html"><div class="collection-image"><img src="assets/cat-kurtis.jpg" alt="Kurtis" loading="lazy"></div><div class="collection-content"><h3>Kurtis</h3><p>Beautiful comfort for everyday elegance.</p></div></a>
+    <a class="collection-card" href="products.html"><div class="collection-image"><img src="assets/cat-dupatta.jpg" alt="Dupattas" loading="lazy"></div><div class="collection-content"><h3>Dupattas</h3><p>Finishing touches that complete the look.</p></div></a>
+    <a class="collection-card" href="products.html"><div class="collection-image"><img src="assets/cat-accessories.jpg" alt="Accessories" loading="lazy"></div><div class="collection-content"><h3>Accessories</h3><p>Details that add a little more sparkle.</p></div></a>
+  </div>
+</section>
+
+<section id="products" class="section shop-section">
+  <div class="section-heading">
+    <p class="eyebrow">SHOP SURU</p>
+    <h2>Our Products</h2>
+    <p>Choose a product to view its details, available options and stock.</p>
+  </div>
+  <div id="productGrid" class="product-grid">
+    <div class="product-loading">Loading products…</div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand-social"><img src="assets/suru-logo-official.png" class="footer-logo" alt="Suru Collection"><div class="social-links">
+  <a href="https://www.instagram.com/surucollectionnepal/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <a href="https://www.facebook.com/surucollectionnepal" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+  <a href="https://www.tiktok.com/@surucollectionnepal" target="_blank" rel="noopener noreferrer" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+  <a href="https://wa.me/9779740381427" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+</div></div>
+    <div><h3>Quick Links</h3><a href="index.html">Home</a><a href="about.html">About Us</a><a href="products.html">Products</a><a href="contact.html">Contact</a></div>
+    <div><h3>Our Location</h3><p>Gaur, Rautahat<br>Nepal</p></div>
+    <div><h3>Suru Collection</h3><p>Traditional elegance for every occasion.</p><p>Inspired by Suruchi Sahani</p></div>
+  </div>
+  <div class="footer-bottom">© <span id="year"></span> Suru Collection. All rights reserved.</div>
+</footer>
+
+<dialog id="variantModal" class="variant-modal">
+  <div class="variant-modal-inner">
+    <div class="variant-modal-header">
+      <div><h2 id="variantProductName"></h2><div id="variantProductCode" class="variant-modal-code"></div></div>
+      <button id="variantClose" class="variant-close" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="variant-modal-product">
+      <img id="variantProductImage" src="" alt="">
+      <div class="variant-modal-product-info"><div id="variantProductCategory" class="variant-modal-category"></div><div id="variantProductPrice" class="variant-modal-price"></div></div>
+    </div>
+    <div id="variantColourField" class="variant-field"><label for="variantColour">Colour</label><select id="variantColour"><option value="">Select Colour</option></select></div>
+    <div id="variantFixedColourField" class="variant-field"><label>Colour</label><div id="variantFixedColour" class="variant-fixed-value"></div></div>
+    <div id="variantSizeField" class="variant-field"><label for="variantSize">Size</label><select id="variantSize"><option value="">Select Size</option></select></div>
+    <div id="variantFixedOptionField" class="variant-field"><label>Option</label><div id="variantFixedOption" class="variant-fixed-value"></div></div>
+    <div class="variant-field"><label for="variantQuantity">Quantity</label><input id="variantQuantity" type="number" min="1" value="1" inputmode="numeric"></div>
+    <div id="variantStock" class="variant-stock" aria-live="polite"></div>
+    <div id="variantModalMessage" class="variant-modal-message" aria-live="polite"></div>
+    <div class="variant-modal-actions">
+      <button id="variantCancelButton" class="secondary-button" type="button">Cancel</button>
+      <button id="variantAddButton" class="buy-button" type="button">Add to Cart</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
 </html>
