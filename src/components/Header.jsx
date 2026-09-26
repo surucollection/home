@@ -57,7 +57,7 @@ function Header(){
           <a href="/account/" onClick={()=>setAccountOpen(false)}>My Account</a>
           <a href="/orders/" onClick={()=>setAccountOpen(false)}>My Orders</a>
           <div className="account-dropdown-divider"/>
-          <button type="button" className="account-logout" onClick={logout}><span className="logout-icon" aria-hidden="true">↪</span>Logout</button>
+          <button type="button" className="account-logout" onClick={logout}><i className="fa fa-sign-out logout-icon" aria-hidden="true"></i>Logout</button>
         </div>}
       </div>}
     </nav>
