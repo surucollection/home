@@ -3537,3 +3537,12 @@ a {
   .auth-card{padding:26px 20px;border-radius:14px;}
   .auth-card h1{font-size:26px;}
 }
+
+
+/* Product page purchase actions */
+.product-action-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.product-action-buttons .buy-button,.product-action-buttons .buy-now-button{width:100%;min-height:46px;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer}
+.product-action-buttons .buy-button{margin-top:0}
+.buy-now-button{border:1px solid var(--maroon);background:var(--maroon);color:#fff;box-shadow:0 8px 20px rgba(118,41,45,.14)}
+.buy-now-button:hover{background:var(--maroon-dark);border-color:var(--maroon-dark)}
+@media(max-width:480px){.product-action-buttons{grid-template-columns:1fr}}
