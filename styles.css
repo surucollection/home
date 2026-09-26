@@ -5958,8 +5958,8 @@ a {
 .sc-footer-section:first-child{border-left:0}
 .sc-footer-section-title{
   width:100%;
-  height:25px;
-  min-height:25px;
+  height:32px;
+  min-height:32px;
   padding:0;
   border:0;
   background:transparent;
