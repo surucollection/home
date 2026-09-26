@@ -40,15 +40,25 @@ export default function Footer() {
                 className="footer-logo"
                 alt="Suru Collection"
               />
-              <p className="footer-tagline">Traditional elegance for every occasion.</p>
+
+              <p className="footer-tagline">
+                Traditional elegance for every occasion.
+              </p>
+
               <p className="footer-description">
-                Discover thoughtfully selected traditional and ethnic wear for
-                every special occasion.
+                Discover thoughtfully selected traditional and ethnic wear,
+                made to bring timeless style to every occasion.
               </p>
 
               <div className="social-links" aria-label="Social media">
                 {socialLinks.map(([href, label, icon]) => (
-                  <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}>
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={label}
+                  >
                     <i className={icon} />
                   </a>
                 ))}
@@ -76,13 +86,24 @@ export default function Footer() {
 
           <section className="footer-column footer-contact">
             <h3>Get In Touch</h3>
-            <a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer">
+
+            <a
+              href="https://wa.me/9779740381427"
+              target="_blank"
+              rel="noreferrer"
+            >
               <i className="fab fa-whatsapp" />
               <span>+977 9740381427</span>
             </a>
+
             <p>
               <i className="fas fa-location-dot" />
               <span>Gaur, Rautahat, Nepal</span>
+            </p>
+
+            <p>
+              <i className="fas fa-clock" />
+              <span>We're here to help</span>
             </p>
           </section>
         </div>
