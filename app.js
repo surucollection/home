@@ -5085,54 +5085,38 @@ document.addEventListener("DOMContentLoaded", function () {
       const [
         ordersResult,
         productsResult,
-        pendingResult
+        pendingCountResult,
+        recentResult
       ] = await Promise.all([
 
         client
           .from("orders")
-          .select("*", {
-            count: "exact",
-            head: true
-          }),
+          .select("*", { count: "exact", head: true }),
 
         client
           .from("products")
-          .select("*", {
-            count: "exact",
-            head: true
-          })
+          .select("*", { count: "exact", head: true })
           .eq("is_active", true),
 
         client
           .from("orders")
-          .select(
-            "id,order_number,customer_name,total,order_status,created_at"
-          )
-          .order("created_at", {
-            ascending: false
-          })
+          .select("*", { count: "exact", head: true })
+          .eq("order_status", "pending"),
+
+        client
+          .from("orders")
+          .select("id,order_number,customer_name,total,order_status,created_at")
+          .order("created_at", { ascending: false })
           .limit(5)
       ]);
 
-      $("#statOrders").textContent =
-        ordersResult.count ?? 0;
-
-      $("#statProducts").textContent =
-        productsResult.count ?? 0;
-
-      const pending =
-        pendingResult.data || [];
-
-      $("#statPending").textContent =
-        pending.filter(
-          x =>
-            x.order_status ===
-            "pending"
-        ).length;
+      $("#statOrders").textContent = ordersResult.count ?? 0;
+      $("#statProducts").textContent = productsResult.count ?? 0;
+      $("#statPending").textContent = pendingCountResult.count ?? 0;
 
       renderOrderTable(
         $("#recentOrders"),
-        pending,
+        recentResult.data || [],
         false
       );
 
