@@ -2614,8 +2614,7 @@ a {
   flex: 1;
 }
 
-.product-page .buy-button,
-.product-page .buy-now-button {
+.product-page .buy-button {
   width: 100%;
   min-height: 48px;
   padding: 0 15px;
@@ -2635,22 +2634,7 @@ a {
   background: var(--maroon-dark);
 }
 
-.product-page .buy-now-button {
-  border: 1px solid var(--maroon);
-  background: #fff;
-  color: var(--maroon);
-}
-
-.product-page .buy-now-button:hover:not(:disabled) {
-  background: #f8eeee;
-}
-
-.product-page .buy-button:disabled,
-.product-page .buy-now-button:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
-
+\n.product-page .buy-button:disabled {\n  opacity: .45;\n  cursor: not-allowed;\n}\n
 /* Message */
 
 .product-page .variant-message {
