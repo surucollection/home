@@ -37,7 +37,6 @@ function copyRuntimeFiles() {
         fs.copyFileSync(src, dest);
       };
 
-      copy(path.join(root, "app.js"), path.join(out, "app.js"));
       copy(path.join(root, "styles.css"), path.join(out, "styles.css"));
       copy(path.join(root, "assets"), path.join(out, "assets"));
     }
