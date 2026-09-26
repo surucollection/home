@@ -3682,3 +3682,13 @@ a {
   .account-card{padding:20px 16px;border-radius:14px;}
   .edit-card-header{align-items:flex-start;}
 }
+
+
+/* Order cancellation states */
+.cancellation-pending,.cancellation-rejected{display:inline-flex;align-items:center;border-radius:999px;padding:7px 11px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.cancellation-pending{background:#fff4df;color:#8a5a13}
+.cancellation-rejected{background:#f7eeee;color:#8a3438}
+.cancellation-review{min-width:170px}
+.cancellation-review small{display:block;overflow-wrap:anywhere;line-height:1.35}
+.cancellation-review button{font-size:.78rem;padding:7px 10px}
+@media(max-width:700px){.cancellation-review{min-width:150px}.cancellation-pending,.cancellation-rejected{white-space:normal}}
