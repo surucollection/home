@@ -22,10 +22,10 @@ const supportLinks = [
 ];
 
 const services = [
-  ["fas fa-truck-fast", "Nepal-wide Delivery", "Reliable doorstep delivery"],
-  ["fas fa-money-bill-wave", "Cash on Delivery", "Pay when your order arrives"],
-  ["fas fa-credit-card", "Online Payment", "Convenient & secure checkout"],
-  ["fas fa-headset", "Personal Support", "We're happy to help"]
+  ["fas fa-truck-fast", "Nepal-wide Delivery"],
+  ["fas fa-money-bill-wave", "Cash on Delivery"],
+  ["fas fa-credit-card", "Online Payment"],
+  ["fas fa-headset", "Personal Support"]
 ];
 
 export default function Footer() {
@@ -41,8 +41,8 @@ export default function Footer() {
             />
             <p className="footer-tagline">Traditional elegance for every occasion.</p>
             <p className="footer-description">
-              Discover thoughtfully selected traditional and ethnic wear,
-              made to bring timeless style to every occasion.
+              Discover thoughtfully selected traditional and ethnic wear for
+              every special occasion.
             </p>
 
             <div className="social-links" aria-label="Social media">
@@ -54,21 +54,23 @@ export default function Footer() {
             </div>
           </section>
 
-          <div className="footer-links-group">
-            <section className="footer-column">
-              <h3>Explore</h3>
+          <section className="footer-column">
+            <h3>Explore</h3>
+            <div className="footer-link-list">
               {quickLinks.map(([href, label]) => (
                 <a key={label} href={href}>{label}</a>
               ))}
-            </section>
+            </div>
+          </section>
 
-            <section className="footer-column">
-              <h3>Customer Care</h3>
+          <section className="footer-column">
+            <h3>Customer Care</h3>
+            <div className="footer-link-list">
               {supportLinks.map(([href, label]) => (
                 <a key={label} href={href}>{label}</a>
               ))}
-            </section>
-          </div>
+            </div>
+          </section>
 
           <section className="footer-column footer-contact">
             <h3>Get In Touch</h3>
@@ -80,23 +82,16 @@ export default function Footer() {
               <i className="fas fa-location-dot" />
               <span>Gaur, Rautahat, Nepal</span>
             </p>
-            <p>
-              <i className="fas fa-clock" />
-              <span>We're here to help</span>
-            </p>
           </section>
         </div>
 
         <div className="footer-services" aria-label="Shopping benefits">
-          {services.map(([icon, title, text]) => (
+          {services.map(([icon, title]) => (
             <div className="footer-service" key={title}>
               <span className="footer-service-icon">
                 <i className={icon} />
               </span>
-              <div>
-                <strong>{title}</strong>
-                <span>{text}</span>
-              </div>
+              <strong>{title}</strong>
             </div>
           ))}
         </div>
