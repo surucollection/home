@@ -4019,3 +4019,17 @@ a {
 
   .footer p { margin-bottom: 7px; }
 }
+
+
+/* Desktop header navigation — align links to the right */
+@media (min-width: 901px) {
+  .nav-inner {
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-inner .nav-links {
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+}
