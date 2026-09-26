@@ -34,7 +34,7 @@ const services = [
   ["fas fa-headset", "Customer Support", "Always Here to Help"]
 ];
 
-function FooterSection({ title, open, onToggle, children }) {
+function FooterSection({ title, links, open, onToggle }) {
   return (
     <section className={`sc-footer-section ${open ? "is-open" : ""}`}>
       <button
@@ -51,7 +51,11 @@ function FooterSection({ title, open, onToggle, children }) {
 
       <div className="sc-footer-section-rule" />
 
-      {children}
+      <div className="sc-footer-links">
+        {links.map(([href, label]) => (
+          <a key={label} href={href}>{label}</a>
+        ))}
+      </div>
     </section>
   );
 }
@@ -99,34 +103,33 @@ export default function Footer() {
           <div className="sc-footer-nav">
             <FooterSection
               title="Quick Links"
+              links={quickLinks}
               open={openSection === "quick"}
               onToggle={() => toggleSection("quick")}
-            >
-              <div className="sc-footer-links">
-                {quickLinks.map(([href, label]) => (
-                  <a key={label} href={href}>{label}</a>
-                ))}
-              </div>
-            </FooterSection>
-
+            />
             <FooterSection
               title="Customer Support"
+              links={supportLinks}
               open={openSection === "support"}
               onToggle={() => toggleSection("support")}
-            >
-              <div className="sc-footer-links">
-                {supportLinks.map(([href, label]) => (
-                  <a key={label} href={href}>{label}</a>
-                ))}
-              </div>
-            </FooterSection>
+            />
           </div>
 
-          <FooterSection
-            title="Contact Us"
-            open={openSection === "contact"}
-            onToggle={() => toggleSection("contact")}
-          >
+          <section className="sc-footer-contact">
+            <button
+              className="sc-footer-section-title"
+              type="button"
+              aria-expanded={openSection === "contact"}
+              onClick={() => toggleSection("contact")}
+            >
+              <span>Contact Us</span>
+              <span className="sc-footer-plus" aria-hidden="true">
+                {openSection === "contact" ? "−" : "+"}
+              </span>
+            </button>
+
+            <div className="sc-footer-section-rule" />
+
             <div className="sc-footer-contact-details">
               <a href="https://wa.me/9779740381427" target="_blank" rel="noreferrer">
                 <i className="fas fa-location-dot" />
@@ -145,7 +148,7 @@ export default function Footer() {
                 <span>Sun - Fri: 9:00 AM - 7:00 PM</span>
               </p>
             </div>
-          </FooterSection>
+          </section>
         </div>
 
         <div className="sc-footer-services">
