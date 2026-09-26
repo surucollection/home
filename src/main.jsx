@@ -109,6 +109,51 @@ function Home() {
         </section>
       </main>
 
+      <dialog id="variantModal" className="variant-modal">
+        <div className="variant-modal-inner">
+          <div className="variant-modal-header">
+            <div>
+              <h2 id="variantProductName"></h2>
+              <div id="variantProductCode" className="variant-modal-code"></div>
+            </div>
+            <button id="variantClose" className="variant-close" type="button" aria-label="Close">×</button>
+          </div>
+          <div className="variant-modal-product">
+            <img id="variantProductImage" src="" alt="" />
+            <div className="variant-modal-product-info">
+              <div id="variantProductCategory" className="variant-modal-category"></div>
+              <div id="variantProductPrice" className="variant-modal-price"></div>
+            </div>
+          </div>
+          <div id="variantColourField" className="variant-field">
+            <label htmlFor="variantColour">Colour</label>
+            <select id="variantColour"><option value="">Select Colour</option></select>
+          </div>
+          <div id="variantFixedColourField" className="variant-field">
+            <label>Colour</label>
+            <div id="variantFixedColour" className="variant-fixed-value"></div>
+          </div>
+          <div id="variantSizeField" className="variant-field">
+            <label htmlFor="variantSize">Size</label>
+            <select id="variantSize"><option value="">Select Size</option></select>
+          </div>
+          <div id="variantFixedOptionField" className="variant-field">
+            <label>Option</label>
+            <div id="variantFixedOption" className="variant-fixed-value"></div>
+          </div>
+          <div className="variant-field">
+            <label htmlFor="variantQuantity">Quantity</label>
+            <input id="variantQuantity" type="number" min="1" defaultValue="1" inputMode="numeric" />
+          </div>
+          <div id="variantStock" className="variant-stock" aria-live="polite"></div>
+          <div id="variantModalMessage" className="variant-modal-message" aria-live="polite"></div>
+          <div className="variant-modal-actions">
+            <button id="variantCancelButton" className="secondary-button" type="button">Cancel</button>
+            <button id="variantAddButton" className="buy-button" type="button">Add to Cart</button>
+          </div>
+        </div>
+      </dialog>
+
       <footer className="footer">
         <div className="footer-grid">
           <div className="footer-brand-social">
