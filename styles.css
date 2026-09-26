@@ -3796,3 +3796,181 @@ a {
   .account-dropdown a,.account-logout{padding:11px 8px}
   .account-dropdown a{border-bottom:0!important}
 }
+
+
+/* =========================================================
+   SURU COLLECTION — FINAL RESPONSIVE FOOTER OVERRIDE
+   Footer only. No other site styles are changed.
+   ========================================================= */
+.footer {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #2d1d20;
+  color: rgba(255,255,255,.74);
+  overflow: hidden;
+}
+
+.footer-grid {
+  width: min(1200px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 58px 0 48px;
+  display: grid;
+  grid-template-columns: minmax(210px, 1.35fr) repeat(3, minmax(150px, 1fr));
+  gap: 42px;
+  align-items: start;
+}
+
+.footer-grid > div { min-width: 0; }
+
+.footer-grid > div:first-child {
+  display: flex;
+  align-items: flex-start;
+}
+
+.footer-logo {
+  display: block;
+  width: auto;
+  max-width: 175px;
+  height: 56px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.footer h3 {
+  margin: 1px 0 14px;
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+
+.footer a {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 9px;
+  color: rgba(255,255,255,.70);
+  font-size: 13px;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: color .2s ease, transform .2s ease;
+}
+
+.footer a:hover {
+  color: #fff;
+  transform: translateX(2px);
+}
+
+.footer p {
+  margin: 0 0 9px;
+  color: rgba(255,255,255,.68);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.footer .footer-script {
+  margin-top: 15px;
+  color: rgba(255,255,255,.48);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.footer .copyright {
+  width: min(1200px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 18px 0 21px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: rgba(255,255,255,.48);
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.footer .copyright span:last-child {
+  color: rgba(255,255,255,.38);
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 34px 32px;
+  }
+
+  .footer-grid > div:first-child {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-grid {
+    width: min(100% - 32px, 520px);
+    padding: 42px 0 34px;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 22px;
+  }
+
+  .footer-grid > div:first-child {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-bottom: 2px;
+  }
+
+  .footer-logo {
+    max-width: 160px;
+    height: 52px;
+  }
+
+  .footer h3 {
+    margin-bottom: 11px;
+    font-size: 15px;
+  }
+
+  .footer a,
+  .footer p {
+    font-size: 12.5px;
+  }
+
+  .footer .copyright {
+    width: min(100% - 32px, 520px);
+    padding: 16px 0 19px;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .footer .copyright span:last-child {
+    text-align: center;
+  }
+}
+
+@media (max-width: 390px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .footer-grid > div:first-child,
+  .footer-grid > div:not(:first-child) {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .footer-grid > div:not(:first-child) a {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .footer p { margin-bottom: 7px; }
+}
