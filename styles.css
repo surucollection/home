@@ -3430,3 +3430,110 @@ a {
   .variant-modal-backdrop{padding:10px}
   .variant-modal{padding:22px 18px}
 }
+
+
+/* =========================================================
+   CUSTOMER AUTH / ACCOUNT PAGES
+   ========================================================= */
+.page{
+  min-height:calc(100vh - 160px);
+  padding:64px 20px;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+.auth-card{
+  width:min(520px,100%);
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:36px;
+}
+.auth-card>img{
+  width:auto;
+  height:58px;
+  max-width:220px;
+  object-fit:contain;
+  margin:0 auto 18px;
+}
+.auth-card h1{
+  margin:0 0 8px;
+  text-align:center;
+  color:var(--maroon);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:30px;
+}
+.auth-intro{
+  margin:0 0 24px;
+  text-align:center;
+  color:var(--muted);
+}
+.auth-card form{
+  display:grid;
+  gap:16px;
+}
+.field{
+  display:grid;
+  gap:7px;
+  color:var(--text);
+  font-size:14px;
+  font-weight:600;
+}
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+  color:var(--text);
+  padding:12px 13px;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color:var(--maroon);
+  box-shadow:0 0 0 3px rgba(118,41,45,.10);
+}
+.auth-card .btn{
+  width:100%;
+  border:0;
+  border-radius:10px;
+  background:var(--maroon);
+  color:#fff;
+  padding:12px 18px;
+  font-weight:700;
+  cursor:pointer;
+}
+.auth-card .btn:hover{background:var(--maroon-dark);}
+.auth-card .btn:disabled{opacity:.65;cursor:not-allowed;}
+.auth-links{
+  margin-top:20px;
+  text-align:center;
+  color:var(--muted);
+  font-size:14px;
+}
+.auth-links a{
+  color:var(--maroon);
+  font-weight:700;
+}
+.message{
+  margin-top:14px;
+  padding:11px 13px;
+  border-radius:9px;
+  background:var(--cream-dark);
+  color:var(--text);
+  font-size:14px;
+}
+.message.error{
+  background:#fff0f0;
+  color:#8a2026;
+}
+@media(max-width:600px){
+  .page{padding:36px 14px;}
+  .auth-card{padding:26px 20px;border-radius:14px;}
+  .auth-card h1{font-size:26px;}
+}
