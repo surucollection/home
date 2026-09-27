@@ -42,7 +42,7 @@ function matchNcmBranch(branches,city,district){
   }
   return best||"";
 }
-const cats=[["cat-sarees.jpg","Sarees","Elegant drapes for every occasion."],["cat-lehengas.jpg","Lehengas","Festive looks with timeless charm."],["cat-suits.jpg","Suits","Classic ethnic styles for every day."],["cat-gowns.jpg","Gowns","Graceful styles for special moments."],["cat-kurtis.jpg","Kurtis","Beautiful comfort for everyday elegance."],["cat-dupatta.jpg","Dupattas","Finishing touches that complete the look."],["cat-accessories.jpg","Accessories","Details that add a little more sparkle."],["cat-kids-wear.svg","Kids Wear","Charming traditional styles for little ones."]];
+const cats=[["cat-sarees.jpg","Sarees","Elegant drapes for every occasion."],["cat-lehengas.jpg","Lehengas","Festive looks with timeless charm."],["cat-suits.jpg","Suits","Classic ethnic styles for every day."],["cat-gowns.jpg","Gowns","Graceful styles for special moments."],["cat-kurtis.jpg","Kurtis","Beautiful comfort for everyday elegance."],["cat-dupatta.jpg","Dupattas","Finishing touches that complete the look."],["cat-kids-wear.svg","Kids Wear","Charming traditional styles for little ones."],["cat-accessories.jpg","Accessories","Details that add a little more sparkle."]];
 const NEPAL_PROVINCES=[
  {name:"Koshi Province",districts:["Taplejung","Sankhuwasabha","Solukhumbu","Okhaldhunga","Khotang","Bhojpur","Dhankuta","Tehrathum","Panchthar","Ilam","Jhapa","Morang","Sunsari","Udayapur"]},
  {name:"Madhesh Province",districts:["Saptari","Siraha","Dhanusha","Mahottari","Sarlahi","Rautahat","Bara","Parsa"]},
