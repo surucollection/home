@@ -45,7 +45,7 @@ export default function ProductCard({product,image,variants=[]}){
         <p className="eyebrow">{buyNow?"BUY NOW":"ADD TO CART"}</p><h3>{product.name}</h3>
         {colours.length>1&&<label className="field">Colour<select value={colour} onChange={e=>setColour(e.target.value)}><option value="">Select Colour</option>{colours.map(x=><option key={x}>{x}</option>)}</select></label>}
         {colours.length===1&&<div className="variant-field"><label>Colour</label><div className="variant-fixed-value">{colours[0]}</div></div>}
-        {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=><option key={x}>{x}</option>)}</select></label>}
+        {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=>{const matching=variants.filter(v=>norm(v.size)===norm(x)&&(!colour||norm(v.color)===norm(colour)));const available=matching.some(v=>Number(v.stock||0)>0);const outOfStock=matching.length>0&&!available;return <option key={x} value={x} disabled={outOfStock}>{x}{outOfStock?" — Out of Stock":""}</option>})}</select></label>}
         {variants.length>0&&<div className={"variant-stock"+(selectedOutOfStock?" out-of-stock":"")}>{selectedOutOfStock?(variant?"Out of Stock":"Select an available option."):Number(variant.stock||0)+" item(s) available"}</div>}
         <label className="field">Quantity<input type="number" min="1" max={variant?.stock||undefined} value={qty} onChange={e=>setQty(e.target.value)}/></label>
         <button className="buy-button" type="button" onClick={confirmAdd} disabled={selectedOutOfStock}>{buyNow?"Buy Now":"Add to Cart"}</button>
