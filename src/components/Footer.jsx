@@ -56,7 +56,7 @@ function FooterSection({ title, links, open, onToggle }) {
 }
 
 export default function Footer() {
-  const [openSection, setOpenSection] = useState(null);
+  const [openSection, setOpenSection] = useState("contact");
 
   const toggleSection = (section) => {
     setOpenSection((current) => current === section ? null : section);
