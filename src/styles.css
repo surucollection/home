@@ -1,2 +1,76 @@
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 @import "../styles.css";
+
+/* Product card purchase actions */
+.product-card-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.product-card-actions button,
+.buy-button{
+  appearance:none;
+  border:1px solid transparent;
+  border-radius:999px;
+  min-height:44px;
+  padding:11px 16px;
+  font:inherit;
+  font-size:.9rem;
+  font-weight:600;
+  line-height:1.1;
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,color .18s ease,border-color .18s ease;
+}
+.product-card-actions button:hover,
+.buy-button:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+.product-card-actions button:active,
+.buy-button:active:not(:disabled){
+  transform:translateY(0);
+}
+.product-card-actions .secondary-button{
+  background:#fff;
+  color:#2d2926;
+  border-color:#d8cec5;
+  box-shadow:0 3px 12px rgba(45,41,38,.06);
+}
+.product-card-actions .secondary-button:hover{
+  border-color:#b7a79a;
+  background:#faf7f4;
+}
+.product-card-actions .buy-now-button{
+  background:#2d2926;
+  color:#fff;
+  border-color:#2d2926;
+  box-shadow:0 4px 14px rgba(45,41,38,.16);
+}
+.product-card-actions .buy-now-button:hover{
+  background:#171513;
+  border-color:#171513;
+}
+.product-card-actions button:focus-visible,
+.buy-button:focus-visible{
+  outline:3px solid rgba(45,41,38,.2);
+  outline-offset:2px;
+}
+.buy-button{
+  width:100%;
+  margin-top:6px;
+  background:#2d2926;
+  color:#fff;
+  border-color:#2d2926;
+  box-shadow:0 4px 14px rgba(45,41,38,.14);
+}
+.buy-button:disabled{
+  cursor:not-allowed;
+  opacity:.5;
+  box-shadow:none;
+  transform:none;
+}
+@media (max-width:520px){
+  .product-card-actions{
+    grid-template-columns:1fr;
+  }
+}
