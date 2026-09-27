@@ -19,8 +19,9 @@ export default function ProductCard({product,image,variants=[]}){
     if(variants.length&&(!variant||Number(variant.stock||0)<=0))return;
     const stock=Number(variant?.stock||0);
     const q=Math.max(1,Math.min(Number(qty)||1,stock||Number(qty)||1));
+    if(buyNow)localStorage.removeItem("suruCart");
     addCart({product_id:product.id,code:product.product_code,name:product.name,price:Number(product.price||0),image:image?.image_url||"",size:variant?.size||size||null,color:variant?.color||colour||product.color||null,quantity:q});
-    setOpen(false);if(buyNow){localStorage.removeItem("suruCart");window.location.href="/order.html";return;}setAdded(true);window.setTimeout(()=>setAdded(false),1200);
+    setOpen(false);if(buyNow){window.location.href="/order.html";return;}setAdded(true);window.setTimeout(()=>setAdded(false),1200);
   };
   return <article className="product-card">
     <a className="product-image" href={href}>
