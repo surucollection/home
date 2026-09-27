@@ -16,7 +16,7 @@ const quickLinks = [
 ];
 
 const supportLinks = [
-  ["/order.html", "Track Order"],
+  ["https://portal.nepalcanmove.com/track/", "Track Order"],
   ["/policy.html#shipping-policy", "Shipping Policy"],
   ["/policy.html#return-exchange-policy", "Return & Exchange"],
   ["/policy.html#terms-conditions", "Terms & Conditions"]
