@@ -13,6 +13,8 @@ import OrderTable from "./components/admin/OrderTable.jsx";
 import ProductAdminCard from "./components/admin/ProductAdminCard.jsx";
 import StockRow from "./components/admin/StockRow.jsx";
 
+const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
+const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
 const NCM_BRANCH_CACHE={items:null};
 async function getNcmBranches(){
   if(NCM_BRANCH_CACHE.items?.length)return NCM_BRANCH_CACHE.items;
@@ -170,7 +172,7 @@ function Admin(){
  const refreshDashboard=async()=>{const[a,b,c]=await Promise.all([supabase.from("orders").select("*",{count:"exact",head:true}),supabase.from("products").select("*",{count:"exact",head:true}).eq("is_active",true),supabase.from("orders").select("*",{count:"exact",head:true}).eq("order_status","pending")]);setStats({orders:a.count||0,products:b.count||0,pending:c.count||0});const{data}=await supabase.from("orders").select("id,order_number,customer_name,total,order_status,created_at").order("created_at",{ascending:false}).limit(5);setOrders(data||[])};
  const loadOrders=async()=>{let q=supabase.from("orders").select("*").order("created_at",{ascending:false}).limit(100);if(status)q=q.eq("order_status",status);if(search)q=q.or("order_number.ilike.%"+search+"%,customer_name.ilike.%"+search+"%,customer_phone.ilike.%"+search+"%");const{data,error}=await q;if(error)setMessage(error.message);else setOrders(data||[])};
  const loadProducts=async()=>{const{data,error}=await supabase.from("products").select("*").order("created_at",{ascending:false});if(error)setMessage(error.message);else setProducts(data||[])};
- const loadInventory=async()=>{const{data,error}=await supabase.from("products").select("id,product_code,name,product_sizes(id,size,color,stock,is_active)").order("product_code");if(error)setMessage(error.message);else{const rows=data||[];setInventory(rows);setInventoryDrafts(Object.fromEntries(rows.map(p=>[p.id,Object.fromEntries((p.product_sizes||[]).map(s=>[s.id,Number(s.stock||0)]))])));}};
+ const loadInventory=async()=>{const{data,error}=await supabase.from("products").select("id,product_code,name,product_sizes(id,size,color,stock,is_active)").order("product_code");if(error)setMessage(error.message);else{const rows=data||[];setInventory(rows.map(p=>({...p,product_sizes:(p.product_sizes||[]).slice().sort((a,b)=>sizeRank(a.size)-sizeRank(b.size)||String(a.color||"").localeCompare(String(b.color||"")))})));setInventoryDrafts(Object.fromEntries(rows.map(p=>[p.id,Object.fromEntries((p.product_sizes||[]).map(s=>[s.id,Number(s.stock||0)]))])));}};
  const loadCustomers=async()=>{const{data,error}=await supabase.rpc("admin_list_customers");if(error)setMessage(error.message);else setCustomers(data||[])};
  useEffect(()=>{(async()=>{try{const{data}=await supabase.auth.getSession();if(!data.session||!(await adminCheck(data.session))){setBusy(false);return}setSession(data.session);await refreshDashboard()}catch(e){setAuthMsg(e.message)}finally{setBusy(false)}})()},[]);
  useEffect(()=>{if(!session)return;if(tab==="dashboard")refreshDashboard();if(tab==="orders")loadOrders();if(tab==="products")loadProducts();if(tab==="inventory")loadInventory();if(tab==="customers")loadCustomers()},[tab,status]);
