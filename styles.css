@@ -6934,3 +6934,14 @@ a {
   .checkout-page .cart-item p{font-size:11px}
   .checkout-page .order-form{padding:17px}
 }
+
+
+/* Scalable product catalog pagination */
+.catalog-load-more{
+  display:flex;
+  justify-content:center;
+  margin:36px 0 8px;
+}
+.catalog-load-more .secondary-button{
+  min-width:220px;
+}
