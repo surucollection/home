@@ -1,18 +1,66 @@
-import React,{useEffect,useState} from "react";
+import React,{useCallback,useEffect,useRef,useState} from "react";
 import { get } from "../lib/api.js";
 import ProductCard from "./ProductCard.jsx";
 
+const PAGE_SIZE=24;
+
 export default function ProductsGrid({limit,category}){
-  const[p,setP]=useState([]),[im,setIm]=useState([]),[vars,setVars]=useState({}),[err,setErr]=useState("");
-  useEffect(()=>{let ok=true;(async()=>{try{
-    const products=await get("products",{select:"id,product_code,name,category,price,compare_at_price,is_active,color",is_active:"eq.true",order:"created_at.desc"});
-    const images=await Promise.all((products||[]).map(x=>get("product_images",{select:"product_id,image_url,alt_text,is_main,sort_order",product_id:"eq."+x.id,order:"sort_order.asc"}).catch(()=>[])));
-    const variants=await Promise.all((products||[]).map(x=>get("product_sizes",{select:"id,size,color,stock,is_active",product_id:"eq."+x.id,is_active:"eq.true",order:"size.asc"}).catch(()=>[])));
-    if(ok){setP(products||[]);setIm(images.flat());setVars(Object.fromEntries((products||[]).map((x,i)=>[x.id,variants[i]||[]])));}
-  }catch(e){if(ok)setErr(e.message)}})();return()=>{ok=false}},[]);
-  if(err)return <div className="product-loading">{err}</div>;
-  if(!p.length)return <div className="product-loading">Loading products…</div>;
-  const filtered=category?p.filter(x=>String(x.category||"").trim().toLowerCase()===String(category).trim().toLowerCase()):p;
-  if(category&&!filtered.length)return <div className="product-loading">No products found in {category}.</div>;
-  return <div className="product-grid">{(limit?filtered.slice(0,limit):filtered).map(product=>{const image=im.find(i=>i.product_id===product.id&&i.is_main)||im.find(i=>i.product_id===product.id);return <ProductCard key={product.id} product={product} image={image} variants={vars[product.id]||[]}/>})}</div>
+  const[p,setP]=useState([]),[err,setErr]=useState(""),[loading,setLoading]=useState(true),[loadingMore,setLoadingMore]=useState(false),[hasMore,setHasMore]=useState(true);
+  const requestId=useRef(0);
+
+  const load=useCallback(async(reset=false)=>{
+    const id=++requestId.current;
+    const offset=reset?0:p.length;
+    if(reset)setLoading(true);else setLoadingMore(true);
+    setErr("");
+    try{
+      const params={
+        select:"id,product_code,name,category,price,compare_at_price,is_active,color,product_images(product_id,image_url,alt_text,is_main,sort_order),product_sizes(id,size,color,stock,is_active)",
+        is_active:"eq.true",
+        "product_sizes.is_active":"eq.true",
+        order:"created_at.desc",
+        limit:String(PAGE_SIZE),
+        offset:String(offset)
+      };
+      if(category)params.category="eq."+category;
+      const rows=await get("products",params);
+      if(id!==requestId.current)return;
+      const next=rows||[];
+      setP(prev=>reset?next:[...prev,...next]);
+      setHasMore(next.length===PAGE_SIZE);
+    }catch(e){
+      if(id===requestId.current)setErr(e.message||"Unable to load products.");
+    }finally{
+      if(id===requestId.current){setLoading(false);setLoadingMore(false);}
+    }
+  },[category,p.length]);
+
+  useEffect(()=>{setP([]);setHasMore(true);load(true)},[category]);
+
+  if(loading&&!p.length)return <div className="product-loading">Loading products…</div>;
+  if(err&&!p.length)return <div className="product-loading">{err}</div>;
+  if(!p.length)return <div className="product-loading">No products found{category?" in "+category:""}.</div>;
+
+  const visible=limit?p.slice(0,limit):p;
+  return <>
+    <div className="product-grid">
+      {visible.map((product,index)=>{
+        const images=product.product_images||[];
+        const image=images.find(i=>i.is_main)||images.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0];
+        return <ProductCard
+          key={product.id}
+          product={product}
+          image={image}
+          variants={product.product_sizes||[]}
+          priority={index<4}
+        />;
+      })}
+    </div>
+    {!limit&&hasMore&&<div className="catalog-load-more">
+      <button className="secondary-button" type="button" onClick={()=>load(false)} disabled={loadingMore}>
+        {loadingMore?"Loading…":"Load More Products"}
+      </button>
+    </div>}
+    {err&&p.length>0&&<div className="product-loading">{err}</div>}
+  </>;
 }
