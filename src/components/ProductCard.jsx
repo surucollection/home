@@ -13,6 +13,7 @@ export default function ProductCard({product,image,variants=[]}){
     return variants.find(v=>(!sizes.length||norm(v.size)===norm(size))&&(!colours.length||norm(v.color)===norm(colour)))||null;
   },[variants,sizes,colours,size,colour]);
   useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
+  const selectedOutOfStock=variants.length>0&&(!variant||Number(variant.stock||0)<=0);
   const startAdd=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(false);setQty(1);setOpen(true)};
   const startBuyNow=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(true);setQty(1);setOpen(true)};
   const confirmAdd=()=>{
@@ -43,9 +44,9 @@ export default function ProductCard({product,image,variants=[]}){
         {colours.length>1&&<label className="field">Colour<select value={colour} onChange={e=>setColour(e.target.value)}><option value="">Select Colour</option>{colours.map(x=><option key={x}>{x}</option>)}</select></label>}
         {colours.length===1&&<div className="variant-field"><label>Colour</label><div className="variant-fixed-value">{colours[0]}</div></div>}
         {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=><option key={x}>{x}</option>)}</select></label>}
-        {variants.length>0&&<div className="variant-stock">{variant?Number(variant.stock||0)+" item(s) available":"Select an available option."}</div>}
+        {variants.length>0&&<div className={"variant-stock"+(selectedOutOfStock?" out-of-stock":"")}>{selectedOutOfStock?(variant?"Out of Stock":"Select an available option."):Number(variant.stock||0)+" item(s) available"}</div>}
         <label className="field">Quantity<input type="number" min="1" max={variant?.stock||undefined} value={qty} onChange={e=>setQty(e.target.value)}/></label>
-        <button className="buy-button" type="button" onClick={confirmAdd} disabled={variants.length>0&&(!variant||Number(variant.stock||0)<=0)}>{buyNow?"Buy Now":"Add to Cart"}</button>
+        <button className="buy-button" type="button" onClick={confirmAdd} disabled={selectedOutOfStock}>{buyNow?"Buy Now":"Add to Cart"}</button>
       </div>
     </div>}
   </article>;
