@@ -1,0 +1,1 @@
+-- Speed up customer order history queries filtered by customer and sorted newest first.\ncreate index if not exists idx_orders_customer_created_at on public.orders (customer_id, created_at desc);\n
