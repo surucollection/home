@@ -13,7 +13,9 @@ export default function ProductCard({product,image,variants=[]}){
     return variants.find(v=>(!sizes.length||norm(v.size)===norm(size))&&(!colours.length||norm(v.color)===norm(colour)))||null;
   },[variants,sizes,colours,size,colour]);
   useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
-  const hasStock=variants.length===0||variants.some(v=>Number(v.stock||0)>0);\n  const selectedOutOfStock=variants.length>0&&(!variant||Number(variant.stock||0)<=0);\n  const productOutOfStock=variants.length>0&&!hasStock;
+  const hasStock=variants.length===0||variants.some(v=>Number(v.stock||0)>0);
+  const selectedOutOfStock=variants.length>0&&(!variant||Number(variant.stock||0)<=0);
+  const productOutOfStock=variants.length>0&&!hasStock;
   const startAdd=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(false);setQty(1);setOpen(true)};
   const startBuyNow=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(true);setQty(1);setOpen(true)};
   const confirmAdd=()=>{
