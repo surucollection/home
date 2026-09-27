@@ -1,20 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 900">
 <defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7eee7"/><stop offset="1" stop-color="#ead8d0"/></linearGradient>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fbf1eb"/><stop offset="1" stop-color="#ead8d0"/></linearGradient>
+  <linearGradient id="dress" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c66a78"/><stop offset="1" stop-color="#8f3f4d"/></linearGradient>
+  <linearGradient id="kurta" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8e4b54"/><stop offset="1" stop-color="#5d2d35"/></linearGradient>
 </defs>
-<rect width="800" height="900" fill="url(#bg)"/>
-<circle cx="400" cy="260" r="190" fill="#f3e4dc"/>
-<g stroke="#76292d" stroke-width="5" stroke-linejoin="round">
-  <circle cx="330" cy="245" r="54" fill="#d9a47f"/>
-  <path d="M276 236q54-78 108 0v-23q-54-74-108 0z" fill="#4b3030"/>
-  <path d="M260 360q70-78 140 0l48 290H212z" fill="#9d4d58"/>
-  <path d="M286 365l44 105 45-105" fill="#f6e7df"/>
-  <path d="M212 650h236l-20 105H232z" fill="#e2b06d"/>
-  <circle cx="470" cy="270" r="48" fill="#d9a47f"/>
-  <path d="M423 258q47-70 94 0v-20q-47-66-94 0z" fill="#4b3030"/>
-  <path d="M410 365q60-70 120 0l38 285H372z" fill="#b66b73"/>
-  <path d="M433 370l37 86 38-86" fill="#f6e7df"/>
-  <path d="M372 650h196l-18 105H390z" fill="#d5a05d"/>
+<rect width="800" height="900" rx="48" fill="url(#bg)"/>
+<circle cx="128" cy="126" r="74" fill="#f0d2c9"/><circle cx="686" cy="170" r="96" fill="#f3dfbd"/>
+<path d="M55 690c105-105 194-72 262 18 54 71 139 87 250 28 79-42 132-31 178 28v80H55z" fill="#e8c6bd" opacity=".7"/>
+<g fill="none" stroke="#9d4d58" stroke-width="5" stroke-linecap="round" opacity=".65">
+ <path d="M102 210l14-28 14 28 30 4-22 21 6 30-28-15-28 15 6-30-22-21z"/>
+ <path d="M642 330c0-28 42-28 42 0 0 35-42 48-42 48s-42-13-42-48c0-28 42-28 42 0z"/>
 </g>
-<path d="M190 790h420" stroke="#76292d" stroke-width="5" opacity=".25"/>
+<text x="68" y="126" font-family="Arial,sans-serif" font-size="42" font-weight="700" fill="#76292d">SURU</text>
+<text x="68" y="202" font-family="Georgia,serif" font-size="62" font-weight="700" fill="#76292d">Kids Wear</text>
+<text x="70" y="239" font-family="Arial,sans-serif" font-size="18" letter-spacing="2" fill="#6b5557">TRADITIONAL • PLAYFUL • LOVELY</text>
+<g stroke="#76292d" stroke-width="5" stroke-linejoin="round">
+ <!-- girl -->
+ <circle cx="420" cy="335" r="66" fill="#d99e7b"/>
+ <path d="M353 335q7-101 74-91 68 10 66 92-18-50-54-57-35 31-86 56z" fill="#4b3030"/>
+ <circle cx="368" cy="270" r="18" fill="#c66a78"/><circle cx="487" cy="270" r="18" fill="#c66a78"/>
+ <path d="M375 455q45-48 90 0l55 215H320z" fill="url(#dress)"/>
+ <path d="M375 455l45 72 45-72" fill="#f7e7df"/>
+ <path d="M385 536q35 28 70 0" fill="none"/>
+ <path d="M350 670h140l-10 72H360z" fill="#e0ae68"/>
+ <path d="M390 742v66M450 742v66" fill="none"/>
+ <!-- boy -->
+ <circle cx="592" cy="355" r="62" fill="#d99e7b"/>
+ <path d="M532 348q14-92 72-78 59 14 60 77-35-42-75-45-28 29-57 46z" fill="#3f3030"/>
+ <path d="M533 468q59-51 118 0l38 202H495z" fill="url(#kurta)"/>
+ <path d="M533 468l59 82 59-82" fill="#f5e6de"/>
+ <path d="M565 536h54M565 575h54M565 614h54" fill="none" stroke="#e2b06d" stroke-width="4"/>
+ <path d="M510 670h165l-16 72H526z" fill="#d3a05f"/>
+ <path d="M555 742v66M630 742v66" fill="none"/>
+</g>
+<g fill="#d9a47f" stroke="#76292d" stroke-width="4">
+ <circle cx="302" cy="410" r="13"/><circle cx="706" cy="520" r="13"/>
+</g>
+<path d="M95 806h610" stroke="#76292d" stroke-width="3" opacity=".22"/>
+<text x="400" y="852" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" fill="#76292d">Little styles, big smiles ✦</text>
 </svg>
