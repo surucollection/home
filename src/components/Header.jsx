@@ -47,7 +47,7 @@ function Header(){
     <button className="menu-toggle" onClick={()=>setOpen(!open)} aria-expanded={open}>☰</button>
     <nav className={open?"open":""}>
       <a href="/">Home</a><a href="/about.html">About Us</a><a href="/products.html">Products</a><a href="/contact.html">Contact</a>
-      {!loggedIn?<a href="/login.html">Login</a>:<div className="account-menu">
+      {!loggedIn?<a href={"/login.html?return="+encodeURIComponent(location.pathname+location.search+location.hash)}>Login</a>:<div className="account-menu">
         <button type="button" className="account-menu-toggle" onClick={e=>{e.stopPropagation();setAccountOpen(!accountOpen)}} aria-expanded={accountOpen}>
           <span className="account-avatar">{initial}</span><span className="account-menu-name">{firstName}</span><span className="account-menu-arrow">⌄</span>
         </button>
