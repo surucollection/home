@@ -15,12 +15,10 @@ function Header(){
         if(mounted){setLoggedIn(false);setAccount({name:"",first_name:"",last_name:"",phone:"",email:""});setAccountOpen(false)}
         return;
       }
-      if(mounted)setLoggedIn(true);
-      const{data}=await supabase.rpc("my_customer_profile");
       if(mounted){
-        let p=data;
-        if(typeof p==="string"){try{p=JSON.parse(p)}catch{}}
-        setAccount({name:p?.name||session.user.user_metadata?.name||"Account",first_name:p?.first_name||session.user.user_metadata?.first_name||"",last_name:p?.last_name||session.user.user_metadata?.last_name||"",phone:p?.phone||session.user.user_metadata?.phone||"",email:session.user.email||""});
+        const m=session.user.user_metadata||{};
+        setLoggedIn(true);
+        setAccount({name:m.name||"Account",first_name:m.first_name||"",last_name:m.last_name||"",phone:m.phone||"",email:session.user.email||""});
       }
     };
     supabase.auth.getSession().then(({data})=>load(data.session));
