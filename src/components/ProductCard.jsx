@@ -1,9 +1,10 @@
 import React,{useEffect,useMemo,useState} from "react";
-import { money, norm, get } from "../lib/api.js";
+import { money, norm, imageUrl } from "../lib/api.js";
 import { addCart } from "../lib/cart.js";
 
-export default function ProductCard({product,image,variants=[]}){
+export default function ProductCard({product,image,variants=[],priority=false}){
   const href="/product.html?code="+encodeURIComponent(product.product_code);
+  const cardImage=imageUrl(image?.image_url||"",600);
   const[added,setAdded]=useState(false),[open,setOpen]=useState(false),[buyNow,setBuyNow]=useState(false),[size,setSize]=useState(""),[colour,setColour]=useState(""),[qty,setQty]=useState(1);
   const sizes=useMemo(()=>[...new Set(variants.map(v=>v.size).filter(Boolean))],[variants]);
   const colours=useMemo(()=>[...new Set(variants.map(v=>v.color).filter(Boolean))],[variants]);
@@ -15,7 +16,6 @@ export default function ProductCard({product,image,variants=[]}){
   useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
   const hasStock=variants.length===0||variants.some(v=>Number(v.stock||0)>0);
   const selectedOutOfStock=variants.length>0&&(!variant||Number(variant.stock||0)<=0);
-  const productOutOfStock=variants.length>0&&!hasStock;
   const startAdd=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(false);setQty(1);setOpen(true)};
   const startBuyNow=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(true);setQty(1);setOpen(true)};
   const confirmAdd=()=>{
@@ -23,12 +23,18 @@ export default function ProductCard({product,image,variants=[]}){
     const stock=Number(variant?.stock||0);
     const q=Math.max(1,Math.min(Number(qty)||1,stock||Number(qty)||1));
     if(buyNow)localStorage.removeItem("suruCart");
-    addCart({product_id:product.id,code:product.product_code,name:product.name,price:Number(product.price||0),image:image?.image_url||"",size:variant?.size||size||null,color:variant?.color||colour||product.color||null,quantity:q});
+    addCart({product_id:product.id,code:product.product_code,name:product.name,price:Number(product.price||0),image:cardImage,size:variant?.size||size||null,color:variant?.color||colour||product.color||null,quantity:q});
     setOpen(false);if(buyNow){window.location.href="/order.html";return;}setAdded(true);window.setTimeout(()=>setAdded(false),1200);
   };
   return <article className="product-card">
     <a className="product-image" href={href}>
-      {image?<img src={image.image_url} alt={image.alt_text||product.name} loading="lazy"/>:<div className="product-image-placeholder">Suru Collection</div>}
+      {image?<img
+        src={cardImage}
+        alt={image.alt_text||product.name}
+        loading={priority?"eager":"lazy"}
+        fetchPriority={priority?"high":"auto"}
+        decoding="async"
+      />:<div className="product-image-placeholder">Suru Collection</div>}
     </a>
     <div className="product-card-content">
       {product.category&&<div className="product-category">{product.category}</div>}
