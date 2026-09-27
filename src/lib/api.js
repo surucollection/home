@@ -11,5 +11,18 @@ export async function get(table,params={}){
   if(!r.ok)throw new Error((await r.json().catch(()=>({}))).message||"Request failed");
   return r.json();
 }
+
+// Cloudinary automatically delivers AVIF/WebP when supported, compresses the image,
+// and caps the width for product-card usage. Non-Cloudinary URLs are unchanged.
+export const imageUrl=(url,width=600)=>{
+  const value=String(url||"");
+  const marker="/upload/";
+  const i=value.indexOf(marker);
+  if(!value.includes("res.cloudinary.com")||i<0)return value;
+  const rest=value.slice(i+marker.length);
+  if(/^f_auto,q_auto,w_\d+/.test(rest))return value;
+  return value.slice(0,i+marker.length)+"f_auto,q_auto,w_"+Math.max(120,Math.round(width))+",c_limit/"+rest;
+};
+
 export const money=v=>"NPR "+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 export const norm=v=>String(v??"").trim().toLowerCase();
