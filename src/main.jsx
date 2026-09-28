@@ -208,7 +208,18 @@ function Admin(){
  const ncm=async body=>{const{data,error}=await supabase.functions.invoke("ncm-admin",{body});if(error){let detail="";try{const res=error.context;if(res?.json){const payload=await res.json();detail=payload?.error||payload?.message||""}}catch{}throw Error(detail||error.message)}if(data?.error)throw Error(data.error);return data};
  const customerAdmin=async body=>{const{data,error}=await supabase.functions.invoke("admin-customers",{body});if(error)throw Error(data?.error||error.message);if(data?.error)throw Error(data.error);return data};
  const loadBranches=async()=>{setNcmBusy(true);try{const d=await ncm({action:"branches"});const b=Array.isArray(d)?d:(d?.branches||[]);setBranches(b);setNcmBranchMessage("Loaded "+b.length+" NCM branches.")}catch(e){setNcmSyncMessage("NCM: "+e.message)}finally{setNcmBusy(false)}};
- const updateOrder=async(id,v)=>{\n   let cancellationReason=null;\n   if(v==="cancelled"){\n     const order=orders.find(o=>o.id===id);\n     cancellationReason=prompt("Reason for cancelling order #"+(order?.order_number||id)+":","");\n     if(cancellationReason===null)return;\n     cancellationReason=cancellationReason.trim();\n     if(!cancellationReason){setMessage("Please enter a reason for cancelling the order.");return}\n     if(!confirm("Cancel order #"+(order?.order_number||id)+"?"))return;\n   }\n   const update=v==="cancelled"?{order_status:v,cancellation_reason:cancellationReason,cancellation_status:"accepted",cancellation_reviewed_at:new Date().toISOString(),cancellation_admin_note:cancellationReason}:{order_status:v};\n   const{error}=await supabase.from("orders").update(update).eq("id",id);\n   if(error)setMessage(error.message);else{setNcmSyncMessage(v==="cancelled"?"Order cancelled and the reason was shared with the customer.":"");loadOrders()}\n };
+ const updateOrder=async(id,v,providedReason=null)=>{
+   let cancellationReason=providedReason;
+   if(v==="cancelled"){
+     if(cancellationReason===null||cancellationReason===undefined){const order=orders.find(o=>o.id===id);cancellationReason=prompt("Reason for cancelling order #"+(order?.order_number||id)+":","");if(cancellationReason===null)return}
+     cancellationReason=String(cancellationReason).trim();
+     if(!cancellationReason){setMessage("Please enter a reason for cancelling the order.");return}
+     if(!confirm("Cancel order #"+(orders.find(o=>o.id===id)?.order_number||id)+"?"))return;
+   }
+   const update=v==="cancelled"?{order_status:v,cancellation_reason:cancellationReason,cancellation_status:"accepted",cancellation_reviewed_at:new Date().toISOString(),cancellation_admin_note:cancellationReason}:{order_status:v};
+   const{error}=await supabase.from("orders").update(update).eq("id",id);
+   if(error)setMessage(error.message);else{setNcmSyncMessage(v==="cancelled"?"Order cancelled and the reason was shared with the customer.":"");loadOrders()}
+ };
  const reviewCancellation=async(o,action)=>{
    let note=null;
    if(action==="reject_cancellation"){note=prompt("Reason/note for rejecting the cancellation (optional):","");if(note===null)return}
