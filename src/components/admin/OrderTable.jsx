@@ -165,7 +165,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
                     <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"].map(s=><option key={s} value={s}>{s}</option>)}</select>
                     {o.cancellation_status==="requested"&&<div className="cancellation-review"><small>Cancellation request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>}
                     {o.cancellation_status==="rejected"&&<small>Cancellation request rejected</small>}
-                    {o.order_status!=="cancelled"&&<button className="danger" disabled={!!busy} onClick={()=>{if(confirm("Cancel customer order #"+(o.order_number||o.id)+"?"))onStatus(o.id,"cancelled")}}>Cancel Order</button>}
+                    {o.order_status!=="cancelled"&&<button className="danger" disabled={!!busy} onClick={()=>onStatus(o.id,"cancelled")}>Cancel Order</button>}
                   </div>:o.order_status||"—"}</td>
                 <td className="order-date-cell">{new Date(o.created_at).toLocaleString()}</td>
                 {!compact&&<>
