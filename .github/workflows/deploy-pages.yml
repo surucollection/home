@@ -1,4 +1,5 @@
 name: Deploy Suru Collection
+# Live deployment trigger
 
 on:
   push:
