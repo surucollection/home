@@ -17,8 +17,21 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     setResultModal({action,value,order:o});
   };
 
+  const ncmStatus=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();
+  const canExchange=ncmStatus.includes("deliver");
+  const canRedirect=ncmStatus.includes("arrived")||ncmStatus.includes("pickup complete")||ncmStatus.includes("returned to warehouse");
+
   const runNcm=async(o,action)=>{
     if(!onNcmAction)return;
+    const currentStatus=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();
+    if(action==="exchange"&&!currentStatus.includes("deliver")){
+      setResultModal({action:"error",value:{message:"NCM exchange can only be created after the shipment is delivered."},order:o});
+      return;
+    }
+    if(action==="redirect"&&!["arrived","pickup complete","returned to warehouse"].some(s=>currentStatus.includes(s))){
+      setResultModal({action:"error",value:{message:"NCM redirect is available only when the shipment status is Arrived, Pickup Complete, or Returned to Warehouse."},order:o});
+      return;
+    }
     const key=o.id+":"+action;
     if(["return","exchange"].includes(action)&&!confirm(action==="return"?"Return this NCM shipment?":"Create an NCM exchange for this order?"))return;
     const payload={};
@@ -109,7 +122,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
                 {!compact&&<>
                   <td>{o.cancellation_status==="requested"?<div className="cancellation-review"><small>Request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>:o.cancellation_status==="accepted"?<small>Cancelled</small>:o.cancellation_status==="rejected"?<small>Request rejected</small>:<small>—</small>}</td>
                   <td>{o.ncm_order_id?<><small>NCM #{o.ncm_order_id}<br/>{o.ncm_status||"created"}{o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onNcmSync&&<button className="secondary" onClick={()=>onNcmSync(o)}>Sync</button>}{o.ncm_tracking_id&&String(o.ncm_tracking_id)!==String(o.ncm_order_id)&&<button className="secondary" onClick={()=>{window.open("https://portal.nepalcanmove.com/track/","_blank","noopener,noreferrer");try{navigator.clipboard?.writeText(String(o.ncm_tracking_id));}catch{}setTimeout(()=>alert("NCM tracking page opened. Tracking ID copied: "+String(o.ncm_tracking_id)),50)}}>Track</button>}</div></>:<small>—</small>}</td>
-                  <td>{o.ncm_order_id&&onNcmAction?<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a)runNcm(o,a)}}>{actionOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>:<small>—</small>}</td>
+                  <td>{o.ncm_order_id&&onNcmAction?<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a)runNcm(o,a)}}>{actionOptions.map(([v,l])=><option key={v} value={v} disabled={(v==="exchange"&&!canExchange)||(v==="redirect"&&!canRedirect)}>{v==="exchange"&&!canExchange?"Create Exchange (after delivery)":v==="redirect"&&!canRedirect?"Redirect Shipment (after allowed status)":l}</option>)}</select>:<small>—</small>}</td>
                 </>}
               </tr>
             ))}
