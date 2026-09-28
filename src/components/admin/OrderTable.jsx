@@ -79,6 +79,17 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
       return <div className="ncm-result-error">{displayValue(value?.message)}</div>;
     }
 
+    if(action==="cancel_draft"){
+      return <div className="cancel-draft-body">
+        <p>Copy this short message and submit it through the NCM vendor tickets page:</p>
+        <textarea readOnly value={value?.message||""} rows={3}/>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
+          <button className="secondary" onClick={async()=>{try{await navigator.clipboard.writeText(value?.message||"");alert("Cancellation text copied.");}catch{alert("Could not copy automatically. Please select and copy the text.");}}}>Copy</button>
+          <button onClick={()=>window.open("https://portal.nepalcanmove.com/accounts/vendor/tickets","_blank","noopener,noreferrer")}>Open NCM Tickets</button>
+        </div>
+      </div>;
+    }
+
     if(action==="details"){
       const data=value&&typeof value==="object"?value:{};
       const preferred=["orderid","trackid","trackingid","cod_charge","delivery_charge","last_delivery_status","payment_status","vendor_return","active","delivered_date","destination_branch_name","destination_branch_phone"];
