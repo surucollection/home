@@ -1,17 +1,19 @@
-import React,{useState,useEffect} from "react";
+import React,{useState,useEffect,useRef} from "react";
 import { money } from "../../lib/api.js";
 
 export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,compact=false}){
   const [busy,setBusy]=useState("");
   const [resultModal,setResultModal]=useState(null);
   const [ncmCancelled,setNcmCancelled]=useState({});
+  const ncmCommentChecks=useRef({});
 
   useEffect(()=>{
     let active=true;
     const check=async()=>{
-      const candidates=(rows||[]).filter(o=>!compact&&o.order_status==="cancelled"&&o.ncm_order_id&&onNcmAction&&!ncmCancelled[o.id]);
+      const candidates=(rows||[]).filter(o=>!compact&&o.order_status==="cancelled"&&o.ncm_order_id&&onNcmAction&&!ncmCommentChecks.current[o.id+":"+o.ncm_order_id]);
       if(!candidates.length)return;
       const found={};
+      candidates.forEach(o=>{ncmCommentChecks.current[o.id+":"+o.ncm_order_id]=true});
       await Promise.all(candidates.map(async o=>{
         try{
           const data=await onNcmAction(o,"comments",{silent:true});
@@ -160,7 +162,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
                 <td className="order-date-cell">{new Date(o.created_at).toLocaleString()}</td>
                 {!compact&&<>
                   <td className="ncm-status-cell">
-                    {o.ncm_order_id&&!ncmCancelled[o.id]?<small>NCM #{o.ncm_order_id}<br/>{o.ncm_status||"created"}{o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}</small>:<small>—</small>}
+                    {o.ncm_order_id&&!ncmCancelled[o.id]?<small>NCM #{o.ncm_order_id}<br/>{o.ncm_status||"created"}{o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}</small>:ncmCancelled[o.id]?<small>NCM shipment cancelled</small>:<small>—</small>}
                   </td>
                   <td className="order-actions-cell">
                     <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
