@@ -18,12 +18,6 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
   };
 
   const runNcm=async(o,action)=>{
-    if(action==="cancel_draft"){
-      const ncmOrderId=o.ncm_order_id||"—";
-      const message="Please cancel my NCM shipment order ID "+ncmOrderId+" for customer order "+(o.order_number||o.id)+". Kindly cancel the shipment and confirm once cancelled.";
-      setResultModal({action:"cancel_draft",value:{message},order:o});
-      return;
-    }
     if(!onNcmAction)return;
     const currentStatus=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();
     if(action==="exchange"&&!currentStatus.includes("deliver")){
@@ -45,6 +39,10 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     if(action==="add_comment"){
       payload.comment=prompt("Enter NCM comment:","")||"";
       if(!payload.comment.trim())return;
+    }
+    if(action==="cancel_order"){
+      const ncmOrderId=o.ncm_order_id||"—";
+      payload.comment="Please cancel my NCM shipment order ID "+ncmOrderId+" for customer order "+(o.order_number||o.id)+". Kindly cancel the shipment and confirm once cancelled.";
     }
     if(action==="return")payload.comment=prompt("Return comment (optional):","")||"";
     if(action==="redirect"){
@@ -73,7 +71,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     ["status_history","Status History"],
     ["comments","View Comments"],
     ["add_comment","Add Comment"],
-    ["cancel_draft","Cancel NCM Order"],
+    ["cancel_order","Cancel NCM Order"],
     ["return","Return Shipment"],
     ["exchange","Create Exchange"],
     ["redirect","Redirect Shipment"]
@@ -84,17 +82,6 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     const {action,value,order}=resultModal;
     if(action==="error"){
       return <div className="ncm-result-error">{displayValue(value?.message)}</div>;
-    }
-
-    if(action==="cancel_draft"){
-      return <div className="cancel-draft-body">
-        <p>Copy this short message and submit it through the NCM vendor tickets page:</p>
-        <textarea readOnly value={value?.message||""} rows={3}/>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
-          <button className="secondary" onClick={async()=>{try{await navigator.clipboard.writeText(value?.message||"");alert("Cancellation text copied.");}catch{alert("Could not copy automatically. Please select and copy the text.");}}}>Copy</button>
-          <button onClick={()=>window.open("https://portal.nepalcanmove.com/accounts/vendor/tickets","_blank","noopener,noreferrer")}>Open NCM Tickets</button>
-        </div>
-      </div>;
     }
 
     if(action==="details"){
