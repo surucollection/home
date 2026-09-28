@@ -6997,3 +6997,8 @@ a {
   line-height:1.45;
 }
 .admin-page .ncm-page-messages .ncm-page-message:last-child{margin-bottom:0}
+
+/* Keep tracking popup above the order details popup */
+.order-details-overlay.tracking-overlay{
+  z-index:1002;
+}
