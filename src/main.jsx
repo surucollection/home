@@ -226,13 +226,16 @@ function Admin(){
  const loadNcmBranches=async()=>{setNcmBusy(true);try{const d=await ncm({action:"branches"});const b=Array.isArray(d)?d:(d?.branches||[]);setBranches(b);if(!destinationBranch&&b.length){const orderBranch=orders.find(o=>o.ncm_destination_branch)?.ncm_destination_branch;if(orderBranch&&b.some(x=>getNcmBranchName(x)===orderBranch))setDestinationBranch(orderBranch)}setNcmBranchMessage("Loaded "+b.length+" NCM branches.")}catch(e){setNcmSyncMessage("NCM: "+e.message)}finally{setNcmBusy(false)}};
  const NCM_DELIVERY_TYPES=["Door2Door","Branch2Door","Door2Branch","Branch2Branch"]; const getRate=async(o,type=ncmDeliveryType)=>{if(!sourceBranch){setNcmSyncMessage("Select the NCM source branch first.");return}const dest=o?.ncm_destination_branch||destinationBranch;if(!dest){setNcmSyncMessage("Select the NCM destination branch first.");return}if(dest!==destinationBranch)setDestinationBranch(dest);try{setNcmBusy(true);const d=await ncm({action:"rate",source:sourceBranch,destination:dest,type});if(d?.raw)throw Error("NCM returned an invalid response.");const charge=Number(d?.charge);setNcmPopup({source:sourceBranch,destination:dest,tests:[{type,charge:Number.isFinite(charge)?charge:"error",error:null}]})}catch(e){setNcmRate(null);setNcmSyncMessage("NCM: "+e.message)}finally{setNcmBusy(false)}}; const testAllNcmRates=async(o)=>{if(!sourceBranch){setNcmSyncMessage("Select the NCM source branch first.");return}const dest=o?.ncm_destination_branch||destinationBranch;if(!dest){setNcmSyncMessage("Select the NCM destination branch first.");return}if(dest!==destinationBranch)setDestinationBranch(dest);try{setNcmBusy(true);const results=[];for(const type of NCM_DELIVERY_TYPES){try{const d=await ncm({action:"rate",source:sourceBranch,destination:dest,type});results.push({type,charge:d?.charge??"error",error:d?.error||null})}catch(e){results.push({type,charge:"error",error:e?.message||"Request failed"})}}setNcmPopup({source:sourceBranch,destination:dest,tests:results})}catch(e){setNcmSyncMessage("NCM: "+e.message)}finally{setNcmBusy(false)}};
  const ncmOrderAction=async(o,action,payload={})=>{
+   const silent=!!payload?.silent;
+   const requestPayload={...payload};
+   delete requestPayload.silent;
    try{
      setNcmBusy(true);
-     const data=await ncm({action,order_id:o.id,...payload});
-     setNcmSyncMessage("NCM "+action+" completed for "+o.order_number+".");
+     const data=await ncm({action,order_id:o.id,...requestPayload});
+     if(!silent)setNcmSyncMessage("NCM "+action+" completed for "+o.order_number+".");
      if(action==="return"||action==="exchange"||action==="redirect")loadOrders();
      return data;
-   }catch(e){setNcmSyncMessage("NCM: "+e.message);throw e}
+   }catch(e){if(!silent)setNcmSyncMessage("NCM: "+e.message);throw e}
    finally{setNcmBusy(false)}
  };
  const syncShipment=async(o)=>{try{setNcmBusy(true);const d=await ncm({action:"sync",order_id:o.id});setNcmSyncMessage("NCM status synced for "+o.order_number+".");if(d?.order)loadOrders()}catch(e){setNcmSyncMessage("NCM: "+e.message)}finally{setNcmBusy(false)}};
