@@ -6945,3 +6945,26 @@ a {
 .catalog-load-more .secondary-button{
   min-width:220px;
 }
+
+
+/* Orders page NCM message alignment */
+.admin-page .ncm-rate-toolbar{
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:0;
+}
+.admin-page .ncm-rate-toolbar .form-note{
+  margin:0;
+  line-height:42px;
+}
+.admin-page .ncm-page-message{
+  width:100%;
+  min-height:0;
+  margin:10px 0 20px;
+  padding:10px 12px;
+  border:1px solid #eaded8;
+  border-radius:9px;
+  background:#faf5f1;
+  text-align:left;
+  line-height:1.45;
+}
