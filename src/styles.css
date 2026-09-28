@@ -1,2 +1,5 @@
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 @import "../styles.css";
+
+/* NCM rate results modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}.modal-card{background:var(--surface,#fff);color:inherit;width:min(760px,100%);max-height:85vh;overflow:auto;border-radius:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.modal-card .page-title{margin-bottom:16px}.modal-card .table-wrap{margin-top:0}
