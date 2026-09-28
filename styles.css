@@ -6968,3 +6968,32 @@ a {
   text-align:left;
   line-height:1.45;
 }
+
+
+/* NCM controls and message stack alignment */
+.admin-page .ncm-rate-toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:12px 0 0;
+}
+.admin-page .ncm-rate-toolbar button{
+  flex:0 0 auto;
+}
+.admin-page .ncm-page-messages{
+  width:100%;
+  margin:10px 0 20px;
+}
+.admin-page .ncm-page-messages .ncm-page-message{
+  width:100%;
+  min-height:0;
+  margin:0 0 8px;
+  padding:10px 12px;
+  border:1px solid #eaded8;
+  border-radius:9px;
+  background:#faf5f1;
+  text-align:left;
+  line-height:1.45;
+}
+.admin-page .ncm-page-messages .ncm-page-message:last-child{margin-bottom:0}
