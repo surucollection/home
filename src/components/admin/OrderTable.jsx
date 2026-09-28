@@ -54,7 +54,8 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
 
     setBusy(key);
     try{
-      const data=await onNcmAction(o,action,payload);
+      const backendAction=action==="cancel_order"?"add_comment":action;
+      const data=await onNcmAction(o,backendAction,payload);
       const value=data?.ncm||data?.history||data?.comments||data?.response||data;
       if(["details","status_history","comments"].includes(action))openResult(action,value,o);
       else setResultModal({action,value:{message:"Action completed successfully."},order:o});
