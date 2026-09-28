@@ -25,7 +25,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
             return "";
           };
           const text=collectText(data).toLowerCase();
-          const completedCancel=/(\\bcancelled\\b|\\bcanceled\\b|cancellation\\s+(?:is\\s+)?confirmed|successfully\\s+(?:cancelled|canceled)|shipment\\s+(?:is\\s+)?(?:cancelled|canceled)|order\\s+(?:is\\s+)?(?:cancelled|canceled)|vendor\\s+(?:has\\s+)?cancelled)/i.test(text);
+          const completedCancel=/(\bcancelled\b|\bcanceled\b|cancellation\\s+(?:is\\s+)?confirmed|successfully\\s+(?:cancelled|canceled)|shipment\\s+(?:is\\s+)?(?:cancelled|canceled)|order\\s+(?:is\\s+)?(?:cancelled|canceled)|vendor\\s+(?:has\\s+)?cancelled)/i.test(text);
           if(completedCancel)found[o.id]=String(o.ncm_order_id);
         }catch{}
       }));
