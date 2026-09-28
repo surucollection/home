@@ -15,7 +15,7 @@ import StockRow from "./components/admin/StockRow.jsx";
 
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
 const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
-function openNcmTracking(trackingId){const id=String(trackingId||"").trim();if(!id)return;openNcmTracking(selectedOrder.ncm_tracking_id);try{navigator.clipboard?.writeText(id);}catch{}setTimeout(()=>alert("NCM tracking page opened. Tracking ID copied: "+id),50)}
+function openNcmTracking(trackingId){const id=String(trackingId||"").trim();if(!id)return;window.open("https://portal.nepalcanmove.com/track/","_blank","noopener,noreferrer");try{navigator.clipboard?.writeText(id);}catch{}setTimeout(()=>alert("NCM tracking page opened. Tracking ID copied: "+id),50)}
 const NCM_BRANCH_CACHE={items:null};
 async function getNcmBranches(){
   if(NCM_BRANCH_CACHE.items?.length)return NCM_BRANCH_CACHE.items;
