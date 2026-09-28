@@ -6976,14 +6976,14 @@ a {
   align-items:center;
   gap:10px;
   flex-wrap:wrap;
-  margin:12px 0 0;
+  margin:12px 0 20px;
 }
 .admin-page .ncm-rate-toolbar button{
   flex:0 0 auto;
 }
 .admin-page .ncm-page-messages{
   width:100%;
-  margin:10px 0 20px;
+  margin:0 0 20px;
 }
 .admin-page .ncm-page-messages .ncm-page-message{
   width:100%;
