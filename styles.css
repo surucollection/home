@@ -2793,6 +2793,10 @@ a {
   padding: 24px 16px;
   background: #fffaf6;
   border-right: 1px solid #eaded8;
+  position: sticky;
+  top: 76px;
+  height: calc(100vh - 76px);
+  align-self: flex-start;
 }
 
 .admin-page .sidebar button{
@@ -3102,6 +3106,10 @@ a {
     overflow-x: auto;
     border-right: 0;
     border-bottom: 1px solid #eaded8;
+    position: sticky;
+    top: 70px;
+    height: auto;
+    z-index: 40;
   }
 
   .admin-page .sidebar button{
