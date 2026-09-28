@@ -133,7 +133,11 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
   return (
     <>
       <div className="table-wrap">
-        <table>
+        <table className="admin-orders-table" style={{width:"100%",minWidth:compact?"760px":"1120px",tableLayout:"fixed"}}>
+          <colgroup>
+            <col style={{width:"145px"}}/><col style={{width:"180px"}}/><col style={{width:"100px"}}/><col style={{width:"175px"}}/><col style={{width:"165px"}}/>
+            {!compact&&<><col style={{width:"205px"}}/><col style={{width:"235px"}}/></>}
+          </colgroup>
           <thead>
             <tr>
               <th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th>
