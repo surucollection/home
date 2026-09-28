@@ -18,6 +18,12 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
   };
 
   const runNcm=async(o,action)=>{
+    if(action==="cancel_draft"){
+      const ncmOrderId=o.ncm_order_id||"—";
+      const message="Please cancel my NCM shipment order ID "+ncmOrderId+" for customer order "+(o.order_number||o.id)+". Kindly cancel the shipment and confirm once cancelled.";
+      setResultModal({action:"cancel_draft",value:{message},order:o});
+      return;
+    }
     if(!onNcmAction)return;
     const currentStatus=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();
     if(action==="exchange"&&!currentStatus.includes("deliver")){
@@ -67,6 +73,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     ["status_history","Status History"],
     ["comments","View Comments"],
     ["add_comment","Add Comment"],
+    ["cancel_draft","Cancel NCM Order"],
     ["return","Return Shipment"],
     ["exchange","Create Exchange"],
     ["redirect","Redirect Shipment"]
