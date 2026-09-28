@@ -17,10 +17,15 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
       await Promise.all(candidates.map(async o=>{
         try{
           const data=await onNcmAction(o,"comments",{silent:true});
-          const value=data?.comments||data?.results||data?.data||data;
-          const list=Array.isArray(value)?value:(Array.isArray(value?.comments)?value.comments:Array.isArray(value?.results)?value.results:Array.isArray(value?.data)?value.data:[]);
-          const text=list.map(x=>String(x?.comments||x?.comment||x?.text||x?.message||"")).join(" ").toLowerCase();
-          const completedCancel=/(cancelled|canceled|cancellation confirmed|successfully cancelled|successfully canceled|shipment cancelled|shipment canceled|order cancelled|order canceled)/i.test(text);
+          const collectText=value=>{
+            if(value===null||value===undefined)return "";
+            if(typeof value==="string"||typeof value==="number"||typeof value==="boolean")return String(value);
+            if(Array.isArray(value))return value.map(collectText).join(" ");
+            if(typeof value==="object")return Object.entries(value).map(([k,v])=>k+" "+collectText(v)).join(" ");
+            return "";
+          };
+          const text=collectText(data).toLowerCase();
+          const completedCancel=/(\\bcancelled\\b|\\bcanceled\\b|cancellation\\s+(?:is\\s+)?confirmed|successfully\\s+(?:cancelled|canceled)|shipment\\s+(?:is\\s+)?(?:cancelled|canceled)|order\\s+(?:is\\s+)?(?:cancelled|canceled)|vendor\\s+(?:has\\s+)?cancelled)/i.test(text);
           if(completedCancel)found[o.id]=String(o.ncm_order_id);
         }catch{}
       }));
