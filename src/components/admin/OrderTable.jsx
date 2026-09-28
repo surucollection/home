@@ -42,7 +42,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     }
     if(action==="cancel_order"){
       const ncmOrderId=o.ncm_order_id||"—";
-      payload.comment="Please cancel my NCM shipment order ID "+ncmOrderId+" for customer order "+(o.order_number||o.id)+". Kindly cancel the shipment and confirm once cancelled.";
+      payload.comment="Please cancel my NCM shipment order ID #"+ncmOrderId+" for customer order #"+(o.order_number||o.id)+" and kindly confirm once cancelled.";
     }
     if(action==="return")payload.comment=prompt("Return comment (optional):","")||"";
     if(action==="redirect"){
