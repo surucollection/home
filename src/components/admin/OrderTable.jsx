@@ -114,7 +114,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
           <thead>
             <tr>
               <th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th>
-              {!compact&&<><th>Cancellation</th><th>NCM</th><th>Actions</th></>}
+              {!compact&&<><th>NCM Status</th><th>Actions</th></>}
             </tr>
           </thead>
           <tbody>
@@ -123,17 +123,23 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
                 <td><b>{o.order_number}</b></td>
                 <td>{o.customer_name}<br/><small>{o.customer_phone}</small></td>
                 <td>{money(o.total)}</td>
-                <td>{onStatus?<select value={o.order_status} onChange={e=>onStatus(o.id,e.target.value)}>{["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"].map(s=><option key={s}>{s}</option>)}</select>:o.order_status}</td>
-                <td>{new Date(o.created_at).toLocaleString()}</td>
-                {!compact&&<>
-                  <td>
-                    {o.cancellation_status==="requested"&&<div className="cancellation-review"><small>Request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>}
-                    {o.cancellation_status==="accepted"?<small>Cancelled</small>:o.cancellation_status==="rejected"?<small>Request rejected</small>:o.cancellation_status!=="requested"&&<small>—</small>}
-                    {o.order_status!=="cancelled"&&onStatus&&<div style={{marginTop:6}}><button className="danger" disabled={!!busy} onClick={()=>{if(confirm("Cancel customer order #"+(o.order_number||o.id)+"?"))onStatus(o.id,"cancelled")}}>Cancel Order</button></div>}
-                  </td>
-                  <td>{o.ncm_order_id?<><small>NCM #{o.ncm_order_id}<br/>{o.ncm_status||"created"}{o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onNcmSync&&<button className="secondary" onClick={()=>onNcmSync(o)}>Sync</button>}{o.ncm_tracking_id&&String(o.ncm_tracking_id)!==String(o.ncm_order_id)&&<button className="secondary" onClick={()=>{window.open("https://portal.nepalcanmove.com/track/","_blank","noopener,noreferrer");try{navigator.clipboard?.writeText(String(o.ncm_tracking_id));}catch{}setTimeout(()=>alert("NCM tracking page opened. Tracking ID copied: "+String(o.ncm_tracking_id)),50)}}>Track</button>}</div></>:<small>—</small>}</td>
-                  <td>{o.ncm_order_id&&onNcmAction?<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a)runNcm(o,a)}}>{actionOptions.map(([v,l])=>{const s=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();const exchangeBlocked=v==="exchange"&&!s.includes("deliver");const returnBlocked=v==="return"&&!["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));const redirectBlocked=v==="redirect"&&!["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));return <option key={v} value={v} disabled={exchangeBlocked||returnBlocked||redirectBlocked}>{exchangeBlocked?"Create Exchange (after delivery)":returnBlocked?"Return Shipment (after allowed status)":redirectBlocked?"Redirect Shipment (after allowed status)":l}</option>})}</select>:o.ncm_order_id?<small>—</small>:<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onNcm&&<button className="secondary" onClick={()=>onNcm(o)}>Create shipment</button>}{onNcmRate&&<button className="secondary" onClick={()=>onNcmRate(o)}>Rate</button>}</div>}</td>
-                </>}
+                <td>
+                  {onStatus?<div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
+                    <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"].map(s=><option key={s} value={s}>{s}</option>)}</select>
+                    {o.cancellation_status==="requested"&&<div className="cancellation-review"><small>Cancellation request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>}
+                    {o.cancellation_status==="rejected"&&<small>Cancellation request rejected</small>}
+                    {o.order_status!=="cancelled"&&<button className="danger" disabled={!!busy} onClick={()=>{if(confirm("Cancel customer order #"+(o.order_number||o.id)+"?"))onStatus(o.id,"cancelled")}}>Cancel Order</button>}
+                  </div>:o.order_status||"—"}</td>
+                <td>
+                  {o.ncm_order_id?<small>NCM #{o.ncm_order_id}<br/>{o.ncm_status||"created"}{o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}</small>:<small>—</small>}
+                </td>
+                <td>
+                  <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
+                    {o.ncm_order_id&&onNcmSync&&<button className="secondary" disabled={!!busy} onClick={()=>onNcmSync(o)}>Sync</button>}
+                    {o.ncm_order_id&&o.ncm_tracking_id&&String(o.ncm_tracking_id)!==String(o.ncm_order_id)&&<button className="secondary" disabled={!!busy} onClick={()=>{window.open("https://portal.nepalcanmove.com/track/","_blank","noopener,noreferrer");try{navigator.clipboard?.writeText(String(o.ncm_tracking_id));}catch{}setTimeout(()=>alert("NCM tracking page opened. Tracking ID copied: "+String(o.ncm_tracking_id)),50)}}>Track</button>}
+                    {o.ncm_order_id&&onNcmAction?<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a)runNcm(o,a)}}>{actionOptions.map(([v,l])=>{const s=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();const exchangeBlocked=v==="exchange"&&!s.includes("deliver");const returnBlocked=v==="return"&&!["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));const redirectBlocked=v==="redirect"&&!["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));return <option key={v} value={v} disabled={exchangeBlocked||returnBlocked||redirectBlocked}>{exchangeBlocked?"Create Exchange (after delivery)":returnBlocked?"Return Shipment (after allowed status)":redirectBlocked?"Redirect Shipment (after allowed status)":l}</option>})}</select>:!o.ncm_order_id&&<>{onNcm&&<button className="secondary" disabled={!!busy} onClick={()=>onNcm(o)}>Create shipment</button>}{onNcmRate&&<button className="secondary" disabled={!!busy} onClick={()=>onNcmRate(o)}>Rate</button>}</>}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
