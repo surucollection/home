@@ -3,6 +3,19 @@ import { money } from "../../lib/api.js";
 
 export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,compact=false}){
   const [busy,setBusy]=useState("");
+  const [resultModal,setResultModal]=useState(null);
+
+  const prettyLabel=k=>String(k||"").replace(/_/g," ").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/\b\w/g,x=>x.toUpperCase());
+  const displayValue=v=>{
+    if(v===null||v===undefined||v==="")return "—";
+    if(typeof v==="boolean")return v?"Yes":"No";
+    if(typeof v==="object")return JSON.stringify(v);
+    return String(v);
+  };
+
+  const openResult=(action,value,o)=>{
+    setResultModal({action,value,order:o});
+  };
 
   const runNcm=async(o,action)=>{
     if(!onNcmAction)return;
@@ -26,13 +39,10 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     try{
       const data=await onNcmAction(o,action,payload);
       const value=data?.ncm||data?.history||data?.comments||data?.response||data;
-      if(["details","status_history","comments"].includes(action)){
-        alert(JSON.stringify(value,null,2));
-      }else{
-        alert("NCM "+action+" completed successfully.");
-      }
+      if(["details","status_history","comments"].includes(action))openResult(action,value,o);
+      else setResultModal({action,value:{message:"Action completed successfully."},order:o});
     }catch(e){
-      alert("NCM: "+(e?.message||"Request failed."));
+      setResultModal({action:"error",value:{message:e?.message||"Request failed."},order:o});
     }finally{
       setBusy("");
     }
@@ -49,104 +59,74 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     ["redirect","Redirect Shipment"]
   ];
 
+  const renderModalBody=()=>{
+    if(!resultModal)return null;
+    const {action,value,order}=resultModal;
+    if(action==="error"){
+      return <div className="ncm-result-error">{displayValue(value?.message)}</div>;
+    }
+
+    if(action==="details"){
+      const data=value&&typeof value==="object"?value:{};
+      const preferred=["orderid","trackid","trackingid","cod_charge","delivery_charge","last_delivery_status","payment_status","vendor_return","active","delivered_date","destination_branch_name","destination_branch_phone"];
+      const keys=[...preferred.filter(k=>Object.prototype.hasOwnProperty.call(data,k)),...Object.keys(data).filter(k=>!preferred.includes(k))];
+      return <div className="ncm-detail-grid">{keys.map(k=><div className="ncm-detail-item" key={k}><span>{prettyLabel(k)}</span><strong>{displayValue(data[k])}</strong></div>)}</div>;
+    }
+
+    if(action==="status_history"){
+      const list=Array.isArray(value)?value:(Array.isArray(value?.results)?value.results:Array.isArray(value?.data)?value.data:Array.isArray(value?.history)?value.history:[]);
+      if(!list.length)return <div className="ncm-empty">No status history found.</div>;
+      return <div className="ncm-history-list">{list.map((item,i)=><div className="ncm-history-item" key={i}><div className="ncm-history-status">{displayValue(item.status||item.event||item.last_delivery_status)}</div><div className="ncm-history-meta">{displayValue(item.added_time||item.addedTime||item.timestamp||item.created_at||"")} {item.comment&&" • "+item.comment}</div></div>)}</div>;
+    }
+
+    if(action==="comments"){
+      const list=Array.isArray(value)?value:(Array.isArray(value?.results)?value.results:Array.isArray(value?.data)?value.data:Array.isArray(value?.comments)?value.comments:[]);
+      if(!list.length)return <div className="ncm-empty">No comments found.</div>;
+      return <div className="ncm-comments-list">{list.map((item,i)=><div className="ncm-comment-item" key={i}><div>{displayValue(item.comments||item.comment||item.text||item.message)}</div><small>{displayValue(item.added_time||item.created_at||item.timestamp||"")}</small></div>)}</div>;
+    }
+
+    return <div className="ncm-success">{displayValue(value?.message||"NCM action completed successfully.")}</div>;
+  };
+
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Order</th>
-            <th>Customer</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Date</th>
-            {!compact&&(
-              <>
-                <th>Cancellation</th>
-                <th>NCM</th>
-                <th>Actions</th>
-              </>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(o=>(
-            <tr key={o.id}>
-              <td><b>{o.order_number}</b></td>
-              <td>{o.customer_name}<br/><small>{o.customer_phone}</small></td>
-              <td>{money(o.total)}</td>
-              <td>
-                {onStatus?(
-                  <select value={o.order_status} onChange={e=>onStatus(o.id,e.target.value)}>
-                    {["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"].map(s=><option key={s}>{s}</option>)}
-                  </select>
-                ):o.order_status}
-              </td>
-              <td>{new Date(o.created_at).toLocaleString()}</td>
-
-              {!compact&&(
-                <>
-                  <td>
-                    {o.cancellation_status==="requested"?(
-                      <div className="cancellation-review">
-                        <small>Request{o.cancellation_reason?": "+o.cancellation_reason:""}</small>
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>
-                          {onCancellation&&(
-                            <>
-                              <button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button>
-                              <button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ):o.cancellation_status==="accepted"?<small>Cancelled</small>:o.cancellation_status==="rejected"?<small>Request rejected</small>:<small>—</small>}
-                  </td>
-
-                  <td>
-                    {o.ncm_order_id?(
-                      <>
-                        <small>
-                          NCM #{o.ncm_order_id}<br/>
-                          {o.ncm_status||"created"}
-                          {o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}
-                        </small>
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>
-                          {onNcmSync&&<button className="secondary" onClick={()=>onNcmSync(o)}>Sync</button>}
-                          {o.ncm_tracking_id&&String(o.ncm_tracking_id)!==String(o.ncm_order_id)&&(
-                            <button
-                              className="secondary"
-                              onClick={()=>{
-                                window.open("https://portal.nepalcanmove.com/track/","_blank","noopener,noreferrer");
-                                try{navigator.clipboard?.writeText(String(o.ncm_tracking_id));}catch{}
-                                setTimeout(()=>alert("NCM tracking page opened. Tracking ID copied: "+String(o.ncm_tracking_id)),50);
-                              }}
-                            >Track</button>
-                          )}
-                        </div>
-                      </>
-                    ):<small>—</small>}
-                  </td>
-
-                  <td>
-                    {o.ncm_order_id&&onNcmAction?(
-                      <select
-                        className="ncm-action-select"
-                        value=""
-                        disabled={!!busy}
-                        onChange={e=>{
-                          const a=e.target.value;
-                          if(a)runNcm(o,a);
-                        }}
-                      >
-                        {actionOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}
-                      </select>
-                    ):<small>—</small>}
-                  </td>
-                </>
-              )}
+    <>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th>
+              {!compact&&<><th>Cancellation</th><th>NCM</th><th>Actions</th></>}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map(o=>(
+              <tr key={o.id}>
+                <td><b>{o.order_number}</b></td>
+                <td>{o.customer_name}<br/><small>{o.customer_phone}</small></td>
+                <td>{money(o.total)}</td>
+                <td>{onStatus?<select value={o.order_status} onChange={e=>onStatus(o.id,e.target.value)}>{["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"].map(s=><option key={s}>{s}</option>)}</select>:o.order_status}</td>
+                <td>{new Date(o.created_at).toLocaleString()}</td>
+                {!compact&&<>
+                  <td>{o.cancellation_status==="requested"?<div className="cancellation-review"><small>Request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>:o.cancellation_status==="accepted"?<small>Cancelled</small>:o.cancellation_status==="rejected"?<small>Request rejected</small>:<small>—</small>}</td>
+                  <td>{o.ncm_order_id?<><small>NCM #{o.ncm_order_id}<br/>{o.ncm_status||"created"}{o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onNcmSync&&<button className="secondary" onClick={()=>onNcmSync(o)}>Sync</button>}{o.ncm_tracking_id&&String(o.ncm_tracking_id)!==String(o.ncm_order_id)&&<button className="secondary" onClick={()=>{window.open("https://portal.nepalcanmove.com/track/","_blank","noopener,noreferrer");try{navigator.clipboard?.writeText(String(o.ncm_tracking_id));}catch{}setTimeout(()=>alert("NCM tracking page opened. Tracking ID copied: "+String(o.ncm_tracking_id)),50)}}>Track</button>}</div></>:<small>—</small>}</td>
+                  <td>{o.ncm_order_id&&onNcmAction?<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a)runNcm(o,a)}}>{actionOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>:<small>—</small>}</td>
+                </>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {resultModal&&<div className="modal-backdrop ncm-result-backdrop" onClick={e=>{if(e.target===e.currentTarget)setResultModal(null)}}>
+        <div className="modal-card ncm-result-modal" role="dialog" aria-modal="true">
+          <div className="ncm-result-header">
+            <div><h2>{resultModal.action==="error"?"NCM Error":resultModal.action==="details"?"NCM Order Details":resultModal.action==="status_history"?"Status History":resultModal.action==="comments"?"NCM Comments":"NCM Action"}</h2><small>{resultModal.order?.order_number||""}{resultModal.order?.ncm_order_id?" • NCM #"+resultModal.order.ncm_order_id:""}</small></div>
+            <button className="ncm-close-button" onClick={()=>setResultModal(null)} aria-label="Close">×</button>
+          </div>
+          <div className="ncm-result-body">{renderModalBody()}</div>
+          <div className="ncm-result-footer"><button className="secondary" onClick={()=>setResultModal(null)}>Close</button></div>
+        </div>
+      </div>}
+    </>
   );
 }
