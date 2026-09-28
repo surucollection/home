@@ -3,3 +3,6 @@
 
 /* NCM rate results modal */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}.modal-card{background:var(--surface,#fff);color:inherit;width:min(760px,100%);max-height:85vh;overflow:auto;border-radius:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.modal-card .page-title{margin-bottom:16px}.modal-card .table-wrap{margin-top:0}
+/* NCM actions dropdown */
+.admin-page .ncm-action-select{min-width:170px;max-width:190px;padding:8px 10px;border:1px solid #d8cbc3;border-radius:8px;background:#fff;color:#241b17;font:inherit;cursor:pointer}
+.admin-page .ncm-action-select:focus{outline:2px solid #b98b70;outline-offset:1px}
