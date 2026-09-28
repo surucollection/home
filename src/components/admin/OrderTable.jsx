@@ -13,8 +13,8 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
       const candidates=(rows||[]).filter(o=>!compact&&o.order_status==="cancelled"&&o.ncm_order_id&&onNcmAction&&!ncmCommentChecks.current[o.id+":"+o.ncm_order_id]);
       if(!candidates.length)return;
       const found={};
-      candidates.forEach(o=>{ncmCommentChecks.current[o.id+":"+o.ncm_order_id]=true});
       await Promise.all(candidates.map(async o=>{
+        const checkKey=o.id+":"+o.ncm_order_id;
         try{
           const data=await onNcmAction(o,"comments",{silent:true});
           const collectText=value=>{
@@ -27,7 +27,10 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
           const text=collectText(data).toLowerCase();
           const completedCancel=/(\bcancelled\b|\bcanceled\b|cancellation\\s+(?:is\\s+)?confirmed|successfully\\s+(?:cancelled|canceled)|shipment\\s+(?:is\\s+)?(?:cancelled|canceled)|order\\s+(?:is\\s+)?(?:cancelled|canceled)|vendor\\s+(?:has\\s+)?cancelled)/i.test(text);
           if(completedCancel)found[o.id]=String(o.ncm_order_id);
-        }catch{}
+          ncmCommentChecks.current[checkKey]=true;
+        }catch{
+          delete ncmCommentChecks.current[checkKey];
+        }
       }));
       if(active&&Object.keys(found).length)setNcmCancelled(prev=>({...prev,...found}));
     };
