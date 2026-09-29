@@ -21,5 +21,7 @@ export function openInvoice(order,targetWindow=null,allowCancelled=false){
   </main></body></html>`;
   const w=targetWindow||window.open("","_blank");
   if(!w){alert("Please allow pop-ups to view the invoice.");return}
-  w.document.write(html);w.document.close();
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
 }
