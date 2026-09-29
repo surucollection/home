@@ -4,9 +4,6 @@ const money=v=>"NPR "+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits
 export function openInvoice(order,targetWindow=null){
   const d=order?.invoice_data;
   if(!d){alert("Invoice is not available for this order yet.");return}
-  if(!["shipped","delivered"].includes(String(order.order_status||"").toLowerCase())){
-    alert("Invoice becomes available after the order is shipped.");return
-  }
   const items=Array.isArray(d.items)?d.items:[];
   const seller=d.seller||{},buyer=d.buyer||{};
   const rows=items.map((i,n)=>`<tr><td>${n+1}</td><td><strong>${esc(i.product_name||"Product")}</strong><small>${esc([i.product_code,i.color,i.size].filter(Boolean).join(" · "))}</small></td><td>${esc(i.quantity)}</td><td>${money(i.unit_price)}</td><td>${money(i.total_price)}</td></tr>`).join("");
