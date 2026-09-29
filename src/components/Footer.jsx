@@ -134,9 +134,9 @@ export default function Footer() {
                 <i className="fab fa-whatsapp" />
                 <span>+977 9740381427</span>
               </a>
-              <a href="mailto:surucollectionnepal@gmail.com">
+              <a href="mailto:info@suru.com.np">
                 <i className="fas fa-envelope" />
-                <span>surucollectionnepal@gmail.com</span>
+                <span>info@suru.com.np</span>
               </a>
               <p>
                 <i className="fas fa-clock" />
