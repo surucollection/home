@@ -1,6 +1,6 @@
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=v=>"NPR "+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
-const LOGO_URL="/assets/suru-logo-official.png";
+const LOGO_URL=typeof window!=="undefined"?new URL("/assets/suru-logo-official.png",window.location.origin).href:"/assets/suru-logo-official.png";
 
 export function openInvoice(order,targetWindow=null){
   const d=order?.invoice_data;
