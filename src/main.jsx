@@ -14,7 +14,7 @@ import OrderTable from "./components/admin/OrderTable.jsx";
 import ProductAdminCard from "./components/admin/ProductAdminCard.jsx";
 import StockRow from "./components/admin/StockRow.jsx";
 
-const APP_BUILD_VERSION="2026.09.29.3";
+const APP_BUILD_VERSION="2026.09.29.5";
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
 const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
 const NCM_BRANCH_CACHE={items:null};
