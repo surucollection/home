@@ -3614,7 +3614,7 @@ a {
 .order-details-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;border-bottom:1px solid #eee5dc;padding-bottom:14px}
 .order-details-header h2{margin:0 0 5px}
 .order-details-header p{margin:0;color:#777}
-.order-detail-status{display:flex;gap:8px;align-items:center;margin:15px 0 20px}
+.order-detail-status{display:flex;gap:12px;align-items:flex-end;margin:15px 0 20px;flex-wrap:wrap}.order-detail-status-item{display:flex;flex-direction:column;gap:5px;align-items:flex-start}.order-detail-status-item small{font-size:.72rem;font-weight:600;color:#777;text-transform:uppercase;letter-spacing:.04em}
 .order-detail-items{border:1px solid #e6ddd4;border-radius:12px;overflow:hidden}
 .order-detail-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:13px 14px;border-bottom:1px solid #eee5dc;align-items:center}
 .order-detail-item:last-child{border-bottom:0}
