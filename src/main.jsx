@@ -14,7 +14,7 @@ import OrderTable from "./components/admin/OrderTable.jsx";
 import ProductAdminCard from "./components/admin/ProductAdminCard.jsx";
 import StockRow from "./components/admin/StockRow.jsx";
 
-const APP_BUILD_VERSION="2026.09.30.2";
+const APP_BUILD_VERSION="2026.09.30.3";
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
 const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
 const NCM_BRANCH_CACHE={items:null};
@@ -68,23 +68,70 @@ function Login(){
  async function submit(e){e.preventDefault();if(!email||!password){setMsg("Please enter your email and password.");return}setBusy(true);setMsg("Signing in…");const{data,error}=await supabase.auth.signInWithPassword({email:email.trim().toLowerCase(),password});if(error){setMsg(error.message);setBusy(false);return}const{data:profile}=await supabase.rpc("my_customer_profile");if(!profile){const user=data.user;const m=user.user_metadata||{};await supabase.from("customers").upsert({auth_user_id:user.id,name:m.name||"",first_name:m.first_name||"",last_name:m.last_name||"",email:user.email,phone:m.phone||"",address:m.address||null,city:m.city||null,district:m.district||null,is_active:true},{onConflict:"auth_user_id"})}location.href=returnTo}
  return <AuthLayout title="Customer Login"><p className="auth-intro">Sign in using your email and password.</p><form onSubmit={submit}><label className="field">Email Address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" required/></label><label className="field">Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" required/></label><button className="btn" disabled={busy}>{busy?"Signing In…":"Sign In"}</button>{msg&&<div className="message error">{msg}</div>}</form><div className="auth-links">New customer? <a href="register.html">Create an account</a></div></AuthLayout>
 }
+function normalizeNepalPhone(value){
+ const raw=String(value||"").trim().replace(/[\\s()-]/g,"");
+ if(raw.startsWith("+977"))return raw;
+ if(raw.startsWith("977"))return "+"+raw;
+ if(raw.startsWith("0"))return "+977"+raw.slice(1);
+ return "+977"+raw;
+}
 function Register(){
- const[f,setF]=useState({first_name:"",last_name:"",email:"",password:"",confirm:"",phone:"",address:"",city:"",district:"",province:"",postal_code:""}),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false);
+ const[f,setF]=useState({first_name:"",last_name:"",email:"",password:"",confirm:"",phone:"",address:"",city:"",district:"",province:"",postal_code:""}),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[otp,setOtp]=useState(""),[otpStep,setOtpStep]=useState(false),[registeredPhone,setRegisteredPhone]=useState(""),[pendingUser,setPendingUser]=useState(null);
  const change=e=>{const{name,value}=e.target;if(name==="province")setF({...f,province:value,district:""});else setF({...f,[name]:value});};
- async function submit(e){e.preventDefault();if(!f.first_name.trim()||!f.last_name.trim()||!f.email.trim()||!f.phone.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");if(f.password.length<6)return setMsg("Password must be at least 6 characters.");if(f.password!==f.confirm)return setMsg("Passwords do not match.");setBusy(true);setMsg("Creating your account…");const{data,error}=await supabase.auth.signUp({email:f.email.trim().toLowerCase(),password:f.password,options:{data:{name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),phone:f.phone,address:f.address,city:f.city,district:f.district,province:f.province,postal_code:f.postal_code||null}}});if(error){setMsg(error.message);setBusy(false);return}if(!data?.session){setMsg('Your account was created, but email confirmation is still enabled in Supabase.');setBusy(false);return}const{error:profileError}=await supabase.from("customers").upsert({auth_user_id:data.user.id,name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase(),phone:f.phone.trim(),address:f.address.trim(),city:f.city.trim(),district:f.district.trim(),province:f.province.trim(),postal_code:f.postal_code.trim()||null,is_active:true},{onConflict:"auth_user_id"});if(profileError){setMsg(profileError.message);setBusy(false);return}location.href="account/"}
- return <AuthLayout title="Create Account"><p className="auth-intro">Create your account with email and password. Fields marked <b>*</b> are required.</p><form onSubmit={submit}>
+ async function createAccount(e){
+   e.preventDefault();
+   if(!f.first_name.trim()||!f.last_name.trim()||!f.email.trim()||!f.phone.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");
+   if(f.password.length<6)return setMsg("Password must be at least 6 characters.");
+   if(f.password!==f.confirm)return setMsg("Passwords do not match.");
+   const phone=normalizeNepalPhone(f.phone);
+   if(!/^\\+9779\\d{9}$/.test(phone))return setMsg("Please enter a valid Nepal mobile number.");
+   setBusy(true);setMsg("Creating your account and sending OTP…");
+   const{data,error}=await supabase.auth.signUp({email:f.email.trim().toLowerCase(),password:f.password,options:{data:{name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),phone,address:f.address,city:f.city,district:f.district,province:f.province,postal_code:f.postal_code||null}}});
+   if(error){setMsg(error.message);setBusy(false);return}
+   if(!data?.user){setMsg("Unable to start registration. Please try again.");setBusy(false);return}
+   const{error:phoneError}=await supabase.auth.updateUser({phone});
+   if(phoneError){
+     await supabase.auth.signOut();
+     setMsg("Unable to send the mobile OTP. Please check the phone number and SMS provider configuration.");
+     setBusy(false);return;
+   }
+   setRegisteredPhone(phone);setPendingUser(data.user);setOtp("");setOtpStep(true);setMsg("OTP sent to "+phone+". Enter the 6-digit code to complete registration.");setBusy(false);
+ }
+ async function verifyRegistration(e){
+   e.preventDefault();
+   const token=otp.trim();
+   if(!/^\\d{6}$/.test(token)){setMsg("Please enter the 6-digit OTP.");return}
+   setBusy(true);setMsg("Verifying mobile number…");
+   const{data,error}=await supabase.auth.verifyOtp({phone:registeredPhone,token,type:"phone_change"});
+   if(error){setMsg(error.message||"Invalid or expired OTP.");setBusy(false);return}
+   const user=data?.user||pendingUser;
+   if(!user){setMsg("Verification succeeded, but the account session could not be loaded. Please sign in.");setBusy(false);return}
+   const{error:profileError}=await supabase.from("customers").upsert({auth_user_id:user.id,name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase(),phone:registeredPhone,address:f.address.trim(),city:f.city.trim(),district:f.district.trim(),province:f.province.trim(),postal_code:f.postal_code.trim()||null,is_active:true},{onConflict:"auth_user_id"});
+   if(profileError){setMsg(profileError.message);setBusy(false);return}
+   setMsg("Mobile number verified. Your account is ready.");
+   location.href="account/";
+ }
+ async function resendOtp(){
+   if(!registeredPhone||busy)return;
+   setBusy(true);setMsg("Sending a new OTP…");
+   const{error}=await supabase.auth.resend({type:"phone_change",phone:registeredPhone});
+   setMsg(error?error.message:"A new OTP has been sent to "+registeredPhone+".");
+   setBusy(false);
+ }
+ if(otpStep)return <AuthLayout title="Verify Mobile Number"><p className="auth-intro">Enter the 6-digit OTP sent to <b>{registeredPhone}</b> to finish creating your account.</p><form onSubmit={verifyRegistration}><label className="field">OTP <span className="required-star">*</span><input type="text" value={otp} onChange={e=>setOtp(e.target.value.replace(/\\D/g,"").slice(0,6))} inputMode="numeric" autoComplete="one-time-code" maxLength="6" required autoFocus/></label><button className="btn" disabled={busy}>{busy?"Verifying…":"Verify & Create Account"}</button>{msg&&<div className={msg.toLowerCase().includes("verified")?"message success":"message error"}>{msg}</div>}</form><div className="auth-links"><button type="button" className="text-button" onClick={resendOtp} disabled={busy}>Resend OTP</button> · <button type="button" className="text-button" onClick={()=>{supabase.auth.signOut();setOtpStep(false);setMsg("");}}>Change Details</button></div></AuthLayout>;
+ return <AuthLayout title="Create Account"><p className="auth-intro">Create your account and verify your mobile number with OTP. Fields marked <b>*</b> are required.</p><form onSubmit={createAccount}>
  <label className="field">First Name <span className="required-star">*</span><input name="first_name" type="text" value={f.first_name} onChange={change} required autoComplete="given-name"/></label>
  <label className="field">Last Name <span className="required-star">*</span><input name="last_name" type="text" value={f.last_name} onChange={change} required autoComplete="family-name"/></label>
  <label className="field">Email Address <span className="required-star">*</span><input name="email" type="email" value={f.email} onChange={change} required autoComplete="email"/></label>
  <label className="field">Password <span className="required-star">*</span><input name="password" type="password" value={f.password} onChange={change} required autoComplete="new-password"/></label>
  <label className="field">Confirm Password <span className="required-star">*</span><input name="confirm" type="password" value={f.confirm} onChange={change} required autoComplete="new-password"/></label>
- <label className="field">Phone Number <span className="required-star">*</span><input name="phone" type="tel" value={f.phone} onChange={change} required autoComplete="tel"/></label>
+ <label className="field">Mobile Number <span className="required-star">*</span><input name="phone" type="tel" value={f.phone} onChange={change} required autoComplete="tel" placeholder="98XXXXXXXX"/></label>
  <label className="field">Delivery Address <span className="required-star">*</span><textarea name="address" rows="3" value={f.address} onChange={change} required/></label>
  <label className="field">Province <span className="required-star">*</span><select name="province" value={f.province} onChange={change} required><option value="">Select Province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
  <label className="field">District <span className="required-star">*</span><select name="district" value={f.district} onChange={change} required disabled={!f.province}><option value="">{f.province?"Select District":"Select Province First"}</option>{provinceDistricts(f.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
  <label className="field">City <span className="required-star">*</span><input name="city" value={f.city} onChange={change} required/></label>
  <label className="field">Postal Code <span className="optional-label">(Optional)</span><input name="postal_code" value={f.postal_code} onChange={change} inputMode="numeric" autoComplete="postal-code"/></label>
- <button className="btn" disabled={busy}>{busy?"Creating…":"Create Account"}</button>{msg&&<div className="message error">{msg}</div>}</form><div className="auth-links">Already have an account? <a href="login.html">Sign in</a></div></AuthLayout>
+ <button className="btn" disabled={busy}>{busy?"Sending OTP…":"Continue & Verify Mobile"}</button>{msg&&<div className="message error">{msg}</div>}</form><div className="auth-links">Already have an account? <a href="login.html">Sign in</a></div></AuthLayout>
 }
 function Account(){
  const currentPath=location.pathname.replace(/\/+$/,"");
