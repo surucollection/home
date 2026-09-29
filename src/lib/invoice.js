@@ -1,7 +1,7 @@
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=v=>"NPR "+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 
-export function openInvoice(order){
+export function openInvoice(order,targetWindow=null){
   const d=order?.invoice_data;
   if(!d){alert("Invoice is not available for this order yet.");return}
   if(!["shipped","delivered"].includes(String(order.order_status||"").toLowerCase())){
@@ -20,7 +20,7 @@ export function openInvoice(order){
   <div class="totals"><div class="total-row"><span>Subtotal</span><strong>${money(d.subtotal)}</strong></div>${Number(d.shipping_fee||0)?`<div class="total-row"><span>Delivery / Shipping</span><strong>${money(d.shipping_fee)}</strong></div>`:""}${Number(d.discount||0)?`<div class="total-row"><span>Discount</span><strong>- ${money(d.discount)}</strong></div>`:""}${vatRegistered?`<div class="total-row"><span>Taxable Amount</span><strong>${money(d.taxable_amount)}</strong></div><div class="total-row"><span>VAT ${esc(d.vat_rate)}%</span><strong>${money(d.vat_amount)}</strong></div>`:""}<div class="total-row grand"><span>Grand Total</span><strong>${money(d.total)}</strong></div></div>
   <div class="signature">${esc(d.seller_signature||"Authorized Signature")}<br><span>Seller</span></div><div class="note">This invoice was generated from the Suru Collection order record. Please retain this invoice for your records.</div>
   </main></body></html>`;
-  const w=window.open("","_blank");
+  const w=targetWindow||window.open("","_blank");
   if(!w){alert("Please allow pop-ups to view the invoice.");return}
   w.document.write(html);w.document.close();
 }
