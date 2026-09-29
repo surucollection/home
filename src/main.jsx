@@ -14,7 +14,7 @@ import OrderTable from "./components/admin/OrderTable.jsx";
 import ProductAdminCard from "./components/admin/ProductAdminCard.jsx";
 import StockRow from "./components/admin/StockRow.jsx";
 
-const APP_BUILD_VERSION="2026.09.29.11";
+const APP_BUILD_VERSION="2026.09.29.12";
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
 const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
 const NCM_BRANCH_CACHE={items:null};
@@ -228,9 +228,18 @@ function Admin(){
      if(!cancellationReason){setMessage("Please enter a reason for cancelling the order.");return}
      if(!confirm("Cancel order #"+(orders.find(o=>o.id===id)?.order_number||id)+"?"))return;
    }
-   const update=v==="cancelled"?{order_status:v,cancellation_reason:cancellationReason,cancellation_status:"accepted",cancellation_reviewed_at:new Date().toISOString(),cancellation_admin_note:cancellationReason}:{order_status:v};
-   const{error}=await supabase.from("orders").update(update).eq("id",id);
-   if(error)setMessage(error.message);else{setNcmSyncMessage(v==="cancelled"?"Order cancelled and the reason was shared with the customer.":"");loadOrders()}
+   if(v==="cancelled"){
+     try{
+       setNcmBusy(true);
+       const{error}=await supabase.rpc("handle_order_cancellation",{p_order_id:id,p_action:"cancel",p_reason:cancellationReason,p_admin_note:cancellationReason});
+       if(error)throw error;
+       setNcmSyncMessage("Order cancelled, inventory restored, and the reason was shared with the customer.");
+       await loadOrders();
+     }catch(e){setMessage("Cancellation: "+(e?.message||"Unable to cancel order."))}finally{setNcmBusy(false)}
+   }else{
+     const{error}=await supabase.from("orders").update({order_status:v}).eq("id",id);
+     if(error)setMessage(error.message);else{setNcmSyncMessage("");loadOrders()}
+   }
  };
  const reviewCancellation=async(o,action)=>{
    let note=null;
