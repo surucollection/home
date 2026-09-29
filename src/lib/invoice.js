@@ -26,3 +26,6 @@ export function openInvoice(order,targetWindow=null,allowCancelled=false,custome
   w.document.write(html);
   w.document.close();
 }
+export function openCustomerInvoice(order,targetWindow=null){
+  return openInvoice(order,targetWindow,false,true);
+}
