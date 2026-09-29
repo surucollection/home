@@ -1,6 +1,8 @@
 import React,{useState,useEffect,useRef} from "react";
 import { money } from "../../lib/api.js";
 
+const ADMIN_INVOICE_ACTIONS_VERSION="2026.09.29.4";
+
 export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,onInvoice,onCancelInvoice,onCreateShipment,compact=false}){
   const [busy,setBusy]=useState("");
   const [resultModal,setResultModal]=useState(null);
