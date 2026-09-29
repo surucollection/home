@@ -2,10 +2,10 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const money=v=>"NPR "+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 const LOGO_URL="https://suru.com.np/assets/suru-logo-official.png";
 
-export function openInvoice(order,targetWindow=null){
+export function openInvoice(order,targetWindow=null,allowCancelled=false){
   const d=order?.invoice_data;
   if(!d){alert("Invoice is not available for this order yet.");return}
-  if(String(order.invoice_status||"active").toLowerCase()==="cancelled"){alert("This invoice has been cancelled.");return}
+  if(!allowCancelled&&String(order.invoice_status||"active").toLowerCase()==="cancelled"){alert("This invoice has been cancelled.");return}
   const items=Array.isArray(d.items)?d.items:[];
   const seller=d.seller||{},buyer=d.buyer||{};
   const rows=items.map((i,n)=>`<tr><td>${n+1}</td><td><strong>${esc(i.product_name||"Product")}</strong><small>${esc([i.product_code,i.color,i.size].filter(Boolean).join(" · "))}</small></td><td>${esc(i.quantity)}</td><td>${money(i.unit_price)}</td><td>${money(i.total_price)}</td></tr>`).join("");
