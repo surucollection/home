@@ -15,7 +15,8 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
     (async()=>{
       setImagesLoading(true);
       const{data,error}=await supabase.from("product_images").select("id,image_url,alt_text,is_main,sort_order").eq("product_id",p.id).order("sort_order",{ascending:true});
-      const next=error?[]:(data||[]);
+      const nextRaw=error?[]:(data||[]);
+      const next=nextRaw.filter(x=>String(x.image_url||"").trim()).filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim())===i);
       if(!cancelled){setImages(next);setImageText(next.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));}
       if(!cancelled)setImagesLoading(false);
     })();
