@@ -17,16 +17,9 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       const{data,error}=await supabase.from("product_images").select("id,image_url,alt_text,is_main,sort_order").eq("product_id",p.id).order("sort_order",{ascending:true});
       const nextRaw=error?[]:(data||[]);
       const next=nextRaw.filter(x=>String(x.image_url||"").trim()).filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim())===i);
-      const hasDrive=next.some(x=>/drive\\.google\\.com\\//i.test(String(x.image_url||"")));
-      if(hasDrive){
-        try{
-          await supabase.functions.invoke("google-drive-folder",{body:{product_id:p.id}});
-          const refreshed=await supabase.from("product_images").select("id,image_url,alt_text,is_main,sort_order").eq("product_id",p.id).order("sort_order",{ascending:true});
-          const hosted=(refreshed.data||[]).filter(x=>String(x.image_url||"").trim()).filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim())===i);
-          if(!cancelled){setImages(hosted);setImageText(hosted.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));}
-        }catch(_){}
-      }else if(!cancelled){
-        setImages(next);setImageText(next.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));
+      if(!cancelled){
+        setImages(next);
+        setImageText(next.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));
       }
       if(!cancelled)setImagesLoading(false);
     })();
@@ -42,8 +35,8 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       <div style={{marginBottom:"12px",padding:"12px",border:"1px solid #e3e3e3",borderRadius:"10px"}}>
         <div><b>Google Drive Folder — Fetch Images</b> <small>(Folder must be shared as “Anyone with the link”.)</small></div>
         <div style={{display:"flex",gap:"8px",marginTop:"8px",flexWrap:"wrap"}}>
-          <input value={driveFolderUrl} onChange={x=>{setDriveFolderUrl(x.target.value);setDriveMessage("");}} placeholder="https://drive.google.com/drive/folders/..." style={{flex:"1 1 360px"}} disabled={driveBusy||imagesLoading}/>
-          <button type="button" className="secondary" disabled={driveBusy||imagesLoading||!driveFolderUrl.trim()} onClick={async()=>{
+          <input value={driveFolderUrl} onChange={x=>{setDriveFolderUrl(x.target.value);setDriveMessage("");}} placeholder="https://drive.google.com/drive/folders/..." style={{flex:"1 1 360px"}} disabled={driveBusy}/>
+          <button type="button" className="secondary" disabled={driveBusy||!driveFolderUrl.trim()} onClick={async()=>{
             setDriveBusy(true);setDriveMessage("Fetching images…");
             const{data,error}=await supabase.functions.invoke("google-drive-folder",{body:{folder_url:driveFolderUrl.trim()}});
             if(error){setDriveMessage(error.message||"Unable to fetch the Drive folder.");setDriveBusy(false);return}
