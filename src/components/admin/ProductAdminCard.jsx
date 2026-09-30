@@ -17,7 +17,17 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       const{data,error}=await supabase.from("product_images").select("id,image_url,alt_text,is_main,sort_order").eq("product_id",p.id).order("sort_order",{ascending:true});
       const nextRaw=error?[]:(data||[]);
       const next=nextRaw.filter(x=>String(x.image_url||"").trim()).filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim())===i);
-      if(!cancelled){setImages(next);setImageText(next.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));}
+      const hasDrive=next.some(x=>/drive\\.google\\.com\\//i.test(String(x.image_url||"")));
+      if(hasDrive){
+        try{
+          await supabase.functions.invoke("google-drive-folder",{body:{product_id:p.id}});
+          const refreshed=await supabase.from("product_images").select("id,image_url,alt_text,is_main,sort_order").eq("product_id",p.id).order("sort_order",{ascending:true});
+          const hosted=(refreshed.data||[]).filter(x=>String(x.image_url||"").trim()).filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim())===i);
+          if(!cancelled){setImages(hosted);setImageText(hosted.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));}
+        }catch(_){}
+      }else if(!cancelled){
+        setImages(next);setImageText(next.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));
+      }
       if(!cancelled)setImagesLoading(false);
     })();
     return()=>{cancelled=true};
