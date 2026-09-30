@@ -5,19 +5,20 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const[e,setE]=useState({...p});
   const[images,setImages]=useState([]);
   const[imagesLoading,setImagesLoading]=useState(false);
+  const[imageText,setImageText]=useState("");
   useEffect(()=>setE({...p}),[p]);
   useEffect(()=>{
     let cancelled=false;
     (async()=>{
       setImagesLoading(true);
       const{data,error}=await supabase.from("product_images").select("id,image_url,alt_text,is_main,sort_order").eq("product_id",p.id).order("sort_order",{ascending:true});
-      if(!cancelled)setImages(error?[]:(data||[]));
+      const next=error?[]:(data||[]);
+      if(!cancelled){setImages(next);setImageText(next.map(x=>String(x.image_url||"").trim()).filter(Boolean).join("\n"));}
       if(!cancelled)setImagesLoading(false);
     })();
     return()=>{cancelled=true};
   },[p.id]);
   const imageLinks=images.map(x=>String(x.image_url||"").trim()).filter(Boolean);
-  const imageText=imageLinks.join("\n");
   return <div className="product-admin-card">
     <small>{p.product_code} · {p.category}</small>
     <h3>{p.name}</h3>
@@ -27,7 +28,9 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       <div className="image-links-field">
         <div><b>Image Links</b> <small>(One image link per line. The first link is the main image.)</small></div>
         <textarea rows="6" placeholder={"https://example.com/image-1.jpg\nhttps://example.com/image-2.jpg\nhttps://example.com/image-3.jpg"} value={imagesLoading?"":imageText} onChange={x=>{
-          const lines=x.target.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+          const value=x.target.value;
+          setImageText(value);
+          const lines=value.split(/\r?\n/).map(v=>v.trim());
           setImages(lines.map((url,i)=>({id:i<images.length?images[i].id:null,image_url:url,alt_text:i<images.length?images[i].alt_text||null:null,is_main:i===0,sort_order:i})));
         }} disabled={imagesLoading}/>
       </div>
