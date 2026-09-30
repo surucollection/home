@@ -29,7 +29,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       <div className="form-grid">{[["product_code","Product Code"],["name","Product Name"],["price","Price"],["compare_at_price","Compare-at Price"],["moq","MOQ"],["fabric","Fabric"],["color","Colour"],["pattern","Pattern"]].map(([k,l])=><label key={k}>{l}<input value={e[k]??""} onChange={x=>setE({...e,[k]:x.target.value})}/></label>)}<label>Category<select value={e.category||""} onChange={x=>setE({...e,category:x.target.value})} required><option value="" disabled>Select Category</option>{["Sarees","Lehengas","Suits","Gowns","Kurtis","Dupattas","Kids Wear","Accessories"].map(x=><option key={x} value={x}>{x}</option>)}</select></label></div>
       <label>Description<textarea value={e.description||""} onChange={x=>setE({...e,description:x.target.value})}/></label>
       <div style={{marginBottom:"12px",padding:"12px",border:"1px solid #e3e3e3",borderRadius:"10px"}}>
-        <div><b>Google Drive Folder</b> <small>(Folder must be shared as “Anyone with the link”.)</small></div>
+        <div><b>Google Drive Folder — Fetch Images</b> <small>(Folder must be shared as “Anyone with the link”.)</small></div>
         <div style={{display:"flex",gap:"8px",marginTop:"8px",flexWrap:"wrap"}}>
           <input value={driveFolderUrl} onChange={x=>{setDriveFolderUrl(x.target.value);setDriveMessage("");}} placeholder="https://drive.google.com/drive/folders/..." style={{flex:"1 1 360px"}} disabled={driveBusy||imagesLoading}/>
           <button type="button" className="secondary" disabled={driveBusy||imagesLoading||!driveFolderUrl.trim()} onClick={async()=>{
