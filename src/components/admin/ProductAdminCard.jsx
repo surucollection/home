@@ -36,10 +36,10 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
     </div>:<>
       <div><b>{money(p.price)}</b> · MOQ: {p.moq}</div>
       <p><span className={p.is_active?"badge active":"badge inactive"}>{p.is_active?"Active":"Inactive"}</span> {p.is_featured&&<span className="badge">Featured</span>}</p>
-      <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:"14px"}}>
         <button className="primary" onClick={()=>setEditing(p)}>Edit Product</button>
-        {imageLinks[0]&&<img src={imageLinks[0]} alt={p.name||"Product"} style={{width:"44px",height:"44px",objectFit:"cover",borderRadius:"6px",border:"1px solid #ddd",display:"block"}} onError={e=>{e.currentTarget.style.visibility="hidden"}}/>}
+        {imageLinks[0]&&<img src={imageLinks[0]} alt={p.name||"Product"} style={{width:"96px",height:"96px",objectFit:"cover",borderRadius:"8px",border:"1px solid #ddd",display:"block"}} onError={e=>{e.currentTarget.style.visibility="hidden"}}/>}
       </div>
-    </>}
+    </> }
   </div>
 }
