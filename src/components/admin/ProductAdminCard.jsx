@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from "react";
-import { money, supabase } from "../../lib/api.js";
+import { money, supabase, imageUrl } from "../../lib/api.js";
 
 export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const[e,setE]=useState({...p});
@@ -38,7 +38,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       <p><span className={p.is_active?"badge active":"badge inactive"}>{p.is_active?"Active":"Inactive"}</span> {p.is_featured&&<span className="badge">Featured</span>}</p>
       <div style={{display:"flex",alignItems:"center",gap:"14px"}}>
         <button className="primary" onClick={()=>setEditing(p)}>Edit Product</button>
-        {imageLinks[0]&&<img src={imageLinks[0]} alt={p.name||"Product"} style={{width:"96px",height:"96px",objectFit:"cover",borderRadius:"8px",border:"1px solid #ddd",display:"block"}} onError={e=>{e.currentTarget.style.visibility="hidden"}}/>}
+        {imageLinks[0]&&<img src={imageUrl(imageLinks[0],192)} alt={p.name||"Product"} style={{width:"96px",height:"96px",objectFit:"cover",borderRadius:"8px",border:"1px solid #ddd",display:"block"}} onError={e=>{e.currentTarget.style.visibility="hidden"}}/>}
       </div>
     </> }
   </div>
