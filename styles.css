@@ -6484,11 +6484,16 @@ a {
   letter-spacing:.14em;
 }
 .product-page .product-main-image img{
-  width:auto;
-  height:auto;
-  max-width:94%;
-  max-height:94%;
-  object-fit:contain;
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  object-fit:contain !important;
+  object-position:center center !important;
   transition:transform .35s ease;
 }
 .product-page .product-main-image:hover img{transform:scale(1.025)}
