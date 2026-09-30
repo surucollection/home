@@ -33,6 +33,14 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
           const lines=value.split(/\r?\n/).map(v=>v.trim());
           setImages(lines.map((url,i)=>({id:i<images.length?images[i].id:null,image_url:url,alt_text:i<images.length?images[i].alt_text||null:null,is_main:i===0,sort_order:i})));
         }} disabled={imagesLoading}/>
+        {imageText.split(/\r?\n/).map(v=>v.trim()).filter(Boolean)[0]&&
+          <div style={{marginTop:"10px"}}>
+            <small style={{display:"block",marginBottom:"6px"}}>Main image preview</small>
+            <img src={imageUrl(imageText.split(/\r?\n/).map(v=>v.trim()).filter(Boolean)[0],400)}
+              alt="Main product preview"
+              style={{width:"140px",height:"140px",objectFit:"cover",borderRadius:"8px",border:"1px solid #ddd",display:"block"}}
+              onError={e=>{e.currentTarget.style.display="none"}}/>
+          </div>}
       </div>
       <div className="check-row"><label><input type="checkbox" checked={!!e.is_active} onChange={x=>setE({...e,is_active:x.target.checked})}/> Active</label><label><input type="checkbox" checked={!!e.is_featured} onChange={x=>setE({...e,is_featured:x.target.checked})}/> Featured</label></div>
       <button className="primary" onClick={()=>saveProduct(e,images)} disabled={imagesLoading}>Save Product</button> <button className="secondary" onClick={()=>setEditing(null)}>Cancel</button>
