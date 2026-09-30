@@ -6,6 +6,9 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const[images,setImages]=useState([]);
   const[imagesLoading,setImagesLoading]=useState(false);
   const[imageText,setImageText]=useState("");
+  const[driveFolderUrl,setDriveFolderUrl]=useState("");
+  const[driveBusy,setDriveBusy]=useState(false);
+  const[driveMessage,setDriveMessage]=useState("");
   useEffect(()=>setE({...p}),[p]);
   useEffect(()=>{
     let cancelled=false;
@@ -25,6 +28,22 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
     {editing?<div className="admin-form">
       <div className="form-grid">{[["product_code","Product Code"],["name","Product Name"],["price","Price"],["compare_at_price","Compare-at Price"],["moq","MOQ"],["fabric","Fabric"],["color","Colour"],["pattern","Pattern"]].map(([k,l])=><label key={k}>{l}<input value={e[k]??""} onChange={x=>setE({...e,[k]:x.target.value})}/></label>)}<label>Category<select value={e.category||""} onChange={x=>setE({...e,category:x.target.value})} required><option value="" disabled>Select Category</option>{["Sarees","Lehengas","Suits","Gowns","Kurtis","Dupattas","Kids Wear","Accessories"].map(x=><option key={x} value={x}>{x}</option>)}</select></label></div>
       <label>Description<textarea value={e.description||""} onChange={x=>setE({...e,description:x.target.value})}/></label>
+      <div style={{marginBottom:"12px",padding:"12px",border:"1px solid #e3e3e3",borderRadius:"10px"}}>
+        <div><b>Google Drive Folder</b> <small>(Folder must be shared as “Anyone with the link”.)</small></div>
+        <div style={{display:"flex",gap:"8px",marginTop:"8px",flexWrap:"wrap"}}>
+          <input value={driveFolderUrl} onChange={x=>{setDriveFolderUrl(x.target.value);setDriveMessage("");}} placeholder="https://drive.google.com/drive/folders/..." style={{flex:"1 1 360px"}} disabled={driveBusy||imagesLoading}/>
+          <button type="button" className="secondary" disabled={driveBusy||imagesLoading||!driveFolderUrl.trim()} onClick={async()=>{
+            setDriveBusy(true);setDriveMessage("Fetching images…");
+            const{data,error}=await supabase.functions.invoke("google-drive-folder",{body:{folder_url:driveFolderUrl.trim()}});
+            if(error){setDriveMessage(error.message||"Unable to fetch the Drive folder.");setDriveBusy(false);return}
+            const files=Array.isArray(data?.files)?data.files:[];
+            if(!files.length){setDriveMessage(data?.message||"No image files were found in this folder.");setDriveBusy(false);return}
+            const rows=files.map((file,i)=>({id:null,image_url:file.url,alt_text:file.name||null,is_main:i===0,sort_order:i}));
+            setImages(rows);setImageText(rows.map(x=>x.image_url).join("\n"));setDriveMessage(`${rows.length} image${rows.length===1?"":"s"} imported. Save Product to apply them.`);setDriveBusy(false);
+          }}>{driveBusy?"Fetching…":"Fetch Images"}</button>
+        </div>
+        {driveMessage&&<small style={{display:"block",marginTop:"7px"}}>{driveMessage}</small>}
+      </div>
       <div className="image-links-field">
         <div><b>Image Links</b> <small>(One image link per line. The first link is the main image.)</small></div>
         <textarea rows="6" placeholder={"https://example.com/image-1.jpg\nhttps://example.com/image-2.jpg\nhttps://example.com/image-3.jpg"} value={imagesLoading?"":imageText} onChange={x=>{
