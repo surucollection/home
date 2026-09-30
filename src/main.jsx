@@ -14,7 +14,7 @@ import OrderTable from "./components/admin/OrderTable.jsx";
 import ProductAdminCard from "./components/admin/ProductAdminCard.jsx";
 import StockRow from "./components/admin/StockRow.jsx";
 
-const APP_BUILD_VERSION="2026.09.30.3";
+const APP_BUILD_VERSION="2026.09.30.4";
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
 const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
 const NCM_BRANCH_CACHE={items:null};
@@ -80,29 +80,23 @@ function Register(){
  const change=e=>{const{name,value}=e.target;if(name==="province")setF({...f,province:value,district:""});else setF({...f,[name]:value});};
  async function createAccount(e){
    e.preventDefault();
-   if(!f.first_name.trim()||!f.last_name.trim()||!f.email.trim()||!f.phone.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");
+   if(!f.first_name.trim()||!f.last_name.trim()||!f.phone.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");
    if(f.password.length<6)return setMsg("Password must be at least 6 characters.");
    if(f.password!==f.confirm)return setMsg("Passwords do not match.");
    const phone=normalizeNepalPhone(f.phone);
    if(!/^\\+9779\\d{9}$/.test(phone))return setMsg("Please enter a valid Nepal mobile number.");
    setBusy(true);setMsg("Creating your account and sending OTP…");
-   const{data,error}=await supabase.auth.signUp({email:f.email.trim().toLowerCase(),password:f.password,options:{data:{name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),phone,address:f.address,city:f.city,district:f.district,province:f.province,postal_code:f.postal_code||null}}});
+   const{data,error}=await supabase.auth.signUp({phone,password:f.password,options:{channel:"whatsapp",data:{name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase()||null,phone,address:f.address,city:f.city,district:f.district,province:f.province,postal_code:f.postal_code||null}}});
    if(error){setMsg(error.message);setBusy(false);return}
    if(!data?.user){setMsg("Unable to start registration. Please try again.");setBusy(false);return}
-   const{error:phoneError}=await supabase.auth.updateUser({phone});
-   if(phoneError){
-     await supabase.auth.signOut();
-     setMsg("Unable to send the mobile OTP. Please check the phone number and SMS provider configuration.");
-     setBusy(false);return;
-   }
-   setRegisteredPhone(phone);setPendingUser(data.user);setOtp("");setOtpStep(true);setMsg("OTP sent to "+phone+". Enter the 6-digit code to complete registration.");setBusy(false);
+   setRegisteredPhone(phone);setPendingUser(data.user);setOtp("");setOtpStep(true);setMsg("WhatsApp OTP sent to "+phone+". Enter the 6-digit code to complete registration.");setBusy(false);
  }
  async function verifyRegistration(e){
    e.preventDefault();
    const token=otp.trim();
    if(!/^\\d{6}$/.test(token)){setMsg("Please enter the 6-digit OTP.");return}
    setBusy(true);setMsg("Verifying mobile number…");
-   const{data,error}=await supabase.auth.verifyOtp({phone:registeredPhone,token,type:"phone_change"});
+   const{data,error}=await supabase.auth.verifyOtp({phone:registeredPhone,token,type:"sms"});
    if(error){setMsg(error.message||"Invalid or expired OTP.");setBusy(false);return}
    const user=data?.user||pendingUser;
    if(!user){setMsg("Verification succeeded, but the account session could not be loaded. Please sign in.");setBusy(false);return}
@@ -114,15 +108,15 @@ function Register(){
  async function resendOtp(){
    if(!registeredPhone||busy)return;
    setBusy(true);setMsg("Sending a new OTP…");
-   const{error}=await supabase.auth.resend({type:"phone_change",phone:registeredPhone});
+   const{error}=await supabase.auth.resend({type:"sms",phone:registeredPhone,options:{channel:"whatsapp"}});
    setMsg(error?error.message:"A new OTP has been sent to "+registeredPhone+".");
    setBusy(false);
  }
  if(otpStep)return <AuthLayout title="Verify Mobile Number"><p className="auth-intro">Enter the 6-digit OTP sent to <b>{registeredPhone}</b> to finish creating your account.</p><form onSubmit={verifyRegistration}><label className="field">OTP <span className="required-star">*</span><input type="text" value={otp} onChange={e=>setOtp(e.target.value.replace(/\\D/g,"").slice(0,6))} inputMode="numeric" autoComplete="one-time-code" maxLength="6" required autoFocus/></label><button className="btn" disabled={busy}>{busy?"Verifying…":"Verify & Create Account"}</button>{msg&&<div className={msg.toLowerCase().includes("verified")?"message success":"message error"}>{msg}</div>}</form><div className="auth-links"><button type="button" className="text-button" onClick={resendOtp} disabled={busy}>Resend OTP</button> · <button type="button" className="text-button" onClick={()=>{supabase.auth.signOut();setOtpStep(false);setMsg("");}}>Change Details</button></div></AuthLayout>;
- return <AuthLayout title="Create Account"><p className="auth-intro">Create your account and verify your mobile number with OTP. Fields marked <b>*</b> are required.</p><form onSubmit={createAccount}>
+ return <AuthLayout title="Create Account"><p className="auth-intro">Create your account and verify your mobile number with WhatsApp OTP. Email is optional and can be added later.</p><form onSubmit={createAccount}>
  <label className="field">First Name <span className="required-star">*</span><input name="first_name" type="text" value={f.first_name} onChange={change} required autoComplete="given-name"/></label>
  <label className="field">Last Name <span className="required-star">*</span><input name="last_name" type="text" value={f.last_name} onChange={change} required autoComplete="family-name"/></label>
- <label className="field">Email Address <span className="required-star">*</span><input name="email" type="email" value={f.email} onChange={change} required autoComplete="email"/></label>
+ <label className="field">Email Address <span className="optional-label">(Optional)</span><input name="email" type="email" value={f.email} onChange={change} autoComplete="email"/></label>
  <label className="field">Password <span className="required-star">*</span><input name="password" type="password" value={f.password} onChange={change} required autoComplete="new-password"/></label>
  <label className="field">Confirm Password <span className="required-star">*</span><input name="confirm" type="password" value={f.confirm} onChange={change} required autoComplete="new-password"/></label>
  <label className="field">Mobile Number <span className="required-star">*</span><input name="phone" type="tel" value={f.phone} onChange={change} required autoComplete="tel" placeholder="98XXXXXXXX"/></label>
