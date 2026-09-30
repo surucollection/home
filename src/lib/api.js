@@ -16,8 +16,8 @@ export async function get(table,params={}){
 // and caps the width for product-card usage. Non-Cloudinary URLs are unchanged.
 export const imageUrl=(url,width=600)=>{
   const value=String(url||"").trim();
-  const driveFile=value.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i)||value.match(/[?&]id=([^&#]+)/i);
-  if(driveFile?.[1])return "https://drive.google.com/uc?export=view&id="+encodeURIComponent(driveFile[1]);
+  const isDrive=/^https?:\/\/(?:www\.)?drive\.google\.com\//i.test(value);\n  const driveFile=value.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i)||(isDrive&&value.match(/[?&]id=([^&#]+)/i));
+  if(driveFile?.[1])return "https://drive.google.com/thumbnail?id="+encodeURIComponent(driveFile[1])+"&sz=w"+Math.max(240,Math.round(width));
   const marker="/upload/";
   const i=value.indexOf(marker);
   if(!value.includes("res.cloudinary.com")||i<0)return value;
