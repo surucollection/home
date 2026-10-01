@@ -7059,3 +7059,7 @@ a {
 .product-image-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,180px) auto;gap:8px;align-items:center;margin-top:10px}
 .product-image-row input{width:100%;min-width:0;box-sizing:border-box}
 @media(max-width:650px){.product-image-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px}.product-image-row input{width:100%;min-width:0}.product-image-row button{grid-column:auto;justify-self:stretch;white-space:nowrap;padding-left:10px;padding-right:10px}}
+
+
+/* Keep size and quantity controls side by side on mobile product pages */
+@media(max-width:650px){.product-variant-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:end}.product-variant-controls>.field{min-width:0;width:100%;margin:0}.product-variant-controls select,.product-variant-controls input{width:100%;min-width:0;box-sizing:border-box}}
