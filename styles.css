@@ -7053,3 +7053,9 @@ a {
   .admin-page .modal-card{max-height:calc(100vh - 20px);padding:14px;border-radius:12px}
   .admin-page .modal-card .page-title{top:-14px}
 }
+
+
+/* Responsive product image URL rows in admin editor */
+.product-image-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,180px) auto;gap:8px;align-items:center;margin-top:10px}
+.product-image-row input{width:100%;min-width:0;box-sizing:border-box}
+@media(max-width:650px){.product-image-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.product-image-row input[aria-label^="Image URL"]{grid-column:1/-1;width:100%;min-width:0}.product-image-row button{grid-column:1/-1;justify-self:start}}
