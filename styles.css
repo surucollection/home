@@ -7063,3 +7063,7 @@ a {
 
 /* Keep size and quantity controls side by side on mobile product pages */
 @media(max-width:650px){.product-variant-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:end}.product-variant-controls>.field{min-width:0;width:100%;margin:0}.product-variant-controls select,.product-variant-controls input{width:100%;min-width:0;box-sizing:border-box}}
+
+
+/* Add breathing room between purchase buttons and product description */
+.product-page .product-action-buttons + .product-description{margin-top:18px}
