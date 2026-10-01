@@ -45,7 +45,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       </div>
       <div className="image-links-field">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}><div><b>Product Images</b><small style={{display:"block"}}>Assign a colour to each photo. Leave colour as “All colours” for shared/default images.</small></div><button type="button" className="secondary" onClick={addImage}>+ Add Image</button></div>
-        {images.map((img,i)=><div key={img.id||"new-"+i} style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) minmax(120px,180px) auto",gap:8,alignItems:"center",marginTop:10}}>
+        {images.map((img,i)=><div key={img.id||"new-"+i} className="product-image-row">
           <input aria-label={"Image URL "+(i+1)} value={img.image_url||""} onChange={x=>updateImage(i,{image_url:x.target.value})} placeholder="Image URL"/>
           <input aria-label={"Image colour "+(i+1)} value={img.color||""} onChange={x=>updateImage(i,{color:x.target.value})} placeholder="Colour (optional)"/>
           <button type="button" className="danger" onClick={()=>setImages(prev=>prev.filter((_,j)=>j!==i))}>Remove</button>
