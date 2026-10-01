@@ -94,7 +94,7 @@ function Register(){
  async function verifyRegistration(e){
    e.preventDefault();
    const token=otp.trim();
-   if(!/^\\d{6}$/.test(token)){setMsg("Please enter the 6-digit OTP.");return}
+   if(!/^\d{6}$/.test(token)){setMsg("Please enter the 6-digit OTP.");return}
    setBusy(true);setMsg("Verifying mobile number…");
    const{data,error}=await supabase.auth.verifyOtp({phone:registeredPhone,token,type:"sms"});
    if(error){setMsg(error.message||"Invalid or expired OTP.");setBusy(false);return}
