@@ -49,24 +49,3 @@
 @media(max-width:760px){.contact-map iframe{height:260px}}
 
 
-/* Official business information and grievance details */
-.business-information{padding-top:12px}
-.business-information-content{max-width:860px;margin:28px auto 0;padding:clamp(20px,4vw,34px);border:1px solid #eadbd2;border-radius:18px;background:#fbf6f1}
-.business-information-content dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:0}
-.business-information-content dl>div{padding:14px 0;border-bottom:1px solid #eadbd2}
-.business-information-content dt,.contact-grievance-details span{margin-bottom:6px;color:#887a73;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.business-information-content dd{margin:0;color:#4a292b;font-size:14px;font-weight:600;line-height:1.65;overflow-wrap:anywhere}
-.business-information-note{margin:22px 0 12px;color:#796b65;font-size:13px;line-height:1.7}
-.contact-grievance{margin:30px 0;padding:clamp(22px,4vw,34px);border:1px solid #eadbd2;border-radius:18px;background:#fbf6f1}
-.contact-grievance h2{margin:8px 0 12px}
-.contact-grievance>p:not(.eyebrow){max-width:760px;color:#796b65;font-size:14px;line-height:1.8}
-.contact-grievance-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:22px;padding-top:20px;border-top:1px solid #eadbd2}
-.contact-grievance-details>div{display:flex;flex-direction:column;gap:5px}
-.contact-grievance-details strong,.contact-grievance-details a{color:#4a292b;font-size:14px;font-weight:700;line-height:1.6;overflow-wrap:anywhere}
-.contact-grievance-details a{text-decoration:underline;text-underline-offset:3px}
-.sc-footer-business-details{display:grid;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.14)}
-.sc-footer-business-details p{display:flex;flex-direction:column;gap:2px;margin:0;font-size:11px;line-height:1.5}
-.sc-footer-business-details strong{color:inherit;font-weight:700}
-.sc-footer-business-details span{opacity:.78;overflow-wrap:anywhere}
-.sc-footer-business-details>a{margin-top:4px;color:inherit;font-size:11px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
-@media(max-width:760px){.business-information-content dl{grid-template-columns:1fr}.contact-grievance-details{grid-template-columns:1fr;gap:14px}.contact-grievance{margin:22px 0}}
