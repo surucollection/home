@@ -7127,3 +7127,9 @@ a {
 .about-closing h2{margin:8px 0 13px;color:#4a292b;font-family:Georgia,serif;font-size:clamp(32px,5vw,48px);font-weight:500;line-height:1.2}.about-closing>p:not(.eyebrow){margin:0;color:#796b65;font-size:15px;line-height:1.7}
 .about-closing .coming-soon-link{margin-top:24px}
 @media(max-width:700px){.about-story{padding-top:32px;padding-bottom:44px}.about-story .story-image img{min-height:280px;max-height:390px}.about-purpose{padding-top:48px;padding-bottom:52px}.about-purpose-grid,.about-special{grid-template-columns:1fr}.about-purpose-grid{gap:14px}.about-purpose-card{padding:27px 23px}.about-special{padding-top:52px;padding-bottom:54px;gap:20px}.about-closing{padding:52px 18px 58px}}
+
+
+/* Normalize the three About-page difference descriptions across breakpoints */
+.about-special-points>div>p{font-size:14px!important;line-height:1.7!important}
+.about-special-points>div>p strong{font-size:15px!important;line-height:1.5!important}
+@media(min-width:701px) and (max-width:1100px){.about-special-points>div>p{font-size:14px!important}}
