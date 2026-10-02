@@ -7080,3 +7080,9 @@ a {
 .featured-view-all .secondary-button{display:inline-flex;justify-content:center;align-items:center;padding:13px 24px;border:1px solid #7b2932;border-radius:999px;background:#7b2932;color:#fff;font-size:15px;font-weight:600;line-height:1.2;text-decoration:none;transition:background .2s ease,color .2s ease,transform .2s ease}
 .featured-view-all .secondary-button:hover{background:transparent;color:#7b2932;transform:translateY(-1px)}
 @media(max-width:600px){.featured-view-all{margin-top:20px}.featured-view-all .secondary-button{padding:12px 20px;font-size:14px}}
+
+
+/* Login method selector */
+.login-method-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 20px;padding:4px;border:1px solid #e6d8d2;border-radius:12px;background:#fbf6f2}
+.login-method-switch button{border:0;border-radius:9px;padding:11px 12px;background:transparent;color:#6f5552;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.login-method-switch button.active{background:#7b2932;color:#fff;box-shadow:0 2px 7px rgba(70,25,30,.12)}
