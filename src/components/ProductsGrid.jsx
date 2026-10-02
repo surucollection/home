@@ -4,7 +4,7 @@ import ProductCard from "./ProductCard.jsx";
 
 const PAGE_SIZE=24;
 
-export default function ProductsGrid({limit,category}){
+export default function ProductsGrid({limit,category,featured=false}){
   const[p,setP]=useState([]),[err,setErr]=useState(""),[loading,setLoading]=useState(true),[loadingMore,setLoadingMore]=useState(false),[hasMore,setHasMore]=useState(true);
   const requestId=useRef(0);
 
@@ -23,6 +23,7 @@ export default function ProductsGrid({limit,category}){
         offset:String(offset)
       };
       if(category)params.category="eq."+category;
+      if(featured)params.is_featured="eq.true";
       const rows=await get("products",params);
       if(id!==requestId.current)return;
       const next=rows||[];
@@ -33,9 +34,9 @@ export default function ProductsGrid({limit,category}){
     }finally{
       if(id===requestId.current){setLoading(false);setLoadingMore(false);}
     }
-  },[category,p.length]);
+  },[category,featured,p.length]);
 
-  useEffect(()=>{setP([]);setHasMore(true);load(true)},[category]);
+  useEffect(()=>{setP([]);setHasMore(true);load(true)},[category,featured]);
 
   if(loading&&!p.length)return <div className="product-loading">Loading products…</div>;
   if(err&&!p.length)return <div className="product-loading">{err}</div>;
