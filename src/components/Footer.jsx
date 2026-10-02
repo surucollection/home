@@ -142,6 +142,14 @@ export default function Footer() {
                 <i className="fas fa-clock" />
                 <span>Sun - Fri: 9:00 AM - 7:00 PM</span>
               </p>
+              <div className="sc-footer-business-details" aria-label="Official business details">
+                <p><strong>Business Registration No.</strong><span>16104/234</span></p>
+                <p><strong>Registration Authority</strong><span>घरेलु तथा साना उद्योग कार्यालय, गौर, रौतहट</span></p>
+                <p><strong>PAN</strong><span>625070013</span></p>
+                <p><strong>Complaint Officer</strong><span>Suruchi Sahani</span></p>
+                <p><strong>Business Address</strong><span>Gaur Tikuliya Road, Gaur-4, Rautahat, Madhesh Pradesh, Nepal</span></p>
+                <a href="/about.html#business-information">Full Business Information</a>
+              </div>
             </div>
           </section>
         </div>
