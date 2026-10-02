@@ -89,58 +89,68 @@ function normalizeNepalPhone(value){
  return "+977"+raw;
 }
 function Register(){
- const[f,setF]=useState({first_name:"",last_name:"",email:"",password:"",confirm:"",phone:"",address:"",city:"",district:"",province:"",postal_code:""}),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[otp,setOtp]=useState(""),[otpStep,setOtpStep]=useState(false),[registeredPhone,setRegisteredPhone]=useState(""),[pendingUser,setPendingUser]=useState(null);
+ const[verifyMethod,setVerifyMethod]=useState("email"),[f,setF]=useState({first_name:"",last_name:"",email:"",password:"",confirm:"",phone:"",address:"",city:"",district:"",province:"",postal_code:""}),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[otp,setOtp]=useState(""),[otpStep,setOtpStep]=useState(false),[registeredPhone,setRegisteredPhone]=useState(""),[pendingUser,setPendingUser]=useState(null);
  async function googleSignIn(){setMsg("To connect Google without creating a separate customer account, first sign in using your existing mobile number or email and password. Then use Link Google in My Account.")}
  const change=e=>{const{name,value}=e.target;if(name==="province")setF({...f,province:value,district:""});else if(name==="phone")setF({...f,phone:value.replace(/\D/g,"").slice(0,10)});else setF({...f,[name]:value});};
  async function createAccount(e){
    e.preventDefault();
-   if(!f.first_name.trim()||!f.last_name.trim()||!f.phone.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");
+   if(!f.first_name.trim()||!f.last_name.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");
+   if(verifyMethod==="email"&&!f.email.trim())return setMsg("Enter an email address to receive your verification code.");
+   if(verifyMethod==="mobile"&&!f.phone.trim())return setMsg("Enter a mobile number to receive your verification code.");
    if(f.password.length<6)return setMsg("Password must be at least 6 characters.");
    if(f.password!==f.confirm)return setMsg("Passwords do not match.");
-   const phone=normalizeNepalPhone(f.phone);
-   if(!/^\+9779\d{9}$/.test(phone))return setMsg("Please enter a valid Nepal mobile number.");
+   const phone=f.phone.trim()?normalizeNepalPhone(f.phone):"";
+   if(verifyMethod==="mobile"&&!/^\+9779\d{9}$/.test(phone))return setMsg("Please enter a valid Nepal mobile number.");
    setBusy(true);setMsg("Creating your account and sending OTP…");
-   const{data,error}=await supabase.auth.signUp({phone,password:f.password,options:{channel:"whatsapp",data:{name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase()||null,phone,address:f.address,city:f.city,district:f.district,province:f.province,postal_code:f.postal_code||null}}});
+   const metadata={name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase()||null,phone:phone||null,address:f.address.trim(),city:f.city.trim(),district:f.district.trim(),province:f.province.trim(),postal_code:f.postal_code.trim()||null};
+   const result=verifyMethod==="mobile"
+     ?await supabase.auth.signUp({phone,password:f.password,options:{channel:"whatsapp",data:metadata}})
+     :await supabase.auth.signUp({email:f.email.trim().toLowerCase(),password:f.password,options:{data:metadata}});
+   const{data,error}=result;
    if(error){setMsg(error.message);setBusy(false);return}
    if(!data?.user){setMsg("Unable to start registration. Please try again.");setBusy(false);return}
-   setRegisteredPhone(phone);setPendingUser(data.user);setOtp("");setOtpStep(true);setMsg("WhatsApp OTP sent to "+phone+". Enter the 6-digit code to complete registration.");setBusy(false);
+   setRegisteredPhone(phone);setPendingUser(data.user);setOtp("");setOtpStep(true);
+   setMsg(verifyMethod==="mobile"?"WhatsApp OTP sent to "+phone+". Enter the 6-digit code to complete registration.":"Email OTP sent to "+f.email.trim()+". Enter the 6-digit code to complete registration.");
+   setBusy(false);
  }
  async function verifyRegistration(e){
-   e.preventDefault();
-   const token=otp.trim();
+   e.preventDefault();const token=otp.trim();
    if(!/^\d{6}$/.test(token)){setMsg("Please enter the 6-digit OTP.");return}
-   setBusy(true);setMsg("Verifying mobile number…");
-   const{data,error}=await supabase.auth.verifyOtp({phone:registeredPhone,token,type:"sms"});
+   setBusy(true);setMsg(verifyMethod==="mobile"?"Verifying mobile number…":"Verifying email address…");
+   const{data,error}=verifyMethod==="mobile"
+     ?await supabase.auth.verifyOtp({phone:registeredPhone,token,type:"sms"})
+     :await supabase.auth.verifyOtp({email:f.email.trim().toLowerCase(),token,type:"signup"});
    if(error){setMsg(error.message||"Invalid or expired OTP.");setBusy(false);return}
    const user=data?.user||pendingUser;
    if(!user){setMsg("Verification succeeded, but the account session could not be loaded. Please sign in.");setBusy(false);return}
-   const{error:profileError}=await supabase.from("customers").upsert({auth_user_id:user.id,name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase(),phone:registeredPhone,address:f.address.trim(),city:f.city.trim(),district:f.district.trim(),province:f.province.trim(),postal_code:f.postal_code.trim()||null,is_active:true},{onConflict:"auth_user_id"});
+   const{error:profileError}=await supabase.from("customers").upsert({auth_user_id:user.id,name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase()||null,phone:registeredPhone||null,address:f.address.trim(),city:f.city.trim(),district:f.district.trim(),province:f.province.trim(),postal_code:f.postal_code.trim()||null,is_active:true},{onConflict:"auth_user_id"});
    if(profileError){setMsg(profileError.message);setBusy(false);return}
-   setMsg("Mobile number verified. Your account is ready.");
-   await offerPasskeyPrompt(user.id);
-   location.href="account/";
+   setMsg((verifyMethod==="mobile"?"Mobile number":"Email address")+" verified. Your account is ready.");
+   await offerPasskeyPrompt(user.id);location.href="account/";
  }
  async function resendOtp(){
-   if(!registeredPhone||busy)return;
+   if(busy)return;
    setBusy(true);setMsg("Sending a new OTP…");
-   const{error}=await supabase.auth.resend({type:"sms",phone:registeredPhone,options:{channel:"whatsapp"}});
-   setMsg(error?error.message:"A new OTP has been sent to "+registeredPhone+".");
+   const{error}=verifyMethod==="mobile"
+     ?await supabase.auth.resend({type:"sms",phone:registeredPhone,options:{channel:"whatsapp"}})
+     :await supabase.auth.resend({type:"signup",email:f.email.trim().toLowerCase()});
+   setMsg(error?error.message:verifyMethod==="mobile"?"A new OTP has been sent to "+registeredPhone+".":"A new OTP has been sent to "+f.email.trim()+".");
    setBusy(false);
  }
- if(otpStep)return <AuthLayout title="Verify Mobile Number"><p className="auth-intro">Enter the 6-digit OTP sent to <b>{registeredPhone}</b> to finish creating your account.</p><form onSubmit={verifyRegistration}><label className="field">OTP <span className="required-star">*</span><input type="text" value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,"").slice(0,6))} inputMode="numeric" autoComplete="one-time-code" maxLength="6" required autoFocus/></label><button className="btn" disabled={busy}>{busy?"Verifying…":"Verify & Create Account"}</button>{msg&&<div className={msg.toLowerCase().includes("verified")?"message success":"message error"}>{msg}</div>}</form><div className="auth-links"><button type="button" className="text-button" onClick={resendOtp} disabled={busy}>Resend OTP</button> · <button type="button" className="text-button" onClick={()=>{supabase.auth.signOut();setOtpStep(false);setMsg("");}}>Change Details</button></div></AuthLayout>;
- return <AuthLayout title="Create Account"><p className="auth-intro">Create your account and verify your mobile number with WhatsApp OTP. Email is optional and can be added later.</p><form onSubmit={createAccount}>
+ if(otpStep)return <AuthLayout title={verifyMethod==="mobile"?"Verify Mobile Number":"Verify Email Address"}><p className="auth-intro">Enter the 6-digit OTP sent to <b>{verifyMethod==="mobile"?registeredPhone:f.email.trim()}</b> to finish creating your account.</p><form onSubmit={verifyRegistration}><label className="field">OTP <span className="required-star">*</span><input type="text" value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,"").slice(0,6))} inputMode="numeric" autoComplete="one-time-code" maxLength="6" required autoFocus/></label><button className="btn" disabled={busy}>{busy?"Verifying…":"Verify & Create Account"}</button>{msg&&<div className={msg.toLowerCase().includes("verified")?"message success":"message error"}>{msg}</div>}</form><div className="auth-links"><button type="button" className="text-button" onClick={resendOtp} disabled={busy}>Resend OTP</button> · <button type="button" className="text-button" onClick={()=>{supabase.auth.signOut();setOtpStep(false);setMsg("");}}>Change Details</button></div></AuthLayout>;
+ return <AuthLayout title="Create Account"><p className="auth-intro">Create your account and verify either your email address or mobile number with a one-time code.</p><div className="login-method-switch" role="group" aria-label="Verification method"><button type="button" className={verifyMethod==="email"?"active":""} onClick={()=>{setVerifyMethod("email");setMsg("");}}>Email OTP</button><button type="button" className={verifyMethod==="mobile"?"active":""} onClick={()=>{setVerifyMethod("mobile");setMsg("");}}>Mobile OTP</button></div><form onSubmit={createAccount}>
  <label className="field">First Name <span className="required-star">*</span><input name="first_name" type="text" value={f.first_name} onChange={change} required autoComplete="given-name"/></label>
  <label className="field">Last Name <span className="required-star">*</span><input name="last_name" type="text" value={f.last_name} onChange={change} required autoComplete="family-name"/></label>
- <label className="field">Email Address <span className="optional-label">(Optional)</span><input name="email" type="email" value={f.email} onChange={change} autoComplete="email"/></label>
+ <label className="field">Email Address {verifyMethod==="email"?<span className="required-star">*</span>:<span className="optional-label">(Optional)</span>}<input name="email" type="email" value={f.email} onChange={change} autoComplete="email" required={verifyMethod==="email"}/></label>
  <label className="field">Password <span className="required-star">*</span><input name="password" type="password" value={f.password} onChange={change} required autoComplete="new-password"/></label>
  <label className="field">Confirm Password <span className="required-star">*</span><input name="confirm" type="password" value={f.confirm} onChange={change} required autoComplete="new-password"/></label>
- <label className="field">Mobile Number <span className="required-star">*</span><div className="phone-input-wrap"><span className="phone-country-code">+977</span><input name="phone" type="tel" value={f.phone} onChange={change} required autoComplete="tel-national" inputMode="numeric" maxLength="10" placeholder="10-digit mobile number"/></div></label>
+ <label className="field">Mobile Number {verifyMethod==="mobile"?<span className="required-star">*</span>:<span className="optional-label">(Optional)</span>}<div className="phone-input-wrap"><span className="phone-country-code">+977</span><input name="phone" type="tel" value={f.phone} onChange={change} required={verifyMethod==="mobile"} autoComplete="tel-national" inputMode="numeric" maxLength="10" placeholder="10-digit mobile number"/></div></label>
  <label className="field">Delivery Address <span className="required-star">*</span><textarea name="address" rows="3" value={f.address} onChange={change} required/></label>
  <label className="field">Province <span className="required-star">*</span><select name="province" value={f.province} onChange={change} required><option value="">Select Province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
  <label className="field">District <span className="required-star">*</span><select name="district" value={f.district} onChange={change} required disabled={!f.province}><option value="">{f.province?"Select District":"Select Province First"}</option>{provinceDistricts(f.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
  <label className="field">City <span className="required-star">*</span><input name="city" value={f.city} onChange={change} required/></label>
  <label className="field">Postal Code <span className="optional-label">(Optional)</span><input name="postal_code" value={f.postal_code} onChange={change} inputMode="numeric" autoComplete="postal-code"/></label>
- <button className="btn" disabled={busy}>{busy?"Sending OTP…":"Continue & Verify Mobile"}</button>{msg&&<div className="message error">{msg}</div>}</form><div className="auth-google"><button type="button" className="google-auth-button" onClick={googleSignIn} disabled={busy}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button></div><div className="auth-links">Already have an account? <a href="login.html">Sign in</a></div></AuthLayout>
+ <button className="btn" disabled={busy}>{busy?"Sending OTP…":verifyMethod==="mobile"?"Continue & Verify Mobile":"Continue & Verify Email"}</button>{msg&&<div className="message error">{msg}</div>}</form><div className="auth-google"><button type="button" className="google-auth-button" onClick={googleSignIn} disabled={busy}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button></div><div className="auth-links">Already have an account? <a href="login.html">Sign in</a></div></AuthLayout>
 }
 function Account(){
  const[passkeyBusy,setPasskeyBusy]=useState(false),[passkeyMsg,setPasskeyMsg]=useState("");
