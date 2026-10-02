@@ -76,3 +76,22 @@
  .business-information-note{margin:18px 0 16px;font-size:13px}
  .business-information-content>.coming-soon-link{min-height:46px}
 }
+
+
+/* Account security and identity controls */
+.account-security-card,.account-google-card{background:linear-gradient(145deg,#fffdfb 0%,#faf2eb 100%);border-color:#e8d9cf;box-shadow:0 8px 24px rgba(75,35,39,.035)}
+.passkey-list{display:grid;gap:10px;margin:18px 0}
+.passkey-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border:1px solid #eadfd8;border-radius:13px;background:rgba(255,255,255,.8)}
+.passkey-details{display:flex;min-width:0;flex-direction:column;gap:5px}
+.passkey-details strong{color:#4a292b;font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.passkey-details span,.passkey-empty{color:#796b65;font-size:12px;line-height:1.5}
+.passkey-empty{margin:14px 0 18px}
+.passkey-delete-button{flex:0 0 auto;min-height:38px;padding:8px 15px;border:1px solid #d9b9b5;border-radius:999px;background:#fff;color:#8b3037;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:background .18s ease,border-color .18s ease}
+.passkey-delete-button:hover{background:#fff1ef;border-color:#b97c79}
+.passkey-delete-button:disabled{opacity:.55;cursor:wait}
+.passkey-add-button{margin-top:2px}
+.account-google-card .account-google-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:11px 22px;border:1px solid #d8c9c2;border-radius:999px;background:#fff;color:#76292d;font-size:14px;font-weight:700;box-shadow:0 3px 10px rgba(75,35,39,.035);transition:transform .18s ease,background .18s ease,border-color .18s ease}
+.account-google-card .account-google-button::before{content:"G";display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#fff;font-family:Arial,sans-serif;font-size:19px;font-weight:700;color:#4285f4}
+.account-google-card .account-google-button:hover:not(:disabled){background:#fff8f3;border-color:#b98b70;transform:translateY(-1px)}
+.account-google-card .account-google-button:disabled{opacity:.65;cursor:default}
+@media(max-width:600px){.account-security-card,.account-google-card{padding:20px 18px}.passkey-row{align-items:flex-start;padding:12px}.passkey-delete-button{min-height:35px;padding:7px 12px}.account-google-card .account-google-button{width:100%}}
