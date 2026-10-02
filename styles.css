@@ -7137,3 +7137,11 @@ a {
 
 /* Desktop: keep all three difference descriptions visually consistent */
 @media(min-width:1101px){.about-special-points>div>p{font-size:18px!important;line-height:1.75!important}}
+
+
+/* Google OAuth buttons on customer login and registration */
+.auth-google{margin:18px 0 4px}
+.google-auth-button{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:46px;padding:11px 16px;border:1px solid #d9d9d9;border-radius:9px;background:#fff;color:#292929;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .18s ease,border-color .18s ease}
+.google-auth-button:hover{background:#f8f8f8;border-color:#bdbdbd}
+.google-auth-button:disabled{opacity:.6;cursor:wait}
+.google-g{font-family:Arial,sans-serif;font-size:19px;font-weight:700;color:#4285f4}
