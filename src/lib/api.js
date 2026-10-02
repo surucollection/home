@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export const API="https://vkycraymxhkqxgpcpdzw.supabase.co/rest/v1/";
 export const KEY="sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC";
-export const supabase=createClient("https://vkycraymxhkqxgpcpdzw.supabase.co",KEY);
+export const supabase=createClient("https://vkycraymxhkqxgpcpdzw.supabase.co",KEY,{auth:{experimental:{passkey:true}}});
 
 export async function get(table,params={}){
   const u=new URL(API+table);
