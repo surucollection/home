@@ -7145,3 +7145,50 @@ a {
 .google-auth-button:hover{background:#f8f8f8;border-color:#bdbdbd}
 .google-auth-button:disabled{opacity:.6;cursor:wait}
 .google-g{font-family:Arial,sans-serif;font-size:19px;font-weight:700;color:#4285f4}
+
+
+/* Customer account page — refined responsive styling */
+.page:has(.account-card){width:min(920px,calc(100% - 32px));margin:0 auto;padding:34px 0 64px}
+.account-card{padding:clamp(22px,4vw,48px);border:1px solid #eadfd8;border-radius:24px;background:#fff;box-shadow:0 14px 42px rgba(75,35,39,.07);color:#38282a}
+.account-card>h1{margin:0 0 30px;color:#76292d;font:500 clamp(30px,5vw,48px)/1.18 Georgia,"Times New Roman",serif;overflow-wrap:anywhere}
+.account-card>h2{margin:36px 0 18px;color:#4a292b;font:500 clamp(25px,3.5vw,34px)/1.2 Georgia,"Times New Roman",serif}
+.account-google-link{margin:0 0 24px;padding:25px 26px;border:1px solid #eadbd2;border-radius:18px;background:linear-gradient(145deg,#fffdfa,#fbf5ef)}
+.account-google-link h2{margin:0 0 10px;color:#4a292b;font:500 clamp(23px,3vw,30px)/1.25 Georgia,"Times New Roman",serif}
+.account-google-link p{max-width:650px;margin:0 0 18px;color:#756763;font-size:15px;line-height:1.75}
+.account-google-link .btn{min-height:44px;padding:10px 22px;border-radius:999px}
+.account-google-link .message{margin-top:16px;padding:12px 15px;border-radius:12px;background:#f5eee7;color:#5c4945;line-height:1.65;overflow-wrap:anywhere}
+.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border:1px solid #e9dfd9;border-radius:18px;overflow:hidden;background:#fffdfa}
+.profile-item{display:grid;grid-template-columns:minmax(105px,.7fr) minmax(0,1.3fr);gap:14px;align-items:start;padding:17px 20px;border-bottom:1px solid #eee7e2}
+.profile-item:nth-child(odd){border-right:1px solid #eee7e2}
+.profile-item b{color:#76292d;font-size:14px;font-weight:700}
+.profile-item span{min-width:0;color:#382e2e;font-size:15px;line-height:1.55;overflow-wrap:anywhere}
+.account-edit-trigger{display:flex;justify-content:flex-end;margin:18px 0 0}
+.account-edit-trigger .btn,.account-card>.btn{min-height:44px;padding:10px 24px;border-radius:999px}
+.account-edit-card{padding:clamp(18px,3vw,30px);border:1px solid #eadbd2;border-radius:18px;background:#fffdfa}
+.edit-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+.edit-card-header h2{margin:0;color:#4a292b;font:500 25px/1.25 Georgia,"Times New Roman",serif}
+.profile-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.profile-form .field{min-width:0;margin:0;color:#554344;font-size:13px;font-weight:650}
+.profile-form .field:nth-of-type(5),.profile-form .field:nth-of-type(10),.profile-form>.btn,.profile-form>.message{grid-column:1/-1}
+.profile-form input,.profile-form select,.profile-form textarea{width:100%;margin-top:7px;padding:12px 13px;border:1px solid #ded3cd;border-radius:10px;background:#fff;color:#302525;font-size:15px}
+.profile-form input:focus,.profile-form select:focus,.profile-form textarea:focus{border-color:#a8795e;outline:2px solid rgba(181,138,74,.16)}
+.profile-form .btn{min-height:46px;border-radius:999px}
+.account-card>.message{margin:18px 0;padding:13px 16px;border-radius:12px;background:#f5eee7;line-height:1.65}
+.account-card .btn.secondary{border:1px solid #dfd1c9;background:#f8f3ef;color:#76292d}
+.account-card .btn.secondary:hover{background:#efe3db}
+@media(max-width:640px){
+ .page:has(.account-card){width:calc(100% - 24px);padding:16px 0 42px}
+ .account-card{padding:22px 17px;border-radius:19px}
+ .account-card>h1{margin-bottom:24px;font-size:clamp(29px,8vw,40px)}
+ .account-google-link{margin-bottom:16px;padding:20px 17px;border-radius:15px}
+ .account-google-link p{font-size:14px}
+ .account-card>h2{margin:30px 0 15px}
+ .profile-grid{grid-template-columns:1fr;border-radius:15px}
+ .profile-item{grid-template-columns:minmax(100px,.65fr) minmax(0,1.35fr);gap:10px;padding:14px 15px}
+ .profile-item:nth-child(odd){border-right:0}
+ .profile-item b{font-size:13px}
+ .profile-item span{font-size:14px}
+ .profile-form{grid-template-columns:1fr;gap:14px}
+ .profile-form .field{grid-column:1/-1}
+ .edit-card-header h2{font-size:21px}
+}
