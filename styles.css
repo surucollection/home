@@ -7086,3 +7086,18 @@ a {
 .login-method-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 20px;padding:4px;border:1px solid #e6d8d2;border-radius:12px;background:#fbf6f2}
 .login-method-switch button{border:0;border-radius:9px;padding:11px 12px;background:transparent;color:#6f5552;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .login-method-switch button.active{background:#7b2932;color:#fff;box-shadow:0 2px 7px rgba(70,25,30,.12)}
+
+
+/* Elegant empty-category coming soon panel */
+.category-coming-soon{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:390px;margin:12px 0 28px;padding:58px 24px;text-align:center;border:1px solid #eadbd2;border-radius:24px;background:radial-gradient(ellipse at 50% 0%,rgba(194,157,111,.16),transparent 58%),linear-gradient(145deg,#fffdf9 0%,#f8eee8 100%);box-shadow:0 16px 42px rgba(91,43,39,.06)}
+.category-coming-soon:before,.category-coming-soon:after{content:"";position:absolute;z-index:-1;width:190px;height:190px;border:1px solid rgba(168,126,81,.16);border-radius:50%}
+.category-coming-soon:before{top:-118px;left:-92px}.category-coming-soon:after{right:-100px;bottom:-125px}
+.coming-soon-ornament{display:flex;align-items:center;gap:12px;margin-bottom:18px;color:#b18a58;font-size:16px}.coming-soon-ornament i{display:block;width:62px;height:1px;background:linear-gradient(90deg,transparent,#b18a58,transparent)}
+.coming-soon-eyebrow{margin:0 0 9px;color:#9a7650;font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase}
+.category-coming-soon h2{margin:0;color:#4a292b;font-family:Georgia,serif;font-size:clamp(34px,5vw,48px);font-weight:500;line-height:1.15}
+.coming-soon-category{margin:12px 0 0;color:#7b2932;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.coming-soon-divider{display:flex;align-items:center;gap:12px;margin:22px 0 15px;color:#b18a58}.coming-soon-divider:before,.coming-soon-divider:after{content:"";display:block;width:48px;height:1px;background:#ddc7ae}
+.coming-soon-copy{margin:0;color:#806f69;font-size:15px;line-height:1.8}
+.coming-soon-link{display:inline-flex;align-items:center;gap:9px;margin-top:27px;padding:12px 21px;border:1px solid #7b2932;border-radius:999px;background:#7b2932;color:#fff;font-size:13px;font-weight:600;text-decoration:none;transition:transform .2s ease,background .2s ease,color .2s ease}
+.coming-soon-link:hover{transform:translateY(-2px);background:transparent;color:#7b2932}
+@media(max-width:600px){.category-coming-soon{min-height:340px;margin:4px 0 20px;padding:44px 18px;border-radius:19px}.coming-soon-copy{font-size:14px}}
