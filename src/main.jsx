@@ -134,7 +134,7 @@ function Register(){
    if(error){setMsg(error.message||"Invalid or expired OTP.");setBusy(false);return}
    const user=data?.user||pendingUser;
    if(!user){setMsg("Verification succeeded, but the account session could not be loaded. Please sign in.");setBusy(false);return}
-   const{error:profileError}=await supabase.from("customers").upsert({auth_user_id:user.id,name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase()||null,phone:registeredPhone||null,address:f.address.trim(),city:f.city.trim(),district:f.district.trim(),province:f.province.trim(),postal_code:f.postal_code.trim()||null,is_active:true},{onConflict:"auth_user_id"});
+   const{error:profileError}=await supabase.rpc("link_verified_customer",{p_name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),p_first_name:f.first_name.trim(),p_last_name:f.last_name.trim(),p_email:f.email.trim().toLowerCase()||null,p_phone:registeredPhone||null,p_address:f.address.trim(),p_city:f.city.trim(),p_district:f.district.trim(),p_province:f.province.trim(),p_postal_code:f.postal_code.trim()||null});
    if(profileError){setMsg(profileError.message);setBusy(false);return}
    setMsg((verifyMethod==="mobile"?"Mobile number":"Email address")+" verified. Your account is ready.");
    await offerPasskeyPrompt(user.id);location.href="account/";
