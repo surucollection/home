@@ -96,11 +96,11 @@ function Register(){
    e.preventDefault();
    if(!f.first_name.trim()||!f.last_name.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");
    if(verifyMethod==="email"&&!f.email.trim())return setMsg("Enter an email address to receive your verification code.");
-   if(verifyMethod==="mobile"&&!f.phone.trim())return setMsg("Enter a mobile number to receive your verification code.");
+   if(!f.phone.trim())return setMsg("Enter your mobile number.");
    if(f.password.length<6)return setMsg("Password must be at least 6 characters.");
    if(f.password!==f.confirm)return setMsg("Passwords do not match.");
    const phone=f.phone.trim()?normalizeNepalPhone(f.phone):"";
-   if(verifyMethod==="mobile"&&!/^\+9779\d{9}$/.test(phone))return setMsg("Please enter a valid Nepal mobile number.");
+   if(!/^\+9779\d{9}$/.test(phone))return setMsg("Please enter a valid Nepal mobile number.");
    setBusy(true);setMsg("Creating your account and sending OTP…");
    const metadata={name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),first_name:f.first_name.trim(),last_name:f.last_name.trim(),email:f.email.trim().toLowerCase()||null,phone:phone||null,address:f.address.trim(),city:f.city.trim(),district:f.district.trim(),province:f.province.trim(),postal_code:f.postal_code.trim()||null};
    const result=verifyMethod==="mobile"
@@ -144,7 +144,7 @@ function Register(){
  <label className="field">Email Address {verifyMethod==="email"?<span className="required-star">*</span>:<span className="optional-label">(Optional)</span>}<input name="email" type="email" value={f.email} onChange={change} autoComplete="email" required={verifyMethod==="email"}/></label>
  <label className="field">Password <span className="required-star">*</span><input name="password" type="password" value={f.password} onChange={change} required autoComplete="new-password"/></label>
  <label className="field">Confirm Password <span className="required-star">*</span><input name="confirm" type="password" value={f.confirm} onChange={change} required autoComplete="new-password"/></label>
- <label className="field">Mobile Number {verifyMethod==="mobile"?<span className="required-star">*</span>:<span className="optional-label">(Optional)</span>}<div className="phone-input-wrap"><span className="phone-country-code">+977</span><input name="phone" type="tel" value={f.phone} onChange={change} required={verifyMethod==="mobile"} autoComplete="tel-national" inputMode="numeric" maxLength="10" placeholder="10-digit mobile number"/></div></label>
+ <label className="field">Mobile Number <span className="required-star">*</span><div className="phone-input-wrap"><span className="phone-country-code">+977</span><input name="phone" type="tel" value={f.phone} onChange={change} required autoComplete="tel-national" inputMode="numeric" maxLength="10" placeholder="10-digit mobile number"/></div></label>
  <label className="field">Delivery Address <span className="required-star">*</span><textarea name="address" rows="3" value={f.address} onChange={change} required/></label>
  <label className="field">Province <span className="required-star">*</span><select name="province" value={f.province} onChange={change} required><option value="">Select Province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
  <label className="field">District <span className="required-star">*</span><select name="district" value={f.district} onChange={change} required disabled={!f.province}><option value="">{f.province?"Select District":"Select Province First"}</option>{provinceDistricts(f.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
