@@ -40,7 +40,7 @@ export default function ProductsGrid({limit,category,featured=false}){
 
   if(loading&&!p.length)return <div className="product-loading">Loading products…</div>;
   if(err&&!p.length)return <div className="product-loading">{err}</div>;
-  if(!p.length)return <div className="product-loading">No products found{category?" in "+category:""}.</div>;
+  if(!p.length)return category?<div className="category-coming-soon"><div className="coming-soon-ornament" aria-hidden="true"><span>✦</span><i></i><span>✦</span></div><p className="coming-soon-eyebrow">A little something is on its way</p><h2>Coming Soon</h2><p className="coming-soon-category">{category}</p><div className="coming-soon-divider"><span>✧</span></div><p className="coming-soon-copy">We’re curating beautiful pieces for this collection.<br/>Stay tuned for something special.</p><a className="coming-soon-link" href="products.html">Explore All Collections <span aria-hidden="true">→</span></a></div>:<div className="product-loading">No products found.</div>;
 
   const visible=limit?p.slice(0,limit):p;
   return <>
