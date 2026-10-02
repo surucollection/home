@@ -7192,3 +7192,8 @@ a {
  .profile-form .field{grid-column:1/-1}
  .edit-card-header h2{font-size:21px}
 }
+
+
+/* Keep the password and passkey actions visually separate on auth pages */
+.auth-card form + .btn{margin-top:12px}
+.auth-card form + .btn + .auth-google{margin-top:18px}
