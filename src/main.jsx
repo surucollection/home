@@ -74,12 +74,23 @@ async function offerPasskeyPrompt(userId){
  if(!userId)return;
  const key="suru-passkey-prompt:"+userId;
  if(localStorage.getItem(key)==="dismissed"||localStorage.getItem(key)==="enabled")return;
- const enable=window.confirm("Make your next login faster? Set up a passkey for Suru Collection using Face ID, Touch ID, your device PIN, or a password manager. Choose Cancel to do this later.");
- if(!enable){localStorage.setItem(key,"dismissed");return;}
- const{error}=await supabase.auth.registerPasskey();
- if(error){window.alert(error.message||"Passkey setup was not completed. You can add one later from My Account.");return;}
- localStorage.setItem(key,"enabled");
- window.alert("Your Suru Collection passkey is ready.");
+ return new Promise(resolve=>{
+  const overlay=document.createElement("div");
+  overlay.className="passkey-prompt-overlay";
+  overlay.innerHTML='<section class="passkey-prompt" role="dialog" aria-modal="true" aria-labelledby="passkey-prompt-title"><button class="passkey-prompt-close" type="button" aria-label="Close">×</button><div class="passkey-prompt-icon" aria-hidden="true"><i class="fa-solid fa-fingerprint"></i></div><h2 id="passkey-prompt-title">Set Up Your Passkey</h2><p>Make your next login faster and more secure with Face ID, Touch ID, your device PIN, or a password manager.</p><button class="btn passkey-prompt-setup" type="button">Set Up Passkey</button><button class="passkey-prompt-later" type="button">Maybe Later</button><p class="passkey-prompt-status" aria-live="polite"></p></section>';
+  document.body.appendChild(overlay);
+  const close=()=>{overlay.remove();resolve()};
+  const later=()=>{localStorage.setItem(key,"dismissed");close()};
+  overlay.querySelector(".passkey-prompt-close").addEventListener("click",later);
+  overlay.querySelector(".passkey-prompt-later").addEventListener("click",later);
+  overlay.addEventListener("click",e=>{if(e.target===overlay)later()});
+  overlay.querySelector(".passkey-prompt-setup").addEventListener("click",async e=>{
+   const button=e.currentTarget,status=overlay.querySelector(".passkey-prompt-status");
+   button.disabled=true;status.textContent="Starting secure passkey setup…";
+   try{const{error}=await supabase.auth.registerPasskey();if(error)throw error;localStorage.setItem(key,"enabled");status.textContent="Passkey added successfully.";button.textContent="Done";button.disabled=false;button.onclick=close;overlay.querySelector(".passkey-prompt-later").hidden=true}
+   catch(err){status.textContent=err?.message||"Passkey setup was not completed. You can add one later from My Account.";button.disabled=false;status.classList.add("is-error")}
+  });
+ });
 }
 function normalizeNepalPhone(value){
  const raw=String(value||"").trim().replace(/[\s()-]/g,"");
