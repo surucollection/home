@@ -95,3 +95,12 @@
 .account-google-card .account-google-button:hover:not(:disabled){background:#fff8f3;border-color:#b98b70;transform:translateY(-1px)}
 .account-google-card .account-google-button:disabled{opacity:.65;cursor:default}
 @media(max-width:600px){.account-security-card,.account-google-card{padding:20px 18px}.passkey-row{align-items:flex-start;padding:12px}.passkey-delete-button{min-height:35px;padding:7px 12px}.account-google-card .account-google-button{width:100%}}
+
+
+/* Password recovery */
+.auth-links>a[href="/reset-password/"]{color:#76292d;font-weight:600;text-decoration:none}
+.auth-links>a[href="/reset-password/"]:hover{text-decoration:underline;text-underline-offset:3px}
+.reset-done{display:grid;gap:18px}
+.reset-done p{margin:0;color:#5d4b47;line-height:1.7}
+.reset-done .btn{display:inline-flex;align-items:center;justify-content:center;width:max-content;min-height:46px;padding:11px 24px;border-radius:999px;background:#76292d;color:#fff;text-decoration:none;font-weight:600}
+.reset-done .btn:hover{background:#5e2025}
