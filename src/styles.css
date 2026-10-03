@@ -108,3 +108,12 @@
 /* Login action buttons: force visible separation, including mobile Safari. */
 .login-extra-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:16px!important;width:100%;margin:14px 0 18px!important}
 .login-extra-actions>.btn{display:flex!important;flex:0 0 auto!important;box-sizing:border-box;width:100%;min-height:56px;margin:0!important}
+
+
+/* Admin login secondary actions mirror the customer login controls. */
+.admin-login-extras{display:flex;flex-direction:column;align-items:stretch;gap:16px;width:100%;margin:14px 0 18px}
+.admin-login-extras>.btn{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-height:56px;margin:0;padding:12px 20px;border:1px solid #e4d7d2;border-radius:999px;background:#fff;color:#76292d;font:inherit;font-weight:600;cursor:pointer}
+.admin-login-extras>.btn:hover{background:#fbf3f1}
+.admin-login-extras>.btn:disabled{opacity:.6;cursor:not-allowed}
+.admin-forgot-password{align-self:center;border:0;background:transparent;padding:4px 8px;color:#76292d;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}
+.admin-forgot-password:hover{text-decoration:underline;text-underline-offset:3px}
