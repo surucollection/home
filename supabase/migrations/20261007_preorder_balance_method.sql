@@ -3,6 +3,8 @@ alter table public.order_items drop constraint if exists order_items_preorder_ba
 alter table public.order_items add constraint order_items_preorder_balance_method_check
   check (preorder_balance_method is null or preorder_balance_method in ('online','cod'));
 
+drop function if exists public.place_preorder_order(jsonb,jsonb,text,text);
+
 create or replace function public.place_preorder_order(
   p_customer jsonb,
   p_items jsonb,
@@ -120,7 +122,7 @@ begin
     insert into public.order_items(order_id,product_id,product_code,product_name,size,color,quantity,
       unit_price,total_price,is_preorder,preorder_discount,advance_amount,balance_amount,preorder_status,preorder_balance_method)
     values(v_order_id,v_product.id,v_product.product_code,v_product.name,v_variant.size,v_variant.color,
-      v_qty,v_product.price,v_final_line,true,v_discount,v_advance,v_balance,'awaiting_advance',v_balance_method);
+      v_qty,v_product.price,v_final_line,true,v_discount,v_advance,v_balance,'awaiting_advance',p_balance_method);
 
     v_subtotal := v_subtotal+v_regular_line;
     v_discount_total := v_discount_total+v_discount;
