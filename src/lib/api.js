@@ -27,5 +27,5 @@ export const imageUrl=(url,width=600)=>{
   return value.slice(0,i+marker.length)+"f_auto,q_auto,w_"+Math.max(120,Math.round(width))+",c_limit/"+rest;
 };
 
-export const money=v=>"NPR "+Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+export const money=v=>"NPR "+Math.round(Number(v||0)).toLocaleString("en-IN",{maximumFractionDigits:0});
 export const norm=v=>String(v??"").trim().toLowerCase();
