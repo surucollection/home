@@ -43,8 +43,8 @@ begin
      or coalesce(trim(p_customer->>'city'),'') = '' then
     raise exception 'Customer details are incomplete';
   end if;
-  if exists (select 1 from jsonb_array_elements(p_items) i
-             where coalesce(i->>'qty','') !~ '^[1-9][0-9]{0,3}$') then
+  if exists (select 1 from jsonb_array_elements(p_items) as x(item)
+             where coalesce(item->>'qty','') !~ '^[1-9][0-9]{0,3}$') then
     raise exception 'Each preorder quantity must be a positive whole number';
   end if;
 
