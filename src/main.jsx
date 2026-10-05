@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from "react";
+import React,{useEffect,useMemo,useRef,useState} from "react";
 import{createRoot}from"react-dom/client";
 import QRCode from "qrcode";
 import"./styles.css";
@@ -271,6 +271,7 @@ function Product(){
 }
 
 function Order(){
+ const checkoutIdempotencyRef=useRef("");
  const[cart,setCart]=useState(()=>readCart()),[checkout,setCheckout]=useState(()=>new URLSearchParams(location.search).get("checkout")==="1"),[session,setSession]=useState(null),[name,setName]=useState(""),[phone,setPhone]=useState(""),[address,setAddress]=useState(""),[city,setCity]=useState(""),[payment,setPayment]=useState("Cash on Delivery — NPR 300 advance"),[paymentRef,setPaymentRef]=useState(""),[busy,setBusy]=useState(false),[msg,setMsg]=useState(""),[success,setSuccess]=useState(""),[ncmBranches,setNcmBranches]=useState([]),[ncmBranch,setNcmBranch]=useState(""),[ncmBranchBusy,setNcmBranchBusy]=useState(false),[couponCode,setCouponCode]=useState(""),[appliedCoupon,setAppliedCoupon]=useState(null),[couponBusy,setCouponBusy]=useState(false),[fonepayQrImage,setFonepayQrImage]=useState(""),[fonepaySetupOrderId,setFonepaySetupOrderId]=useState(()=>{try{return sessionStorage.getItem("suru-fonepay-setup-order")||""}catch{return ""}}),[fonepaySetupPurpose,setFonepaySetupPurpose]=useState(()=>{try{return sessionStorage.getItem("suru-fonepay-setup-purpose")||"full"}catch{return "full"}}),[fonepayPayment,setFonepayPayment]=useState(()=>{try{const raw=sessionStorage.getItem("suru-fonepay-pending");if(!raw)return null;const v=JSON.parse(raw);return v&&v.orderId&&Date.now()-Number(v.createdAt||0)<15*60*1000?{...v,purpose:v.purpose||"full"}:null}catch{return null}}),[fonepayBusy,setFonepayBusy]=useState(false);
  useEffect(()=>{const f=()=>{setCart(readCart());setAppliedCoupon(null)};addEventListener("suruCartChanged",f);return()=>removeEventListener("suruCartChanged",f)},[]);
  useEffect(()=>{if(fonepayPayment){try{sessionStorage.setItem("suru-fonepay-pending",JSON.stringify(fonepayPayment))}catch{}}else{try{sessionStorage.removeItem("suru-fonepay-pending")}catch{}}},[fonepayPayment]);
@@ -291,15 +292,16 @@ function Order(){
    if(!session){location.href="login.html?return="+encodeURIComponent("/order.html?checkout=1");return}
    if(!name.trim()||!phone.trim()||!address.trim()||!city.trim()){setMsg("Please fill in all delivery details.");return}
    setBusy(true);setMsg("");
+   const checkoutKey=checkoutIdempotencyRef.current||(crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join(""));checkoutIdempotencyRef.current=checkoutKey;
    try{
      const{data:userData}=await supabase.auth.getUser();const email=userData?.user?.email||"";
      const items=cart.map(x=>({code:String(x.code||x.product_code||"").trim(),size:x.size||null,color:x.color||x.colour||null,qty:Math.max(1,Number(x.quantity??x.qty??1))})).filter(x=>x.code);
      if(!items.length)throw Error("Your cart contains an invalid product. Please remove it and add the product again.");
      const paymentMethod=payment==="Pay with Fonepay"?"fonepay":payment==="Card / Payment Gateway"?"online":"cod";
      const fonepayPurpose=paymentMethod==="cod"?"cod_advance":"full";
-     const{data,error}=await supabase.rpc("place_order",{p_customer:{name:name.trim(),phone:phone.trim(),email,address:address.trim(),city:city.trim(),district:null,province:null,postal_code:null,ncm_destination_branch:ncmBranch||null},p_items:items,p_payment_method:paymentMethod,p_customer_note:paymentRef.trim()?("Payment reference: "+paymentRef.trim()):null,p_coupon_code:appliedCoupon?.code||null});
+     const{data,error}=await supabase.rpc("place_order",{p_customer:{name:name.trim(),phone:phone.trim(),email,address:address.trim(),city:city.trim(),district:null,province:null,postal_code:null,ncm_destination_branch:ncmBranch||null},p_items:items,p_payment_method:paymentMethod,p_customer_note:paymentRef.trim()?("Payment reference: "+paymentRef.trim()):null,p_coupon_code:appliedCoupon?.code||null,p_checkout_idempotency_key:checkoutKey});
      if(error)throw error;
-     const orderId=data?.order_id||data?.order?.id||null;const orderNumber=data?.order_number||"";
+     const orderId=data?.order_id||data?.order?.id||null;const orderNumber=data?.order_number||"";if(data?.duplicate)setMsg("This checkout request was already submitted. Resuming your existing order.");
      if(paymentMethod==="fonepay"||paymentMethod==="cod"){
        if(!orderId)throw Error("Order was created but its payment ID was not returned. Please contact Suru Collection.");
        const expectedAmount=fonepayPurpose==="cod_advance"?Number(data?.cod_advance_required):Number(data?.total);
@@ -314,7 +316,7 @@ function Order(){
        setFonepaySetupOrderId("");
        setFonepayPayment({...paymentData,orderId,amount:returnedAmount,createdAt:Date.now(),purpose:fonepayPurpose});setMsg("");
      }else{
-       setSuccess(orderNumber?"Order "+orderNumber+" was placed successfully.":"Your order was placed successfully.");clear();setAppliedCoupon(null);setCouponCode("");setMsg("");
+       setSuccess(orderNumber?"Order "+orderNumber+" was placed successfully.":"Your order was placed successfully.");checkoutIdempotencyRef.current="";clear();setAppliedCoupon(null);setCouponCode("");setMsg("");
      }
    }catch(e){setMsg("Unable to place the order. "+(e?.message||"Please try again."))}finally{setBusy(false)}
  }
