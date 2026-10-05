@@ -300,7 +300,7 @@ function Order(){
      const paymentMethod=payment==="Pay with Fonepay"||payment==="Other Online Payment"?"fonepay":payment==="Card / Payment Gateway"?"online":"cod";
      const fonepayPurpose=paymentMethod==="cod"?"cod_advance":"full";
      if(paymentMethod==="cod"&&advanceMethod!=="Fonepay"){throw Error("Please select Fonepay for the COD advance. Other online payment is coming soon.");}
-     const{data,error}=await supabase.rpc("place_order",{p_customer:{name:name.trim(),phone:phone.trim(),email,address:address.trim(),city:city.trim(),district:null,province:null,postal_code:null,ncm_destination_branch:ncmBranch||null},p_items:items,p_payment_method:paymentMethod,p_customer_note:paymentRef.trim()?("Payment reference: "+paymentRef.trim()):null,p_coupon_code:appliedCoupon?.code||null,p_checkout_idempotency_key:checkoutKey});
+     const{data,error}=await supabase.rpc("place_order",{p_customer:{name:name.trim(),phone:phone.trim(),email,address:address.trim(),city:city.trim(),district:district.trim(),province:canonicalProvince(province),postal_code:postalCode.trim()||null,ncm_destination_branch:ncmBranch||null},p_items:items,p_payment_method:paymentMethod,p_customer_note:paymentRef.trim()?("Payment reference: "+paymentRef.trim()):null,p_coupon_code:appliedCoupon?.code||null,p_checkout_idempotency_key:checkoutKey});
      if(error)throw error;
      const orderId=data?.order_id||data?.order?.id||null;const orderNumber=data?.order_number||"";if(data?.duplicate)setMsg("This checkout request was already submitted. Resuming your existing order.");
      if(paymentMethod==="fonepay"||paymentMethod==="cod"){
