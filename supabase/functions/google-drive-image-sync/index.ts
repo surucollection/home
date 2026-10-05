@@ -117,6 +117,17 @@ Deno.serve(async req=>{
           if(clear.error)throw clear.error;
         }
 
+        if(files.length>0){
+          const stale=rows.filter(r=>{
+            const id=driveIdFromUrl(r.image_url);
+            return id && !desiredIds.has(id);
+          });
+          if(stale.length){
+            const del=await sb.from("product_images").delete().in("id",stale.map(r=>r.id));
+            if(del.error)throw del.error;
+          }
+        }
+
         for(const [i,f] of files.entries()){
           images++;
           const url=(Deno.env.get("SUPABASE_URL")||"")+"/functions/v1/google-drive-image?id="+encodeURIComponent(f.id);
@@ -140,7 +151,7 @@ Deno.serve(async req=>{
           }
         }
       }catch(e){
-        errors.push(code+": "+(e instanceof Error?e.message:"sync failed"));
+        errors.push(code+": "+(e instanceof Error?e.message:JSON.stringify(e)));
       }
     }
 
