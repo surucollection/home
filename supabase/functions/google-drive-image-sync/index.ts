@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-const ROOT="1zeVIdGtmBCianwPQsGxwOkXnqclLapNh", DRIVE="https://www.googleapis.com/drive/v3", TOKEN="https://oauth2.googleapis.com/token", SCOPE="https://www.googleapis.com/auth/drive";
+const ROOT="1zeVIdGtmBCianwPQsGxwOkXnqclLapNh", DRIVE="https://www.googleapis.com/drive/v3/files", TOKEN="https://oauth2.googleapis.com/token", SCOPE="https://www.googleapis.com/auth/drive";
 const b64=(b:Uint8Array)=>btoa(String.fromCharCode(...b)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
 const ub64=(s:string)=>b64(new TextEncoder().encode(s));
 function der(pem:string){const normalized=pem.replace(/\\n/g,"\n").replace(/\\r/g,"\r");const clean=normalized.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----/g,"").replace(/\s+/g,"");const binary=atob(clean);return Uint8Array.from(binary,c=>c.charCodeAt(0));}
