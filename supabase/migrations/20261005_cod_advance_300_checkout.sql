@@ -40,7 +40,7 @@ declare
  v_coupon_code text:=nullif(trim(p_coupon_code),''); v_cod_advance numeric(12,2):=0;
 begin
  if p_payment_method not in ('cod','esewa','khalti','fonepay','online') then raise exception 'Invalid payment method'; end if;
- if v_checkout_key is not null and (length(v_checkout_key)>64 or v_checkout_key !~ '^[0-9a-fA-F-]{16,64}
+ if v_checkout_key is not null and (length(v_checkout_key)>64 or v_checkout_key !~ '^[0-9a-fA-F-]{16,64}$') then raise exception 'Invalid checkout idempotency key'; end if;
  if jsonb_typeof(p_items)<>'array' or jsonb_array_length(p_items)=0 then raise exception 'Cart is empty'; end if;
  if coalesce(trim(p_customer->>'name'),'')='' or coalesce(trim(p_customer->>'phone'),'')='' or coalesce(trim(p_customer->>'address'),'')='' or coalesce(trim(p_customer->>'city'),'')='' then raise exception 'Customer details are incomplete'; end if;
  v_ncm_destination_branch:=nullif(trim(p_customer->>'ncm_destination_branch'),'');
