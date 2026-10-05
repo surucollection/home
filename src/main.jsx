@@ -296,19 +296,23 @@ function Order(){
      const items=cart.map(x=>({code:String(x.code||x.product_code||"").trim(),size:x.size||null,color:x.color||x.colour||null,qty:Math.max(1,Number(x.quantity??x.qty??1))})).filter(x=>x.code);
      if(!items.length)throw Error("Your cart contains an invalid product. Please remove it and add the product again.");
      const paymentMethod=payment==="Pay with Fonepay"?"fonepay":payment==="Online Payment — confirm with Suru Collection"?"online":"cod";
+     const fonepayPurpose=paymentMethod==="cod"?"cod_advance":"full";
      const{data,error}=await supabase.rpc("place_order",{p_customer:{name:name.trim(),phone:phone.trim(),email,address:address.trim(),city:city.trim(),district:null,province:null,postal_code:null,ncm_destination_branch:ncmBranch||null},p_items:items,p_payment_method:paymentMethod,p_customer_note:paymentRef.trim()?("Payment reference: "+paymentRef.trim()):null,p_coupon_code:appliedCoupon?.code||null});
      if(error)throw error;
      const orderId=data?.order_id||data?.order?.id||null;const orderNumber=data?.order_number||"";
-     if(paymentMethod==="fonepay"){
+     if(paymentMethod==="fonepay"||paymentMethod==="cod"){
        if(!orderId)throw Error("Order was created but its payment ID was not returned. Please contact Suru Collection.");
-       setFonepaySetupOrderId(orderId);
-       const{data:paymentData,error:paymentError}=await supabase.functions.invoke("fonepay-payment",{body:{action:"create",orderId}});
+       const expectedAmount=fonepayPurpose==="cod_advance"?Number(data?.cod_advance_required):Number(data?.total);
+       if(!Number.isFinite(expectedAmount)||expectedAmount<=0)throw Error("The order did not return a valid payment amount.");
+       setFonepaySetupPurpose(fonepayPurpose);setFonepaySetupOrderId(orderId);
+       const{data:paymentData,error:paymentError}=await supabase.functions.invoke("fonepay-payment",{body:{action:"create",orderId,purpose:fonepayPurpose}});
        if(paymentError)throw paymentError;
        if(paymentData?.error)throw Error(paymentData.error);
+       if(paymentData?.alreadyPaid){setFonepaySetupOrderId("");setSuccess(fonepayPurpose==="cod_advance"?(orderNumber?"COD order "+orderNumber+" was already confirmed.":"Your COD order was already confirmed."):(orderNumber?"Order "+orderNumber+" was already paid.":"Your order was already paid."));clear();setAppliedCoupon(null);setCouponCode("");setMsg("");return}
        const returnedAmount=Number(paymentData?.amount);
-       if(!Number.isFinite(returnedAmount)||Math.round(returnedAmount)!==checkoutTotal)throw Error("The payment amount returned by Fonepay does not match your order total. No payment screen was opened; please contact Suru Collection before retrying.");
+       if(!Number.isFinite(returnedAmount)||Math.abs(returnedAmount-expectedAmount)>0.01)throw Error(fonepayPurpose==="cod_advance"?"The COD advance amount returned by Fonepay does not match the required advance. No payment screen was opened; please contact Suru Collection.":"The payment amount returned by Fonepay does not match your order total. No payment screen was opened; please contact Suru Collection before retrying.");
        setFonepaySetupOrderId("");
-       setFonepayPayment({...paymentData,orderId,amount:returnedAmount,createdAt:Date.now()});setMsg("");
+       setFonepayPayment({...paymentData,orderId,amount:returnedAmount,createdAt:Date.now(),purpose:fonepayPurpose});setMsg("");
      }else{
        setSuccess(orderNumber?"Order "+orderNumber+" was placed successfully.":"Your order was placed successfully.");clear();setAppliedCoupon(null);setCouponCode("");setMsg("");
      }
