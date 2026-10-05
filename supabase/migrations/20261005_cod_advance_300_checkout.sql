@@ -103,3 +103,35 @@ $function$;
 
 revoke all on function public.place_order(jsonb,jsonb,text,text,text) from public;
 grant execute on function public.place_order(jsonb,jsonb,text,text,text) to authenticated;
+
+
+create or replace function public.claim_fonepay_payment_setup(p_order_id uuid,p_purpose text default 'full')
+returns jsonb language plpgsql security definer set search_path=public as $function$
+declare v_order public.orders%rowtype; v_reference text; v_status text; v_now timestamptz:=now();
+begin
+ if p_purpose not in ('full','cod_advance') then raise exception 'Unsupported payment purpose'; end if;
+ select * into v_order from public.orders where id=p_order_id for update;
+ if not found then raise exception 'Order not found'; end if;
+ if p_purpose='cod_advance' then
+  if v_order.payment_method<>'cod' then raise exception 'This order is not configured for COD'; end if;
+  if coalesce(v_order.cod_advance_required,0)<=0 then raise exception 'This COD order does not require an online advance'; end if;
+  if v_order.cod_advance_payment_status='paid' or coalesce(v_order.cod_advance_paid,0)>=v_order.cod_advance_required then return jsonb_build_object('state','already_paid','amount',v_order.cod_advance_required,'balance_due',coalesce(v_order.cod_balance_due,0),'order_id',v_order.id,'order_number',v_order.order_number); end if;
+  v_status:=coalesce(v_order.cod_advance_payment_status,'pending');
+  if v_status='initiated' and v_order.cod_advance_fonepay_reference is not null and v_order.cod_advance_fonepay_response ? 'qrString' then return jsonb_build_object('state','resume','reference',v_order.cod_advance_fonepay_reference,'amount',v_order.cod_advance_required,'balance_due',coalesce(v_order.cod_balance_due,0),'response',v_order.cod_advance_fonepay_response,'order_id',v_order.id,'order_number',v_order.order_number); end if;
+  if v_status='creating' and v_order.cod_advance_fonepay_initiated_at > v_now-interval '60 seconds' then return jsonb_build_object('state','in_progress','order_id',v_order.id,'order_number',v_order.order_number); end if;
+  v_reference:=case when v_status='creating' and v_order.cod_advance_fonepay_reference is not null then v_order.cod_advance_fonepay_reference else 'SC'||substr(replace(gen_random_uuid()::text,'-',''),1,26) end;
+  update public.orders set cod_advance_fonepay_reference=v_reference,cod_advance_payment_status='creating',cod_advance_fonepay_initiated_at=v_now,updated_at=v_now where id=v_order.id;
+  return jsonb_build_object('state','claimed','reference',v_reference,'amount',v_order.cod_advance_required,'balance_due',coalesce(v_order.cod_balance_due,0),'order_id',v_order.id,'order_number',v_order.order_number);
+ end if;
+ if v_order.payment_method<>'fonepay' then raise exception 'This order is not configured for Fonepay'; end if;
+ if v_order.payment_status='paid' then return jsonb_build_object('state','already_paid','order_id',v_order.id,'order_number',v_order.order_number); end if;
+ v_status:=coalesce(v_order.fonepay_status,'pending');
+ if v_status='initiated' and v_order.fonepay_reference is not null and v_order.fonepay_response ? 'qrString' then return jsonb_build_object('state','resume','reference',v_order.fonepay_reference,'amount',v_order.total,'response',v_order.fonepay_response,'order_id',v_order.id,'order_number',v_order.order_number); end if;
+ if v_status='creating' and v_order.fonepay_initiated_at > v_now-interval '60 seconds' then return jsonb_build_object('state','in_progress','order_id',v_order.id,'order_number',v_order.order_number); end if;
+ v_reference:=case when v_status='creating' and v_order.fonepay_reference is not null then v_order.fonepay_reference else 'SC'||substr(replace(gen_random_uuid()::text,'-',''),1,26) end;
+ update public.orders set fonepay_reference=v_reference,fonepay_status='creating',fonepay_initiated_at=v_now,updated_at=v_now where id=v_order.id;
+ return jsonb_build_object('state','claimed','reference',v_reference,'amount',v_order.total,'order_id',v_order.id,'order_number',v_order.order_number);
+end;
+$function$;
+revoke all on function public.claim_fonepay_payment_setup(uuid,text) from public,anon,authenticated;
+grant execute on function public.claim_fonepay_payment_setup(uuid,text) to service_role;
