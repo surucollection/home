@@ -41,7 +41,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
   },[rows,compact,onNcmAction,ncmCancelled]);
 
   const isNcmCancelled=o=>ncmCancelled[o.id]===String(o.ncm_order_id)||/^(cancelled|canceled)$/i.test(String(o.ncm_status||"").trim());
-  const codAdvancePaid=o=>String(o.payment_method||"").toLowerCase()==="cod"&&Number(o.cod_advance_required||0)>0&&(String(o.cod_advance_payment_status||"").toLowerCase()==="paid"||Number(o.cod_advance_paid||0)>=Number(o.cod_advance_required||0));
+  const codAdvancePaid=o=>String(o.payment_method||"").toLowerCase()==="cod"&&Number(o.cod_advance_required||0)>0&&Number(o.cod_advance_paid||0)>=Number(o.cod_advance_required||0);
   const allowedOrderStatuses=o=>codAdvancePaid(o)?["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"]:["pending","cancelled"];
   const prettyLabel=k=>String(k||"").replace(/_/g," ").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/\b\w/g,x=>x.toUpperCase());
   const displayValue=v=>{
