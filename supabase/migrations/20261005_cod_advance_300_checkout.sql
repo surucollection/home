@@ -11,7 +11,7 @@ alter table public.orders
 
 alter table public.orders drop constraint if exists orders_cod_advance_payment_status_check;
 alter table public.orders add constraint orders_cod_advance_payment_status_check
-  check (cod_advance_payment_status in ('not_required','pending','initiated','paid','failed','expired','refunded'));
+  check (cod_advance_payment_status in ('not_required','pending','creating','initiated','paid','failed','expired','refunded'));
 alter table public.orders drop constraint if exists orders_cod_advance_required_check;
 alter table public.orders add constraint orders_cod_advance_required_check check (cod_advance_required >= 0);
 alter table public.orders drop constraint if exists orders_cod_advance_paid_check;
