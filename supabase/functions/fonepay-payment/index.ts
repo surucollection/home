@@ -54,22 +54,32 @@ async function checkPayment(order:any,purpose:string){
   if(isCodAdvance){
     if(String(order.payment_method)!=="cod")throw new Error("This order is not configured for COD");
     const reference=String(order.cod_advance_fonepay_reference||"");if(!reference)throw new Error("COD advance payment has not been initiated");
-    const expected=Number(order.cod_advance_required);const result=await fonepayRequest("/api/merchant/third-party/v2/thirdPartyDynamicQrGetStatus",{terminalId:FONEPAY_TERMINAL_ID,referenceLabel:reference});
-    const status=String(result?.paymentStatus||"pending").toLowerCase(),requested=Number(result?.requestedAmount),paid=Number(result?.totalTransactionAmount),amountOk=Number.isFinite(paid)&&Math.abs(paid-expected)<0.01;
-    if(status==="success"&&!amountOk)throw new Error("Fonepay reported a successful COD advance, but the paid amount does not match the required advance. The order was not confirmed.");
-    const patch:Record<string,unknown>={cod_advance_payment_status:status,cod_advance_fonepay_trace_id:result?.fonepayTraceId!=null?String(result.fonepayTraceId):null,cod_advance_fonepay_response:result,updated_at:new Date().toISOString()};
-    if(status==="success"&&amountOk){patch.cod_advance_paid=expected;patch.cod_balance_due=Math.max(0,Number(order.total)-expected);patch.cod_advance_payment_status="paid";patch.cod_advance_fonepay_paid_at=new Date().toISOString();if(String(order.order_status)==="pending")patch.order_status="confirmed"}
-    const{error}=await admin.from("orders").update(patch).eq("id",order.id);if(error)throw error;
-    return{orderId:order.id,orderNumber:order.order_number,paymentStatus:status,requestedAmount:requested,totalTransactionAmount:paid,traceId:result?.fonepayTraceId??null,paymentMessage:result?.paymentMessage||null,verified:status==="success"&&amountOk,purpose,balanceDue:Math.max(0,Number(order.total)-expected)};
+    const expected=Number(order.cod_advance_required);
+    if(String(order.cod_advance_payment_status)==="paid")return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"success",verified:true,purpose,balanceDue:Number(order.cod_balance_due||0),alreadyPaid:true};
+    const result=await fonepayRequest("/api/merchant/third-party/v2/thirdPartyDynamicQrGetStatus",{terminalId:FONEPAY_TERMINAL_ID,referenceLabel:reference});
+    const upstreamStatus=String(result?.paymentStatus||"pending").toLowerCase(),requested=Number(result?.requestedAmount),paid=Number(result?.totalTransactionAmount),amountOk=Number.isFinite(paid)&&Math.abs(paid-expected)<0.01;
+    if(upstreamStatus==="success"&&!amountOk)throw new Error("Fonepay reported a successful COD advance, but the paid amount does not match the required advance. The order was not confirmed.");
+    const nextStatus=upstreamStatus==="success"&&amountOk?"paid":upstreamStatus==="failed"?"failed":"initiated";
+    const patch:Record<string,unknown>={cod_advance_fonepay_trace_id:result?.fonepayTraceId!=null?String(result.fonepayTraceId):null,cod_advance_fonepay_response:result,updated_at:new Date().toISOString()};
+    if(nextStatus==="paid"){patch.cod_advance_paid=expected;patch.cod_balance_due=Math.max(0,Number(order.total)-expected);patch.cod_advance_payment_status="paid";patch.cod_advance_fonepay_paid_at=new Date().toISOString();if(String(order.order_status)==="pending")patch.order_status="confirmed"}
+    else if(nextStatus==="failed"&&String(order.cod_advance_payment_status)!=="paid")patch.cod_advance_payment_status="failed";
+    else if(String(order.cod_advance_payment_status)!=="paid"&&String(order.cod_advance_payment_status)!=="failed")patch.cod_advance_payment_status="initiated";
+    const update=admin.from("orders").update(patch).eq("id",order.id).neq("cod_advance_payment_status","paid");
+    const{error}=await update;if(error)throw error;
+    return{orderId:order.id,orderNumber:order.order_number,paymentStatus:upstreamStatus,requestedAmount:requested,totalTransactionAmount:paid,traceId:result?.fonepayTraceId??null,paymentMessage:result?.paymentMessage||null,verified:nextStatus==="paid",purpose,balanceDue:nextStatus==="paid"?Math.max(0,Number(order.total)-expected):Number(order.cod_balance_due||0)};
   }
   if(String(order.payment_method)!=="fonepay")throw new Error("This order is not configured for Fonepay");
+  if(String(order.payment_status)==="paid")return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"success",verified:true,purpose,alreadyPaid:true};
   if(!order.fonepay_reference)throw new Error("Fonepay payment has not been initiated");
   const result=await fonepayRequest("/api/merchant/third-party/v2/thirdPartyDynamicQrGetStatus",{terminalId:FONEPAY_TERMINAL_ID,referenceLabel:order.fonepay_reference});
-  const status=String(result?.paymentStatus||"pending").toLowerCase(),requested=Number(result?.requestedAmount),paid=Number(result?.totalTransactionAmount),expected=Number(order.total),amountOk=Number.isFinite(paid)&&Math.abs(paid-expected)<0.01;
-  if(status==="success"&&!amountOk)throw new Error("Fonepay reported a successful payment, but the paid amount does not match the order total. The order was not marked paid.");
-  const patch:Record<string,unknown>={fonepay_status:status,fonepay_trace_id:result?.fonepayTraceId!=null?String(result.fonepayTraceId):null,fonepay_response:result,updated_at:new Date().toISOString()};
-  if(status==="success"&&amountOk){patch.payment_status="paid";patch.fonepay_paid_at=new Date().toISOString();if(String(order.order_status)==="pending")patch.order_status="confirmed"}else if(status==="failed")patch.payment_status="failed";
-  const{error}=await admin.from("orders").update(patch).eq("id",order.id);if(error)throw error;
-  return{orderId:order.id,orderNumber:order.order_number,paymentStatus:status,requestedAmount:requested,totalTransactionAmount:paid,traceId:result?.fonepayTraceId??null,paymentMessage:result?.paymentMessage||null,verified:status==="success"&&amountOk,purpose};
+  const upstreamStatus=String(result?.paymentStatus||"pending").toLowerCase(),requested=Number(result?.requestedAmount),paid=Number(result?.totalTransactionAmount),expected=Number(order.total),amountOk=Number.isFinite(paid)&&Math.abs(paid-expected)<0.01;
+  if(upstreamStatus==="success"&&!amountOk)throw new Error("Fonepay reported a successful payment, but the paid amount does not match the order total. The order was not marked paid.");
+  const nextStatus=upstreamStatus==="success"&&amountOk?"paid":upstreamStatus==="failed"?"failed":"initiated";
+  const patch:Record<string,unknown>={fonepay_trace_id:result?.fonepayTraceId!=null?String(result.fonepayTraceId):null,fonepay_response:result,updated_at:new Date().toISOString()};
+  if(nextStatus==="paid"){patch.payment_status="paid";patch.fonepay_status="success";patch.fonepay_paid_at=new Date().toISOString();if(String(order.order_status)==="pending")patch.order_status="confirmed"}
+  else if(nextStatus==="failed"&&String(order.payment_status)!=="paid"){patch.payment_status="failed";patch.fonepay_status="failed"}
+  else if(String(order.payment_status)!=="paid"&&String(order.payment_status)!=="failed"){patch.fonepay_status="initiated"}
+  const{error}=await admin.from("orders").update(patch).eq("id",order.id).neq("payment_status","paid");if(error)throw error;
+  return{orderId:order.id,orderNumber:order.order_number,paymentStatus:upstreamStatus,requestedAmount:requested,totalTransactionAmount:paid,traceId:result?.fonepayTraceId??null,paymentMessage:result?.paymentMessage||null,verified:nextStatus==="paid",purpose};
 }
 Deno.serve(async(req)=>{if(req.method==="OPTIONS")return new Response("ok",{headers:cors});try{if(req.method!=="POST")return json({error:"Method not allowed"},405);const user=await currentUser(req),body=await req.json().catch(()=>({})),action=String(body?.action||""),purpose=String(body?.purpose||"full"),orderId=String(body?.orderId||"").trim();if(!orderId)return json({error:"orderId is required"},400);if(!["full","cod_advance"].includes(purpose))return json({error:"Unsupported payment purpose"},400);const order=await getOwnedOrder(orderId,user.id);if(action==="create")return json(await createPayment(order,purpose));if(action==="status")return json(await checkPayment(order,purpose));return json({error:"Unsupported action"},400)}catch(e){console.error("Fonepay payment request failed:",e instanceof Error?e.message:"unknown error");return json({error:e instanceof Error?e.message:"Payment request failed"},400)}});
