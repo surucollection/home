@@ -22,13 +22,6 @@ create unique index if not exists orders_cod_advance_fonepay_reference_uidx
   on public.orders(cod_advance_fonepay_reference)
   where cod_advance_fonepay_reference is not null;
 
-update public.orders
-set cod_advance_required = case when payment_method='cod' then least(300,total) else 0 end,
-    cod_advance_paid = 0,
-    cod_balance_due = case when payment_method='cod' then greatest(0,total-least(300,total)) else 0 end,
-    cod_advance_payment_status = case when payment_method='cod' then 'pending' else 'not_required' end
-where coalesce(cod_advance_required,0)=0
-  and coalesce(cod_advance_payment_status,'not_required')='not_required';
 
 -- The place_order RPC now calculates the COD advance server-side:
 -- COD orders require min(NPR 300, order total) before confirmation.
