@@ -161,7 +161,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
               <tr key={o.id}>
                 <td><b>{o.order_number}</b></td>
                 <td>{o.customer_name}<br/><small>{o.customer_phone}</small></td>
-                <td>{money(o.total)}</td>
+                <td>{money(o.total)}{o.payment_method==="cod"&&<small style={{display:"block",marginTop:4}}>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(o.cod_balance_due||o.total||0)}</small>}</td>
                 <td>
                   {onStatus?<div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
                     <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"].map(s=><option key={s} value={s}>{s}</option>)}</select>
