@@ -41,6 +41,8 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
   },[rows,compact,onNcmAction,ncmCancelled]);
 
   const isNcmCancelled=o=>ncmCancelled[o.id]===String(o.ncm_order_id)||/^(cancelled|canceled)$/i.test(String(o.ncm_status||"").trim());
+  const codAdvancePaid=o=>String(o.payment_method||"").toLowerCase()==="cod"&&Number(o.cod_advance_required||0)>0&&(String(o.cod_advance_payment_status||"").toLowerCase()==="paid"||Number(o.cod_advance_paid||0)>=Number(o.cod_advance_required||0));
+  const allowedOrderStatuses=o=>codAdvancePaid(o)?["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"]:["pending","cancelled"];
   const prettyLabel=k=>String(k||"").replace(/_/g," ").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/\b\w/g,x=>x.toUpperCase());
   const displayValue=v=>{
     if(v===null||v===undefined||v==="")return "—";
@@ -164,7 +166,8 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
                 <td>{money(o.total)}{o.payment_method==="cod"&&<small style={{display:"block",marginTop:4}}>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(o.cod_balance_due||o.total||0)}</small>}</td>
                 <td>
                   {onStatus?<div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
-                    <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"].map(s=><option key={s} value={s}>{s}</option>)}</select>
+                    <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{allowedOrderStatuses(o).map(s=><option key={s} value={s}>{s}</option>)}</select>
+                    {String(o.payment_method||"").toLowerCase()==="cod"&&<small style={{fontWeight:700}}>{codAdvancePaid(o)?<>COD Advance Paid: {money(o.cod_advance_paid||0)} · Balance Due: {money(o.cod_balance_due||0)}</>:<>COD Advance Pending: {money(o.cod_advance_required||0)} required before confirmation</>}</small>}
                     {o.cancellation_status==="requested"&&<div className="cancellation-review"><small>Cancellation request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>}
                     {o.cancellation_status==="rejected"&&<small>Cancellation request rejected</small>}
                     {o.order_status!=="cancelled"&&<button className="danger" disabled={!!busy} onClick={()=>{const reason=prompt("Reason for cancelling order #"+(o.order_number||o.id)+":","");if(reason===null)return;if(!reason.trim()){alert("Please enter a reason for cancelling the order.");return}onStatus(o.id,"cancelled",reason.trim())}}>Cancel Order</button>}
