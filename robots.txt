@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://suru.com.np/sitemap.xml
