@@ -16,7 +16,6 @@ import ProductAdminCard from "./components/admin/ProductAdminCard.jsx";
 import StockRow from "./components/admin/StockRow.jsx";
 import PreorderAdminQueue from "./components/admin/PreorderAdminQueue.jsx";
 
-const APP_BUILD_VERSION="2026.09.30.6";
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
 const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
 const NCM_BRANCH_CACHE={items:null};
