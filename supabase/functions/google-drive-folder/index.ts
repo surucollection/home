@@ -116,7 +116,6 @@ Deno.serve(async (req) => {
     url.searchParams.set("q", "'" + folderId + "' in parents and trashed = false");
     url.searchParams.set("fields", "nextPageToken,files(id,name,mimeType,createdTime)");
     url.searchParams.set("pageSize", "1000");
-    url.searchParams.set("orderBy", "createdTime");
     url.searchParams.set("supportsAllDrives", "true");
     url.searchParams.set("includeItemsFromAllDrives", "true");
     url.searchParams.set("key", apiKey);
@@ -151,9 +150,11 @@ Deno.serve(async (req) => {
     pageToken = payload.nextPageToken || "";
   } while (pageToken);
 
-  files.sort((a, b) =>
-    String(a.createdTime || "").localeCompare(String(b.createdTime || ""))
-  );
+  const filenameCompare = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
+  files.sort((a, b) => {
+    const byName = filenameCompare.compare(String(a.name || ""), String(b.name || ""));
+    return byName !== 0 ? byName : String(a.id || "").localeCompare(String(b.id || ""));
+  });
 
   return json({
     files,
