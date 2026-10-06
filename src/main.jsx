@@ -294,7 +294,7 @@ function Product(){
      material:p.fabric||undefined,
      color:p.color||undefined,
      brand:{"@type":"Brand",name:"Suru Collection"},
-     offers:{"@type":"Offer",url:canonical,priceCurrency:"NPR",price:Number(p.price||0),availability:"https://schema.org/InStock"}
+     offers:{"@type":"Offer",url:canonical,priceCurrency:"NPR",price:Number(p.price||0)}
    });
    return()=>{const el=document.getElementById(id);if(el)el.remove()};
  },[p,main,imgs]);
