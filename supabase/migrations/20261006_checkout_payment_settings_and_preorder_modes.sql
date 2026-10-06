@@ -61,7 +61,7 @@ begin
  insert into public.preorder_payment_intents(auth_user_id,customer_id,product_id,product_code,size,color,quantity,total_amount,advance_amount,balance_amount,advance_percent,balance_method,payment_method,payment_provider,payment_purpose,customer_snapshot,customer_note)
  values(p_user_id,v_customer_id,v_product.id,v_product.product_code,case when v_variant_found then v_variant.size else nullif(trim(p_size),'') end,case when v_variant_found then v_variant.color else nullif(trim(p_color),'') end,p_qty,v_total,v_advance,v_balance,case when p_payment_purpose='full' then 100 else v_percent end,p_balance_method,p_payment_method,'fonepay',p_payment_purpose,jsonb_build_object('name',trim(p_customer->>'name'),'phone',trim(p_customer->>'phone'),'email',nullif(trim(p_customer->>'email'),''),'address',trim(p_customer->>'address'),'city',trim(p_customer->>'city'),'district',trim(p_customer->>'district'),'province',trim(p_customer->>'province'),'postal_code',nullif(trim(p_customer->>'postal_code'),'')),nullif(trim(coalesce(p_customer_note,'')),'') ) returning id into v_intent;
  return jsonb_build_object('success',true,'intent_id',v_intent,'amount',v_advance,'total',v_total,'balance_due',v_balance,'advance_percent',case when p_payment_purpose='full' then 100 else v_percent end,'payment_purpose',p_payment_purpose);
-end; $;
+end; $$;
 revoke all on function public.create_preorder_payment_intent(uuid,jsonb,text,text,text,integer,text,text,text,text) from public,anon,authenticated;
 grant execute on function public.create_preorder_payment_intent(uuid,jsonb,text,text,text,integer,text,text,text,text) to service_role;
 
