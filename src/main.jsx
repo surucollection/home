@@ -483,14 +483,26 @@ function Order(){
     setNcmBranch(p.ncm_destination_branch||"");
     if(branches?.length){
       setNcmBranches(prev=>prev.length?prev:branches);
-      const matched=matchNcmBranch(branches,p.city,p.district,null,p.province);
-      setNcmBranch(matched||p.ncm_destination_branch||"");
+      const profileCity=String(p.city||"").split(",")[0].trim();
+      const profileDistrict=String(p.district||"").trim()||(
+        String(p.city||"").includes(",")?String(p.city).split(",").slice(1).join(",").trim():""
+      );
+      const profileProvince=canonicalProvince(p.province)||"";
+      const matched=matchNcmBranch(branches,profileCity,profileDistrict,null,profileProvince);
+      setNcmBranch(matched||"");
     }
   }catch{}
  },[checkout]);
  useEffect(()=>{
-  if(!checkout||!city||!district||!ncmBranches.length)return;
-  const matched=matchNcmBranch(ncmBranches,city,district,null,province);
+  if(!checkout||!ncmBranches.length)return;
+  const c=String(city||"").trim();
+  const d=String(district||"").trim();
+  const p=String(province||"").trim();
+  if(!c&&!d&&!p){
+    setNcmBranch("");
+    return;
+  }
+  const matched=matchNcmBranch(ncmBranches,c,d,null,p);
   setNcmBranch(matched||"");
  },[checkout,province,district,city,ncmBranches.length]);
  useEffect(()=>{let active=true;
@@ -507,7 +519,23 @@ function Order(){
  const total=useMemo(()=>Math.round(cart.reduce((n,x)=>n+Number(x.price||0)*Number(x.quantity??x.qty??0),0)),[cart]); const checkoutDiscount=Math.round(Number(appliedCoupon?.discount_amount||0)); const checkoutTotal=Math.round(Math.max(0,total-checkoutDiscount)); const codAdvanceDue=Math.min(Number(ncmRate?.advanceDeliveryCharge||0),checkoutTotal);
  const remove=item=>setCart(removeCart(item));
  const clear=()=>setCart(clearCart());
- const selectSavedAddress=a=>{if(!a)return;setSelectedAddressId(a.id||"");setName(a.full_name||"");setPhone(a.phone||"");setAddress(a.address||"");setCity(a.city||"");setDistrict(a.district||"");setProvince(canonicalProvince(a.province)||"");setPostalCode(a.postal_code||"");setNcmBranch("");setMsg("")};
+ const selectSavedAddress=a=>{
+   if(!a)return;
+   const nextCity=String(a.city||"").trim();
+   const nextDistrict=String(a.district||"").trim();
+   const nextProvince=canonicalProvince(a.province)||"";
+   setSelectedAddressId(a.id||"");
+   setName(a.full_name||"");
+   setPhone(a.phone||"");
+   setAddress(a.address||"");
+   setCity(nextCity);
+   setDistrict(nextDistrict);
+   setProvince(nextProvince);
+   setPostalCode(a.postal_code||"");
+   const matched=matchNcmBranch(ncmBranches,nextCity,nextDistrict,null,nextProvince);
+   setNcmBranch(matched||"");
+   setMsg("");
+ };
  async function applyCoupon(){if(!couponCode.trim()){setAppliedCoupon(null);setMsg("Enter a coupon code.");return}setCouponBusy(true);setMsg("");try{const{data,error}=await supabase.rpc("validate_discount_coupon",{p_code:couponCode.trim(),p_subtotal:Math.round(total)});if(error)throw error;if(!data?.valid){setAppliedCoupon(null);setMsg(data?.message||"This coupon cannot be applied.");return}setAppliedCoupon(data);setMsg("Coupon "+data.code+" applied successfully.")}catch(e){setAppliedCoupon(null);setMsg("Coupon: "+(e?.message||"Unable to validate coupon."))}finally{setCouponBusy(false)}}
  async function place(){
    if(fonepayPayment){setMsg("A Fonepay payment is already in progress. Complete it or wait for the status check to finish.");return}
