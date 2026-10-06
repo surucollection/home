@@ -1,25 +1,37 @@
 import React,{useEffect,useMemo,useState} from "react";
-import { money, norm, imageUrl } from "../lib/api.js";
+import { money, norm, imageUrl, get } from "../lib/api.js";
 import { addCart } from "../lib/cart.js";
 
 export default function ProductCard({product,image,variants=[],priority=false}){
   const href="/product.html?code="+encodeURIComponent(product.product_code);
-  const cardImage=imageUrl(image?.image_url||"",600);
+  const cardImage=imageUrl(image?.image_url||"",480);
+  const[loadedVariants,setLoadedVariants]=useState(variants);
+  const[variantLoading,setVariantLoading]=useState(false);
   const[added,setAdded]=useState(false),[open,setOpen]=useState(false),[buyNow,setBuyNow]=useState(false),[size,setSize]=useState(""),[colour,setColour]=useState(""),[qty,setQty]=useState(1);
-  const sizes=useMemo(()=>[...new Set(variants.map(v=>v.size).filter(Boolean))],[variants]);
-  const colours=useMemo(()=>[...new Set(variants.map(v=>v.color).filter(Boolean))],[variants]);
+  const activeVariants=loadedVariants;
+  const sizes=useMemo(()=>[...new Set(activeVariants.map(v=>v.size).filter(Boolean))],[activeVariants]);
+  const colours=useMemo(()=>[...new Set(activeVariants.map(v=>v.color).filter(Boolean))],[activeVariants]);
   const variant=useMemo(()=>{
-    if(!variants.length)return null;
+    if(!activeVariants.length)return null;
     if(!sizes.length&&!colours.length)return variants[0];
     return variants.find(v=>(!sizes.length||norm(v.size)===norm(size))&&(!colours.length||norm(v.color)===norm(colour)))||null;
   },[variants,sizes,colours,size,colour]);
   useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
-  const hasStock=variants.length===0||variants.some(v=>Number(v.stock||0)>0);
-  const selectedOutOfStock=variants.length>0&&(!variant||Number(variant.stock||0)<=0);
-  const startAdd=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(false);setQty(1);setOpen(true)};
-  const startBuyNow=(e)=>{e?.preventDefault();e?.stopPropagation();setBuyNow(true);setQty(1);setOpen(true)};
+  const hasStock=activeVariants.length===0||variants.some(v=>Number(v.stock||0)>0);
+  const selectedOutOfStock=activeVariants.length>0&&(!variant||Number(variant.stock||0)<=0);
+  const openPicker=async wantBuyNow=>{
+    setBuyNow(wantBuyNow);setQty(1);setOpen(true);
+    if(loadedVariants.length||variantLoading)return;
+    setVariantLoading(true);
+    try{
+      const rows=await get("product_sizes",{select:"id,size,color,stock,is_active",product_id:"eq."+product.id,is_active:"eq.true",order:"size.asc"});
+      setLoadedVariants(rows||[]);
+    }catch{}finally{setVariantLoading(false)}
+  };
+  const startAdd=(e)=>{e?.preventDefault();e?.stopPropagation();void openPicker(false)};
+  const startBuyNow=(e)=>{e?.preventDefault();e?.stopPropagation();void openPicker(true)};
   const confirmAdd=()=>{
-    if(variants.length&&(!variant||Number(variant.stock||0)<=0))return;
+    if(activeVariants.length&&(!variant||Number(variant.stock||0)<=0))return;
     const stock=Number(variant?.stock||0);
     const q=Math.max(1,Math.min(Number(qty)||1,stock||Number(qty)||1));
     if(buyNow)localStorage.removeItem("suruCart");
@@ -49,10 +61,11 @@ export default function ProductCard({product,image,variants=[],priority=false}){
       <div className="variant-modal" onClick={e=>e.stopPropagation()}>
         <button className="variant-modal-close" type="button" onClick={()=>setOpen(false)} aria-label="Close">×</button>
         <p className="eyebrow">{buyNow?"BUY NOW":"ADD TO CART"}</p><h3>{product.name}</h3>
+        {variantLoading&&<div className="variant-stock">Loading available options…</div>}
         {colours.length>1&&<label className="field">Colour<select value={colour} onChange={e=>setColour(e.target.value)}><option value="">Select Colour</option>{colours.map(x=><option key={x}>{x}</option>)}</select></label>}
         {colours.length===1&&<div className="variant-field"><label>Colour</label><div className="variant-fixed-value">{colours[0]}</div></div>}
-        {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=>{const matching=variants.filter(v=>norm(v.size)===norm(x)&&(!colour||norm(v.color)===norm(colour)));const available=matching.some(v=>Number(v.stock||0)>0);const outOfStock=matching.length>0&&!available;return <option key={x} value={x} disabled={outOfStock}>{x}{outOfStock?" — Out of Stock":""}</option>})}</select></label>}
-        {variants.length>0&&<div className={"variant-stock"+(selectedOutOfStock?" out-of-stock":"")}>{selectedOutOfStock?(variant?"Out of Stock":"Select an available option."):Number(variant.stock||0)+" item(s) available"}</div>}
+        {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=>{const matching=activeVariants.filter(v=>norm(v.size)===norm(x)&&(!colour||norm(v.color)===norm(colour)));const available=matching.some(v=>Number(v.stock||0)>0);const outOfStock=matching.length>0&&!available;return <option key={x} value={x} disabled={outOfStock}>{x}{outOfStock?" — Out of Stock":""}</option>})}</select></label>}
+        {activeVariants.length>0&&<div className={"variant-stock"+(selectedOutOfStock?" out-of-stock":"")}>{selectedOutOfStock?(variant?"Out of Stock":"Select an available option."):Number(variant.stock||0)+" item(s) available"}</div>}
         <label className="field">Quantity<input type="number" min="1" max={variant?.stock||undefined} value={qty} onChange={e=>setQty(e.target.value)}/></label>
         <button className="buy-button" type="button" onClick={confirmAdd} disabled={selectedOutOfStock}>{buyNow?"Buy Now":"Add to Cart"}</button>
       </div>
