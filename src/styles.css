@@ -181,3 +181,12 @@
  .saved-address-actions .btn{width:100%}
  .address-selector-panel{padding:14px}
 }
+
+.address-modal-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(34,20,20,.48);backdrop-filter:blur(3px)}
+.address-modal{width:min(680px,100%);max-height:min(88vh,760px);overflow:auto;padding:22px;border-radius:18px;background:#fffdfa;box-shadow:0 24px 70px rgba(0,0,0,.22)}
+.address-modal .address-form-heading{position:sticky;top:-22px;margin:-22px -22px 18px;padding:18px 22px;background:#fffdfa;border-bottom:1px solid #eadfd8;z-index:2}
+.saved-address-summary{display:grid;gap:3px;color:#5e4d4a;font-size:12px;line-height:1.45}
+.saved-address-summary strong{color:#3f3031;font-size:14px}
+.address-selector-panel .saved-address-card{padding:13px 15px}
+.address-selector-panel .saved-address-actions{margin-top:9px}
+@media(max-width:760px){.address-modal-backdrop{align-items:flex-end;padding:0}.address-modal{max-height:92vh;border-radius:18px 18px 0 0;padding:17px}.address-modal .address-form-heading{top:-17px;margin:-17px -17px 16px;padding:15px 17px}}
