@@ -21,7 +21,7 @@ export default function PreorderAdminQueue(){
  };
  const statusLabel=s=>String(s||"pending").replace(/_/g," ");
  return <section>
-  <div className="page-title"><div><h2>Preorder Review</h2><p>Verify submitted advance payments. Approval confirms the preorder; gateway integration is not included.</p></div><button className="secondary" onClick={load} disabled={loading}>{loading?"Loading…":"Refresh"}</button></div>
+  <div className="page-title"><div><h2>Preorder Review</h2><p>New Fonepay preorders are confirmed automatically after payment verification. This queue remains available for reviewing older/manual preorder payment records.</p></div><button className="secondary" onClick={load} disabled={loading}>{loading?"Loading…":"Refresh"}</button></div>
   {error&&<div className="message error">{error}</div>}
   {loading?<p>Loading preorder records…</p>:!rows.length?<div className="card"><p>No preorder items found.</p></div>:<div className="table-wrap"><table className="admin-orders-table" style={{width:"100%",minWidth:"1150px"}}><thead><tr><th>Order / Customer</th><th>Product</th><th>Amounts</th><th>Advance status</th><th>Submitted proof / reference</th><th>Review note / action</th></tr></thead><tbody>
    {rows.map(r=><tr key={r.id}>
