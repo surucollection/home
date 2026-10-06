@@ -279,3 +279,29 @@ where coalesce(trim(c.address),'') <> ''
   and not exists (
     select 1 from public.customer_addresses a where a.customer_id=c.id
   );
+
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on table public.customer_addresses to authenticated;
+
+drop policy if exists "Customers can read their saved addresses" on public.customer_addresses;
+drop policy if exists "Customers can insert their saved addresses" on public.customer_addresses;
+drop policy if exists "Customers can update their saved addresses" on public.customer_addresses;
+drop policy if exists "Customers can delete their saved addresses" on public.customer_addresses;
+
+create policy "Customers can read their saved addresses"
+on public.customer_addresses for select to authenticated
+using (exists (select 1 from public.customers c where c.id=customer_addresses.customer_id and (c.auth_user_id=auth.uid() or public.is_admin())));
+
+create policy "Customers can insert their saved addresses"
+on public.customer_addresses for insert to authenticated
+with check (exists (select 1 from public.customers c where c.id=customer_addresses.customer_id and (c.auth_user_id=auth.uid() or public.is_admin())));
+
+create policy "Customers can update their saved addresses"
+on public.customer_addresses for update to authenticated
+using (exists (select 1 from public.customers c where c.id=customer_addresses.customer_id and (c.auth_user_id=auth.uid() or public.is_admin())))
+with check (exists (select 1 from public.customers c where c.id=customer_addresses.customer_id and (c.auth_user_id=auth.uid() or public.is_admin())));
+
+create policy "Customers can delete their saved addresses"
+on public.customer_addresses for delete to authenticated
+using (exists (select 1 from public.customers c where c.id=customer_addresses.customer_id and (c.auth_user_id=auth.uid() or public.is_admin())));
