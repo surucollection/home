@@ -1029,8 +1029,7 @@ a {
 .cart-item strong { color:var(--maroon); }
 .remove-item { display:block; margin-top:10px; padding:0; border:0; background:transparent; color:var(--maroon); font-size:12px; cursor:pointer; }
 .variant-stock { margin-top:5px; min-height:20px; color:#5e4b4b; font-size:13px; }
-.variant-stock.warning { color:#a66b00; }
-.variant-stock.out { color:#a12828; font-weight:700; }
+
 .variant-modal-message { min-height:20px; margin-top:10px; color:#5e4b4b; font-size:13px; }
 .variant-modal-message.error { color:#a12828; }
 
@@ -2411,9 +2410,6 @@ a {
   min-height: 100vh;
 }
 
-.admin-page .hidden{
-  display: none !important;
-}
 
 /* =========================
    LOGIN
