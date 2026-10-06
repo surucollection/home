@@ -11,7 +11,7 @@ const DOOR_PICKUP_CHARGE = 15;
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const NCM_RATE_BASES = [
   "https://nepalcanmove.com",
-  "https://portal.nepalcanmove.com/api",
+  "https://portal.nepalcanmove.com",
 ];
 
 const admin = createClient(
@@ -21,7 +21,7 @@ const admin = createClient(
 );
 
 const cors = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://suru.com.np",
   "Access-Control-Allow-Headers": "authorization,x-client-info,apikey,content-type",
   "Access-Control-Allow-Methods": "POST,OPTIONS",
 };
