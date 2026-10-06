@@ -18,6 +18,7 @@ export default function ProductCard({product,image,variants=[],priority=false}){
   },[activeVariants,sizes,colours,size,colour]);
   useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
   const selectedOutOfStock=activeVariants.length>0&&(!variant||Number(variant.stock||0)<=0);
+  const preorderAvailable=Boolean(product.preorder_enabled);
   const openPicker=async wantBuyNow=>{
     setBuyNow(wantBuyNow);setQty(1);setOpen(true);
     if(loadedVariants.length||variantLoading)return;
@@ -29,7 +30,18 @@ export default function ProductCard({product,image,variants=[],priority=false}){
   };
   const startAdd=(e)=>{e?.preventDefault();e?.stopPropagation();void openPicker(false)};
   const startBuyNow=(e)=>{e?.preventDefault();e?.stopPropagation();void openPicker(true)};
+  const startPreorder=(e)=>{e?.preventDefault();e?.stopPropagation();void openPicker(false)};
   const confirmAdd=()=>{
+    if(preorderAvailable&&selectedOutOfStock){
+      const params=new URLSearchParams();
+      params.set("code",product.product_code);
+      params.set("preorder","1");
+      if(size)params.set("size",size);
+      if(colour)params.set("color",colour);
+      params.set("qty",String(Math.max(1,Number(qty)||1)));
+      window.location.href="/product.html?"+params.toString();
+      return;
+    }
     if(activeVariants.length&&(!variant||Number(variant.stock||0)<=0))return;
     const stock=Number(variant?.stock||0);
     const q=Math.max(1,Math.min(Number(qty)||1,stock||Number(qty)||1));
@@ -53,7 +65,7 @@ export default function ProductCard({product,image,variants=[],priority=false}){
       <div className="product-price">{money(product.price)}{product.compare_at_price&&<span className="compare-price">{money(product.compare_at_price)}</span>}</div>
       <div className="product-card-actions">
         <button type="button" className="secondary-button" onClick={startAdd}>{added?"Added ✓":"Add to Cart"}</button>
-        <button type="button" className="buy-now-button" onClick={startBuyNow}>Buy Now</button>
+        {preorderAvailable&&<button type="button" className="buy-now-button preorder-button" onClick={startPreorder}>Pre-order</button>}<button type="button" className="buy-now-button" onClick={startBuyNow}>Buy Now</button>
       </div>
     </div>
     {open&&<div className="variant-modal-backdrop" onClick={()=>setOpen(false)}>
@@ -63,10 +75,10 @@ export default function ProductCard({product,image,variants=[],priority=false}){
         {variantLoading&&<div className="variant-stock">Loading available options…</div>}
         {colours.length>1&&<label className="field">Colour<select value={colour} onChange={e=>setColour(e.target.value)}><option value="">Select Colour</option>{colours.map(x=><option key={x}>{x}</option>)}</select></label>}
         {colours.length===1&&<div className="variant-field"><label>Colour</label><div className="variant-fixed-value">{colours[0]}</div></div>}
-        {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=>{const matching=activeVariants.filter(v=>norm(v.size)===norm(x)&&(!colour||norm(v.color)===norm(colour)));const available=matching.some(v=>Number(v.stock||0)>0);const outOfStock=matching.length>0&&!available;return <option key={x} value={x} disabled={outOfStock}>{x}{outOfStock?" — Out of Stock":""}</option>})}</select></label>}
-        {activeVariants.length>0&&<div className={"variant-stock"+(selectedOutOfStock?" out-of-stock":"")}>{selectedOutOfStock?(variant?"Out of Stock":"Select an available option."):Number(variant.stock||0)+" item(s) available"}</div>}
+        {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=>{const matching=activeVariants.filter(v=>norm(v.size)===norm(x)&&(!colour||norm(v.color)===norm(colour)));const available=matching.some(v=>Number(v.stock||0)>0);const outOfStock=matching.length>0&&!available;return <option key={x} value={x} disabled={outOfStock&&!preorderAvailable}>{x}{outOfStock?(preorderAvailable?" — Pre-order":" — Out of Stock"):""}</option>})}</select></label>}
+        {activeVariants.length>0&&<div className={"variant-stock"+(selectedOutOfStock&&!preorderAvailable?" out-of-stock":"")}>{selectedOutOfStock?(preorderAvailable?"Available for pre-order":(variant?"Out of Stock":"Select an available option.")):Number(variant.stock||0)+" item(s) available"}</div>}
         <label className="field">Quantity<input type="number" min="1" max={variant?.stock||undefined} value={qty} onChange={e=>setQty(e.target.value)}/></label>
-        <button className="buy-button" type="button" onClick={confirmAdd} disabled={variantLoading||selectedOutOfStock}>{buyNow?"Buy Now":"Add to Cart"}</button>
+        <button className="buy-button" type="button" onClick={confirmAdd} disabled={variantLoading||(!preorderAvailable&&selectedOutOfStock)}>{preorderAvailable&&selectedOutOfStock?"Pre-order":buyNow?"Buy Now":"Add to Cart"}</button>
       </div>
     </div>}
   </article>;
