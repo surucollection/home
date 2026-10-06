@@ -1,73 +1,250 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const SUPABASE_URL=Deno.env.get("SUPABASE_URL")||"";
-const SUPABASE_SERVICE_ROLE_KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
-const NCM_TOKEN=Deno.env.get("NCM_TOKEN")||"";
-const NCM_BASE="https://nepalcanmove.com";
-const ORIGIN_BRANCH="GAUR";
-const DELIVERY_TYPE="Pickup/Collect";
-const DOOR_PICKUP_CHARGE=15;
-const CACHE_TTL_MS=15*60*1000;
-const admin=createClient(SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
-const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,x-client-info,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS"};
-const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
-let branchCache:{expires:number;branches:any[]}|null=null;
-async function ncmFetch(url:string,init:RequestInit={},retries=1){
-  for(let attempt=0;;attempt++){
-    const r=await fetch(url,{...init,headers:{...(init.headers||{}),Authorization:"Token "+NCM_TOKEN,Accept:"application/json","Content-Type":"application/json","User-Agent":"NepalCanMovePHPSDK"}});
-    if(r.status===429&&attempt<retries){await new Promise(x=>setTimeout(x,1000));continue}
-    return r;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const NCM_TOKEN = Deno.env.get("NCM_TOKEN") || "";
+
+const ORIGIN_BRANCH = "GAUR";
+const DELIVERY_TYPE = "Pickup/Collect";
+const DOOR_PICKUP_CHARGE = 15;
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const NCM_RATE_BASES = [
+  "https://nepalcanmove.com",
+  "https://portal.nepalcanmove.com/api",
+];
+
+const admin = createClient(
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false } },
+);
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization,x-client-info,apikey,content-type",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+};
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...cors, "Content-Type": "application/json" },
+  });
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function ncmFetch(
+  url: string,
+  init: RequestInit = {},
+  retries = 2,
+) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          ...(init.headers || {}),
+          Authorization: "Token " + NCM_TOKEN,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "NepalCanMovePHPSDK",
+        },
+      });
+
+      if (response.status !== 429 || attempt === retries) {
+        return response;
+      }
+
+      const retryAfter = Number(response.headers.get("Retry-After") || 0);
+      const waitMs = Math.max(
+        1100,
+        Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(retryAfter * 1000, 5000)
+          : 1100,
+      );
+
+      await response.arrayBuffer().catch(() => {});
+      await sleep(waitMs);
+    } catch (error) {
+      if (attempt === retries) throw error;
+      await sleep(1100);
+    }
   }
+
+  throw new Error("NCM rate request failed after retry");
 }
-async function getBranches(){
-  if(branchCache&&branchCache.expires>Date.now())return branchCache.branches;
-  const r=await ncmFetch("https://portal.nepalcanmove.com/api/v2/branches");
-  const text=await r.text();let body:any;try{body=JSON.parse(text)}catch{throw new Error("NCM returned an invalid branches response")}
-  if(!r.ok)throw new Error(body?.Error||body?.message||body?.detail||("NCM branches API error ("+r.status+")"));
-  const raw=Array.isArray(body)?body:(body?.results||body?.branches||[]);
-  const branches=raw.map((b:any)=>({code:String(b.code??""),name:String(b.name??""),district_name:String(b.district_name??""),pk:b.pk??b.id??null})).filter((b:any)=>b.name);
-  branchCache={expires:Date.now()+5*60*1000,branches};return branches;
+
+function extractCharge(body: any): number | null {
+  const candidates = [
+    body?.charge,
+    body?.delivery_charge,
+    body?.data?.charge,
+    body?.data?.delivery_charge,
+    body?.result?.charge,
+    body?.result?.delivery_charge,
+  ];
+
+  for (const candidate of candidates) {
+    const value = Number(candidate);
+    if (Number.isFinite(value) && value >= 0) return value;
+  }
+
+  return null;
 }
-function resolveBranch(input:string,branches:any[]){
-  const v=input.trim().toUpperCase();
-  return branches.find(b=>String(b.name).trim().toUpperCase()===v||String(b.code).trim().toUpperCase()===v)||null;
+
+async function requestRate(destination: string) {
+  const query = new URLSearchParams({
+    creation: ORIGIN_BRANCH,
+    destination,
+    type: DELIVERY_TYPE,
+  }).toString();
+
+  const errors: string[] = [];
+
+  for (const base of NCM_RATE_BASES) {
+    const url = base + "/api/v1/shipping-rate?" + query;
+
+    try {
+      const response = await ncmFetch(url);
+      const bodyText = await response.text();
+
+      let body: any = {};
+      try {
+        body = bodyText ? JSON.parse(bodyText) : {};
+      } catch {
+        throw new Error(
+          "NCM returned a non-JSON rate response (HTTP " + response.status + ")",
+        );
+      }
+
+      if (!response.ok) {
+        const message = body?.Error ||
+          body?.message ||
+          body?.detail ||
+          ("NCM API error (" + response.status + ")");
+        throw new Error(
+          "NCM API error (" + response.status + "): " +
+            (typeof message === "string" ? message : JSON.stringify(message)),
+        );
+      }
+
+      const charge = extractCharge(body);
+      if (charge === null) {
+        throw new Error(
+          "NCM returned a rate response without a delivery charge",
+        );
+      }
+
+      return { body, charge, url };
+    } catch (error) {
+      errors.push(
+        base + "/api/v1/shipping-rate: " +
+          (error instanceof Error ? error.message : String(error)),
+      );
+    }
+  }
+
+  throw new Error("NCM shipping-rate service unavailable. " + errors.join(" | "));
 }
-async function getRate(destination:string){
-  const key=destination.trim().toUpperCase();
-  const {data:cached,error:cacheError}=await admin.from("ncm_delivery_rate_cache").select("origin_branch,destination_branch,delivery_type,ncm_charge,door_pickup_charge,fetched_at,expires_at,raw_response").eq("origin_branch",ORIGIN_BRANCH).eq("destination_branch",key).eq("delivery_type",DELIVERY_TYPE).gt("expires_at",new Date().toISOString()).maybeSingle();
-  if(cacheError)throw cacheError;
-  if(cached)return cached;
-  const url=new URL(NCM_BASE+"/api/v1/shipping-rate");
-  url.searchParams.set("creation",ORIGIN_BRANCH);
-  url.searchParams.set("destination",destination);
-  url.searchParams.set("type",DELIVERY_TYPE);
-  const r=await ncmFetch(url.toString());
-  const text=await r.text();let body:any;try{body=JSON.parse(text)}catch{throw new Error("NCM returned an invalid rate response")}
-  if(!r.ok)throw new Error(body?.Error||body?.message||body?.detail||("NCM rate API error ("+r.status+")"));
-  const charge=Number(body?.charge??body?.delivery_charge);
-  if(!Number.isFinite(charge)||charge<0)throw new Error("NCM did not return a valid door-to-door delivery charge");
-  const now=new Date(),expires=new Date(now.getTime()+CACHE_TTL_MS);
-  const row={origin_branch:ORIGIN_BRANCH,destination_branch:key,delivery_type:DELIVERY_TYPE,ncm_charge:Math.round(charge*100)/100,door_pickup_charge:DOOR_PICKUP_CHARGE,fetched_at:now.toISOString(),expires_at:expires.toISOString(),raw_response:body};
-  const {error}=await admin.from("ncm_delivery_rate_cache").upsert(row,{onConflict:"origin_branch,destination_branch,delivery_type"});
-  if(error)throw error;
+
+async function getRate(destination: string) {
+  const key = destination.trim().toUpperCase();
+
+  const { data: cached, error: cacheError } = await admin
+    .from("ncm_delivery_rate_cache")
+    .select(
+      "origin_branch,destination_branch,delivery_type,ncm_charge,door_pickup_charge,fetched_at,expires_at",
+    )
+    .eq("origin_branch", ORIGIN_BRANCH)
+    .eq("destination_branch", key)
+    .eq("delivery_type", DELIVERY_TYPE)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (cacheError) throw cacheError;
+  if (cached) return cached;
+
+  const result = await requestRate(destination);
+  const now = new Date();
+  const expires = new Date(now.getTime() + CACHE_TTL_MS);
+
+  const row = {
+    origin_branch: ORIGIN_BRANCH,
+    destination_branch: key,
+    delivery_type: DELIVERY_TYPE,
+    ncm_charge: Math.round(result.charge * 100) / 100,
+    door_pickup_charge: DOOR_PICKUP_CHARGE,
+    fetched_at: now.toISOString(),
+    expires_at: expires.toISOString(),
+    raw_response: result.body,
+  };
+
+  const { error } = await admin
+    .from("ncm_delivery_rate_cache")
+    .upsert(row, {
+      onConflict: "origin_branch,destination_branch,delivery_type",
+    });
+
+  if (error) throw error;
   return row;
 }
-Deno.serve(async(req:Request)=>{
-  if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
-  if(req.method!=="POST")return json({error:"Method not allowed"},405);
-  try{
-    if(!NCM_TOKEN)throw new Error("NCM_TOKEN secret is not configured");
-    const body=await req.json().catch(()=>({}));
-    const requested=String(body?.destinationBranch||"").trim();
-    if(!requested)return json({error:"destinationBranch is required"},400);
-    const branch=resolveBranch(requested,await getBranches());
-    if(!branch)return json({error:"The selected NCM destination branch could not be verified"},400);
-    const rate=await getRate(branch.name);
-    const ncmCharge=Number(rate.ncm_charge),doorPickup=Number(rate.door_pickup_charge||DOOR_PICKUP_CHARGE);
-    return json({originBranch:ORIGIN_BRANCH,destinationBranch:branch.name,destinationBranchCode:branch.code||null,deliveryType:DELIVERY_TYPE,ncmDeliveryCharge:ncmCharge,doorPickupCharge:doorPickup,advanceDeliveryCharge:Math.round((ncmCharge+doorPickup)*100)/100,fetchedAt:rate.fetched_at,expiresAt:rate.expires_at});
-  }catch(e){
-    console.error("NCM rate request failed:",e instanceof Error?e.message:"unknown error");
-    return json({error:e instanceof Error?e.message:"Unable to calculate NCM delivery charge"},400);
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: cors });
+  }
+
+  if (req.method !== "POST") {
+    return json({ ok: false, error: "Method not allowed" });
+  }
+
+  try {
+    if (!NCM_TOKEN) {
+      return json({
+        ok: false,
+        error: "NCM delivery service is not configured yet. Please contact Suru Collection support.",
+      });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const destination = String(body?.destinationBranch || "").trim();
+
+    if (!destination) {
+      return json({
+        ok: false,
+        error: "Please select an NCM destination branch.",
+      });
+    }
+
+    const rate = await getRate(destination);
+    const ncmCharge = Number(rate.ncm_charge);
+    const doorPickup = Number(rate.door_pickup_charge || DOOR_PICKUP_CHARGE);
+
+    return json({
+      ok: true,
+      originBranch: ORIGIN_BRANCH,
+      destinationBranch: rate.destination_branch,
+      deliveryType: DELIVERY_TYPE,
+      ncmDeliveryCharge: ncmCharge,
+      doorPickupCharge: doorPickup,
+      advanceDeliveryCharge: Math.round((ncmCharge + doorPickup) * 100) / 100,
+      fetchedAt: rate.fetched_at,
+      expiresAt: rate.expires_at,
+    });
+  } catch (error) {
+    console.error(
+      "NCM rate request failed:",
+      error instanceof Error ? error.message : String(error),
+    );
+
+    return json({
+      ok: false,
+      error: error instanceof Error
+        ? error.message
+        : "Unable to calculate the NCM delivery charge right now. Please try again.",
+    });
   }
 });
