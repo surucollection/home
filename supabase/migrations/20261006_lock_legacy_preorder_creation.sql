@@ -1,0 +1,1 @@
+revoke all on function public.place_preorder_order(jsonb,jsonb,text,text,text) from public,anon,authenticated;
