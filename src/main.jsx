@@ -55,49 +55,69 @@ function ncmWordMatch(value,target){
 function matchNcmBranch(branches,city,district,location=null,province=""){
   const c=ncmNorm(city),d=ncmNorm(district),p=ncmNorm(province);
   if(!c&&!d&&!p&&!location)return "";
-  let best=null,bestScore=-1,bestDistance=Infinity;
-  for(const b of branches){
-    const name=ncmNorm(b.name),code=ncmNorm(b.code),mun=ncmNorm(b.municipality),bd=ncmNorm(b.district_name),bp=ncmNorm(b.province_name);
-    const address=ncmNorm(b.address),areaText=String(b.areas_covered||"");
-    const areas=ncmFieldTokens(areaText);
+  const rows=branches.map(b=>{
+    const name=ncmNorm(b.name),mun=ncmNorm(b.municipality),bd=ncmNorm(b.district_name),bp=ncmNorm(b.province_name);
+    const address=ncmNorm(b.address),areas=ncmFieldTokens(b.areas_covered);
     const searchText=ncmNorm([b.name,b.code,b.municipality,b.address,b.areas_covered,b.district_name,b.province_name].filter(Boolean).join(" "));
     const distance=ncmDistanceKm(location,ncmCoords(b.geocode));
-    const districtText=ncmNorm([bd,address,areaText,name,mun].filter(Boolean).join(" "));
-    const provinceText=ncmNorm([bp,address,areaText].filter(Boolean).join(" "));
-    const districtMatch=!!d&&(
-      (!!bd&&(bd===d||ncmWordMatch(bd,d)))||
-      (!bd&&ncmWordMatch(districtText,d))
-    );
-    const provinceMatch=!!p&&(
-      (!!bp&&(bp===p||ncmWordMatch(bp,p)))||
-      (!bp&&ncmWordMatch(provinceText,p))
-    );
-    // Never select a branch from a known different district/province.
-    if(d&&bd&&!districtMatch)continue;
-    if(p&&bp&&!provinceMatch)continue;
-    let score=-1;
-    if(c&&name===c)score=1250;
-    else if(c&&mun===c)score=1200;
-    else if(c&&areas.includes(c))score=1150;
-    else if(c&&ncmWordMatch(mun,c))score=1100;
-    else if(c&&ncmWordMatch(name,c))score=1050;
-    else if(c&&ncmWordMatch(address,c))score=950;
-    else if(c&&ncmWordMatch(searchText,c))score=900;
-    else if(d&&name===d)score=850;
-    else if(d&&bd===d)score=820;
-    else if(d&&areas.includes(d))score=780;
-    else if(d&&ncmWordMatch(address,d))score=740;
-    else if(d&&ncmWordMatch(searchText,d))score=700;
-    if(score>=0&&p){
-      if(bp===p)score+=80;
-      else if(ncmWordMatch(searchText,p))score+=25;
+    const areaExact=v=>areas.some(a=>a===v);
+    const areaWord=v=>areas.some(a=>ncmWordMatch(a,v));
+    const cityCompatible=!c||areaExact(c)||areaWord(c)||mun===c||ncmWordMatch(mun,c)||name===c||ncmWordMatch(name,c);
+    const districtCompatible=!d||bd===d||ncmWordMatch(bd,d)||areaExact(d)||areaWord(d)||ncmWordMatch(address,d)||ncmWordMatch(searchText,d);
+    const provinceCompatible=!p||bp===p||ncmWordMatch(bp,p)||ncmWordMatch(searchText,p);
+    return {b,name,mun,bd,bp,address,areas,searchText,distance,cityCompatible,districtCompatible,provinceCompatible,areaExact,areaWord};
+  });
+
+  // Lookup 1: customer's city/municipality inside NCM's Areas Covered.
+  // Once a branch is found here, do not fall through to weaker lookups.
+  if(c){
+    const cityMatches=rows.filter(r=>r.cityCompatible&&r.areas.length&&(r.areaExact(c)||r.areaWord(c)))
+      .filter(r=>!d||!r.bd||r.districtCompatible)
+      .filter(r=>!p||!r.bp||r.provinceCompatible);
+    if(cityMatches.length){
+      cityMatches.sort((a,b)=>{
+        const as=(a.areaExact(c)?100:0)+(a.mun===c?20:0)+(a.name===c?10:0)+(a.distance<Infinity?1:0);
+        const bs=(b.areaExact(c)?100:0)+(b.mun===c?20:0)+(b.name===c?10:0)+(b.distance<Infinity?1:0);
+        return bs-as||a.distance-b.distance;
+      });
+      return cityMatches[0].b.name||"";
     }
-    // Geocode is only a tie-breaker for an already text-compatible branch;
-    // it can never create a match on its own.
-    if(score<0)continue;
-    if(score>bestScore||(score===bestScore&&distance<bestDistance)){bestScore=score;bestDistance=distance;best=b}
   }
-  return best?.name||"";
+
+  // Lookup 2: municipality / branch name, still respecting address geography.
+  if(c){
+    const cityMatches=rows.filter(r=>(r.mun===c||ncmWordMatch(r.mun,c)||r.name===c||ncmWordMatch(r.name,c)))
+      .filter(r=>!d||!r.bd||r.districtCompatible)
+      .filter(r=>!p||!r.bp||r.provinceCompatible);
+    if(cityMatches.length){
+      cityMatches.sort((a,b)=>(a.mun===c?0:1)-(b.mun===c?0:1)||a.distance-b.distance);
+      return cityMatches[0].b.name||"";
+    }
+  }
+
+  // Lookup 3: district inside Areas Covered.
+  if(d){
+    const districtMatches=rows.filter(r=>r.areas.length&&(r.areaExact(d)||r.areaWord(d)))
+      .filter(r=>!r.bd||r.districtCompatible)
+      .filter(r=>!r.bp||r.provinceCompatible);
+    if(districtMatches.length){
+      districtMatches.sort((a,b)=>(a.areaExact(d)?0:1)-(b.areaExact(d)?0:1)||a.distance-b.distance);
+      return districtMatches[0].b.name||"";
+    }
+  }
+
+  // Lookup 4: explicit district metadata/name/address, never cross a known province.
+  if(d){
+    const districtMatches=rows.filter(r=>r.bd===d||ncmWordMatch(r.bd,d)||ncmWordMatch(r.name,d)||ncmWordMatch(r.address,d))
+      .filter(r=>!r.bp||!p||r.provinceCompatible);
+    if(districtMatches.length){
+      districtMatches.sort((a,b)=>(a.bd===d?0:1)-(b.bd===d?0:1)||a.distance-b.distance);
+      return districtMatches[0].b.name||"";
+    }
+  }
+
+  // No safe textual match: never guess from geocode alone.
+  return "";
 }
 const cats=[["cat-sarees.jpg","Sarees","Elegant drapes for every occasion."],["cat-lehengas.jpg","Lehengas","Festive looks with timeless charm."],["cat-suits.jpg","Suits","Classic ethnic styles for every day."],["cat-gowns.jpg","Gowns","Graceful styles for special moments."],["cat-kurtis.jpg","Kurtis","Beautiful comfort for everyday elegance."],["cat-dupatta.jpg","Dupattas","Finishing touches that complete the look."],["cat-kids-wear.jpg","Kids Wear","Charming traditional styles for little ones."],["cat-accessories.jpg","Accessories","Details that add a little more sparkle."]];
 const NEPAL_PROVINCES=[
