@@ -58,7 +58,9 @@ Deno.serve(async (req) => {
 
       if (metaResponse.ok && String(meta.mimeType || "").toLowerCase().startsWith("image/")) {
         if (meta.thumbnailLink) {
-          const thumbnail = await returnImage(await fetch(meta.thumbnailLink, { redirect: "follow" }));
+          const requestedWidth = Math.max(240, Math.min(2000, Math.round(Number(width) || 1200)));
+          const sizedThumbnail = String(meta.thumbnailLink).replace(/=s\d+(?:-[^?]*)?$/i, "=s" + requestedWidth);
+          const thumbnail = await returnImage(await fetch(sizedThumbnail, { redirect: "follow" }));
           if (thumbnail) return thumbnail;
         }
 
