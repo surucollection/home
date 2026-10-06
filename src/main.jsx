@@ -260,6 +260,44 @@ function Product(){
    const group=colours.length&&colour?vars.filter(v=>norm(v.color)===norm(colour)):vars;
    return [...group].sort((a,b)=>sizeRank(a.size)-sizeRank(b.size)||norm(a.color).localeCompare(norm(b.color)));
  },[vars,colour,colours]);
+ useEffect(()=>{
+   if(!p)return;
+   const title=`${p.name||p.product_code} | Suru Collection`;
+   const description=String(p.description||`${p.name||""} from Suru Collection.`).replace(/\\s+/g," ").trim().slice(0,160);
+   const canonical=location.href;
+   document.title=title;
+   const upsert=(attr,value,content)=>{
+     let el=document.head.querySelector(`meta[${attr}="${value}"]`);
+     if(!el){el=document.createElement("meta");el.setAttribute(attr,value);document.head.appendChild(el)}
+     el.setAttribute("content",content);
+   };
+   upsert("name","description",description);
+   upsert("property","og:title",title);
+   upsert("property","og:description",description);
+   upsert("property","og:type","product");
+   upsert("property","og:url",canonical);
+   if(main)upsert("property","og:image",main);
+   let link=document.head.querySelector('link[rel="canonical"]');
+   if(!link){link=document.createElement("link");link.rel="canonical";document.head.appendChild(link)}
+   link.href=canonical;
+   const id="suru-product-jsonld";
+   let script=document.getElementById(id);
+   if(!script){script=document.createElement("script");script.id=id;script.type="application/ld+json";document.head.appendChild(script)}
+   script.textContent=JSON.stringify({
+     "@context":"https://schema.org",
+     "@type":"Product",
+     name:p.name||p.product_code,
+     sku:p.product_code||undefined,
+     description:description,
+     image:imgs.map(x=>x.image_url).filter(Boolean),
+     category:p.category||undefined,
+     material:p.fabric||undefined,
+     color:p.color||undefined,
+     brand:{"@type":"Brand",name:"Suru Collection"},
+     offers:{"@type":"Offer",url:canonical,priceCurrency:"NPR",price:Number(p.price||0),availability:"https://schema.org/InStock"}
+   });
+   return()=>{const el=document.getElementById(id);if(el)el.remove()};
+ },[p,main,imgs]);
  const variant=useMemo(()=>{if(!vars.length)return null;if(!sizes.length&&!colours.length)return vars.find(v=>!v.size&&!v.color)||vars[0];return vars.find(v=>(!sizes.length||norm(v.size)===norm(size))&&(!colours.length||norm(v.color||p?.color)===norm(colour)))||null},[vars,sizes,colours,size,colour,p]);
   const galleryImgs=useMemo(()=>{const specific=colour?imgs.filter(i=>norm(i.color)===norm(colour)):[];if(specific.length)return specific;const shared=imgs.filter(i=>!String(i.color||"").trim());return shared.length?shared:imgs},[imgs,colour]);
   useEffect(()=>{if(galleryImgs.length&&!galleryImgs.some(i=>i.image_url===main)){setMain((galleryImgs.find(i=>i.is_main)||galleryImgs[0]).image_url)}},[galleryImgs,main]);
