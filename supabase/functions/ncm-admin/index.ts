@@ -55,18 +55,43 @@ async function requireAdmin(req: Request) {
   if (!rows?.length) throw new Error("Administrator access required");
 }
 
-async function ncm(path: string, init: RequestInit = {}, base = NCM_BASE) {
+let ncmQueue = Promise.resolve();
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function ncmRequest(path: string, init: RequestInit = {}, base = NCM_BASE) {
   if (!NCM_TOKEN) throw new Error("NCM_TOKEN secret is not configured");
-  return fetch(base + path, {
-    ...init,
-    headers: {
-      Authorization: "Token " + NCM_TOKEN,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "User-Agent": "NepalCanMovePHPSDK",
-      ...(init.headers || {}),
-    },
-  });
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(base + path, {
+      ...init,
+      headers: {
+        Authorization: "Token " + NCM_TOKEN,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "NepalCanMovePHPSDK",
+        ...(init.headers || {}),
+      },
+    });
+
+    if (response.status !== 429 || attempt === 2) return response;
+
+    const retryAfter = Number(response.headers.get("Retry-After") || 0);
+    const waitMs = Math.max(1100, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 0);
+    await response.arrayBuffer().catch(() => {});
+    await sleep(waitMs);
+  }
+
+  throw new Error("NCM request failed after retry");
+}
+
+async function ncm(path: string, init: RequestInit = {}, base = NCM_BASE) {
+  const run = () => ncmRequest(path, init, base);
+  const next = ncmQueue.catch(() => {}).then(run);
+  ncmQueue = next.then(() => undefined, () => undefined);
+  return next;
 }
 
 async function ncmJson(path: string, init: RequestInit = {}, base = NCM_BASE) {
