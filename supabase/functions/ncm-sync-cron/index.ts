@@ -7,11 +7,30 @@ const NCM_TOKEN=Deno.env.get("NCM_TOKEN")!;
 const NCM_BASE="https://nepalcanmove.com";
 
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"}});
+let ncmQueue=Promise.resolve();
+
+const sleep=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+
+async function ncmRequest(path:string,base=NCM_BASE){
+  for(let attempt=0;attempt<3;attempt++){
+    const r=await fetch(base+path,{headers:{Authorization:"Token "+NCM_TOKEN,Accept:"application/json","User-Agent":"NepalCanMovePHPSDK"}});
+    if(r.status!==429||attempt===2){
+      const t=await r.text(); let b:any={}; try{b=t?JSON.parse(t):{}}catch{b={raw:t}}
+      if(!r.ok)throw new Error("NCM "+r.status+": "+String(b?.Error||b?.message||b?.detail||t).slice(0,300));
+      return b;
+    }
+    const retryAfter=Number(r.headers.get("Retry-After")||0);
+    await r.arrayBuffer().catch(()=>{});
+    await sleep(Math.max(1100,Number.isFinite(retryAfter)&&retryAfter>0?retryAfter*1000:0));
+  }
+  throw new Error("NCM request failed after retry");
+}
+
 async function ncm(path:string,base=NCM_BASE){
-  const r=await fetch(base+path,{headers:{Authorization:"Token "+NCM_TOKEN,Accept:"application/json","User-Agent":"NepalCanMovePHPSDK"}});
-  const t=await r.text(); let b:any={}; try{b=t?JSON.parse(t):{}}catch{b={raw:t}}
-  if(!r.ok)throw new Error("NCM "+r.status+": "+String(b?.Error||b?.message||b?.detail||t).slice(0,300));
-  return b;
+  const run=()=>ncmRequest(path,base);
+  const next=ncmQueue.catch(()=>{}).then(run);
+  ncmQueue=next.then(()=>undefined,()=>undefined);
+  return next;
 }
 function tracking(v:any):string{
   const keys=["tracking_id","trackingId","track_id","trackId","trackingid","trackid","tracking_number","trackingNumber"];
