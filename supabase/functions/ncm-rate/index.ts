@@ -22,7 +22,7 @@ async function ncmFetch(url:string,init:RequestInit={},retries=1){
 }
 async function getBranches(){
   if(branchCache&&branchCache.expires>Date.now())return branchCache.branches;
-  const r=await ncmFetch(NCM_BASE+"/api/v2/branches");
+  const r=await ncmFetch("https://portal.nepalcanmove.com/api/v2/branches");
   const text=await r.text();let body:any;try{body=JSON.parse(text)}catch{throw new Error("NCM returned an invalid branches response")}
   if(!r.ok)throw new Error(body?.Error||body?.message||body?.detail||("NCM branches API error ("+r.status+")"));
   const raw=Array.isArray(body)?body:(body?.results||body?.branches||[]);
