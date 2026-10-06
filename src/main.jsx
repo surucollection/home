@@ -53,7 +53,9 @@ function ncmWordMatch(value,target){
   return tt.every(w=>vt.includes(w))||v.startsWith(t+" ")||t.startsWith(v+" ");
 }
 function matchNcmBranch(branches,city,district,location=null,province=""){
-  const c=ncmNorm(city),d=ncmNorm(district),p=ncmNorm(province);
+  const primaryCity=String(city||"").split(",")[0].trim();
+  const primaryDistrict=String(district||"").split(",")[0].trim();
+  const c=ncmNorm(primaryCity),d=ncmNorm(primaryDistrict),p=ncmNorm(province);
   if(!c&&!d&&!p&&!location)return "";
   const rows=branches.map(b=>{
     const name=ncmNorm(b.name),mun=ncmNorm(b.municipality),bd=ncmNorm(b.district_name),bp=ncmNorm(b.province_name);
@@ -69,15 +71,23 @@ function matchNcmBranch(branches,city,district,location=null,province=""){
   });
 
   // Lookup 1: customer's city/municipality inside NCM's Areas Covered.
-  // Once a branch is found here, do not fall through to weaker lookups.
+  // This is decisive: when a city exists in Areas Covered, stop here.
   if(c){
-    const cityMatches=rows.filter(r=>r.cityCompatible&&r.areas.length&&(r.areaExact(c)||r.areaWord(c)))
-      .filter(r=>!d||!r.bd||r.districtCompatible)
-      .filter(r=>!p||!r.bp||r.provinceCompatible);
+    const cityMatches=rows.filter(r=>r.areas.length&&(r.areaExact(c)||r.areaWord(c)));
     if(cityMatches.length){
       cityMatches.sort((a,b)=>{
-        const as=(a.areaExact(c)?100:0)+(a.mun===c?20:0)+(a.name===c?10:0)+(a.distance<Infinity?1:0);
-        const bs=(b.areaExact(c)?100:0)+(b.mun===c?20:0)+(b.name===c?10:0)+(b.distance<Infinity?1:0);
+        const as=(a.areaExact(c)?1000:0)
+          +(a.mun===c?100:0)
+          +(a.name===c?50:0)
+          +(a.districtCompatible?10:0)
+          +(a.provinceCompatible?5:0)
+          +(a.distance<Infinity?1:0);
+        const bs=(b.areaExact(c)?1000:0)
+          +(b.mun===c?100:0)
+          +(b.name===c?50:0)
+          +(b.districtCompatible?10:0)
+          +(b.provinceCompatible?5:0)
+          +(b.distance<Infinity?1:0);
         return bs-as||a.distance-b.distance;
       });
       return cityMatches[0].b.name||"";
@@ -420,11 +430,21 @@ function Order(){
  useEffect(()=>{if(!fonepayPayment)return;const warn=e=>{e.preventDefault();e.returnValue="A Fonepay payment is still in progress.";return e.returnValue};addEventListener("beforeunload",warn);return()=>removeEventListener("beforeunload",warn)},[fonepayPayment]);
  useEffect(()=>{if(!fonepaySetupOrderId){try{sessionStorage.removeItem("suru-fonepay-setup-order");sessionStorage.removeItem("suru-fonepay-setup-purpose")}catch{};return}try{sessionStorage.setItem("suru-fonepay-setup-order",fonepaySetupOrderId);sessionStorage.setItem("suru-fonepay-setup-purpose",fonepaySetupPurpose||"full")}catch{}},[fonepaySetupOrderId,fonepaySetupPurpose]);
  useEffect(()=>{let active=true;if(!fonepayPayment?.qrString){setFonepayQrImage("");return}QRCode.toDataURL(String(fonepayPayment.qrString),{width:560,margin:2,errorCorrectionLevel:"M"}).then(url=>{if(active)setFonepayQrImage(url)}).catch(()=>{if(active)setFonepayQrImage("")});return()=>{active=false}},[fonepayPayment?.qrString]);
+ useEffect(()=>{
+  if(!checkout||ncmBranches.length)return;
+  let active=true;
+  setNcmBranchBusy(true);
+  getNcmBranches()
+    .then(bs=>{if(active)setNcmBranches(bs)})
+    .catch(()=>{})
+    .finally(()=>{if(active)setNcmBranchBusy(false)});
+  return()=>{active=false};
+ },[checkout,ncmBranches.length]);
  useEffect(()=>{(async()=>{try{const{data}=await supabase.auth.getSession();setSession(data.session||null);if(!data.session)return;const{data:p}=await supabase.rpc("my_customer_profile");if(!p)return;setCustomerId(p.id||"");if(!name)setName(p.name||"");if(!phone)setPhone(p.phone||"");if(!address)setAddress(p.address||"");if(!city){const savedCity=String(p.city||"").trim();if(savedCity)setCity(savedCity.split(",")[0].trim());}if(!district&&p.district)setDistrict(p.district);if(!district&&!p.district&&String(p.city||"").includes(","))setDistrict(String(p.city).split(",").slice(1).join(",").trim());if(!province)setProvince(canonicalProvince(p.province)||"");if(!postalCode)setPostalCode(p.postal_code||"");setNcmBranch(p.ncm_destination_branch||"");setNcmBranchBusy(true);const bs=await getNcmBranches();setNcmBranches(bs);const matched=matchNcmBranch(bs,p.city,p.district,null,p.province);setNcmBranch(matched||p.ncm_destination_branch||"")}catch{}finally{setNcmBranchBusy(false)}})()},[]);
  useEffect(()=>{
-  if(!checkout||!province||!district||!city||!ncmBranches.length)return;
-  const matched=matchNcmBranch(ncmBranches,city,district);
-  if(matched)setNcmBranch(prev=>prev||matched);
+  if(!checkout||!city||!district||!ncmBranches.length)return;
+  const matched=matchNcmBranch(ncmBranches,city,district,null,province);
+  setNcmBranch(matched||"");
  },[checkout,province,district,city,ncmBranches.length]);
  useEffect(()=>{let active=true;
   if(!ncmBranch){setNcmRate(null);setNcmRateError("");setNcmRateBusy(false);return()=>{active=false}};
