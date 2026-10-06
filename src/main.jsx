@@ -478,6 +478,7 @@ function Order(){
     if(!province)setProvince(canonicalProvince(p.province)||"");
     if(!postalCode)setPostalCode(p.postal_code||"");
   }catch{}
+  })().catch(()=>{});
  },[]);
  useEffect(()=>{
   if(!checkout||!ncmBranches.length)return;
