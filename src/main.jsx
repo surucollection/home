@@ -62,6 +62,19 @@ function matchNcmBranch(branches,city,district,location=null,province=""){
     const areas=ncmFieldTokens(areaText);
     const searchText=ncmNorm([b.name,b.code,b.municipality,b.address,b.areas_covered,b.district_name,b.province_name].filter(Boolean).join(" "));
     const distance=ncmDistanceKm(location,ncmCoords(b.geocode));
+    const districtText=ncmNorm([bd,address,areaText,name,mun].filter(Boolean).join(" "));
+    const provinceText=ncmNorm([bp,address,areaText].filter(Boolean).join(" "));
+    const districtMatch=!!d&&(
+      (!!bd&&(bd===d||ncmWordMatch(bd,d)))||
+      (!bd&&ncmWordMatch(districtText,d))
+    );
+    const provinceMatch=!!p&&(
+      (!!bp&&(bp===p||ncmWordMatch(bp,p)))||
+      (!bp&&ncmWordMatch(provinceText,p))
+    );
+    // Never select a branch from a known different district/province.
+    if(d&&bd&&!districtMatch)continue;
+    if(p&&bp&&!provinceMatch)continue;
     let score=-1;
     if(c&&name===c)score=1250;
     else if(c&&mun===c)score=1200;
@@ -79,7 +92,8 @@ function matchNcmBranch(branches,city,district,location=null,province=""){
       if(bp===p)score+=80;
       else if(ncmWordMatch(searchText,p))score+=25;
     }
-    if(score<0&&location&&Number.isFinite(distance))score=100;
+    // Geocode is only a tie-breaker for an already text-compatible branch;
+    // it can never create a match on its own.
     if(score<0)continue;
     if(score>bestScore||(score===bestScore&&distance<bestDistance)){bestScore=score;bestDistance=distance;best=b}
   }
