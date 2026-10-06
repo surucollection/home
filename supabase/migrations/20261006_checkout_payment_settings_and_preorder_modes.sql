@@ -2,11 +2,20 @@
 alter table public.invoice_settings add column if not exists cod_advance_amount numeric(12,2) not null default 300;
 update public.invoice_settings set cod_advance_amount=case when cod_advance_amount is null or cod_advance_amount<0 then 300 else cod_advance_amount end where id=true;
 
-create or replace function public.get_checkout_payment_settings() returns jsonb language sql security definer set search_path='' as $$
- select jsonb_build_object('cod_advance_amount',greatest(0,coalesce(cod_advance_amount,300))) from public.invoice_settings where id=true;
+create or replace function public.get_checkout_payment_settings()
+returns jsonb
+language plpgsql
+security definer
+set search_path=''
+as $$
+begin
+  if auth.uid() is null then raise exception 'Authentication required'; end if;
+  return (select jsonb_build_object('cod_advance_amount',greatest(0,coalesce(cod_advance_amount,300)))
+          from public.invoice_settings where id=true);
+end;
 $$;
-revoke all on function public.get_checkout_payment_settings() from public;
-grant execute on function public.get_checkout_payment_settings() to anon,authenticated;
+revoke all on function public.get_checkout_payment_settings() from public,anon,authenticated;
+grant execute on function public.get_checkout_payment_settings() to authenticated;
 
 create or replace function public.apply_cod_advance_setting() returns trigger language plpgsql security definer set search_path='' as $$
 declare v_amount numeric(12,2);
