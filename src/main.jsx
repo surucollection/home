@@ -57,15 +57,17 @@ function matchNcmBranch(branches,city,district,location=null,province=""){
   if(!c&&!d&&!p&&!location)return "";
   let best=null,bestScore=-1,bestDistance=Infinity;
   for(const b of branches){
-    const name=ncmNorm(b.name),code=ncmNorm(b.code),bd=ncmNorm(b.district_name),bp=ncmNorm(b.province_name);
+    const name=ncmNorm(b.name),code=ncmNorm(b.code),mun=ncmNorm(b.municipality),bd=ncmNorm(b.district_name),bp=ncmNorm(b.province_name);
     const address=ncmNorm(b.address),areaText=String(b.areas_covered||"");
     const areas=ncmFieldTokens(areaText);
-    const searchText=ncmNorm([b.name,b.code,b.address,b.areas_covered,b.district_name,b.province_name].filter(Boolean).join(" "));
+    const searchText=ncmNorm([b.name,b.code,b.municipality,b.address,b.areas_covered,b.district_name,b.province_name].filter(Boolean).join(" "));
     const distance=ncmDistanceKm(location,ncmCoords(b.geocode));
     let score=-1;
-    if(c&&name===c)score=1200;
-    else if(c&&areas.includes(c))score=1100;
-    else if(c&&ncmWordMatch(name,c))score=1000;
+    if(c&&name===c)score=1250;
+    else if(c&&mun===c)score=1200;
+    else if(c&&areas.includes(c))score=1150;
+    else if(c&&ncmWordMatch(mun,c))score=1100;
+    else if(c&&ncmWordMatch(name,c))score=1050;
     else if(c&&ncmWordMatch(address,c))score=950;
     else if(c&&ncmWordMatch(searchText,c))score=900;
     else if(d&&name===d)score=850;
