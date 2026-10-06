@@ -13,11 +13,10 @@ export default function ProductCard({product,image,variants=[],priority=false}){
   const colours=useMemo(()=>[...new Set(activeVariants.map(v=>v.color).filter(Boolean))],[activeVariants]);
   const variant=useMemo(()=>{
     if(!activeVariants.length)return null;
-    if(!sizes.length&&!colours.length)return variants[0];
-    return variants.find(v=>(!sizes.length||norm(v.size)===norm(size))&&(!colours.length||norm(v.color)===norm(colour)))||null;
-  },[variants,sizes,colours,size,colour]);
+    if(!sizes.length&&!colours.length)return activeVariants[0];
+    return activeVariants.find(v=>(!sizes.length||norm(v.size)===norm(size))&&(!colours.length||norm(v.color)===norm(colour)))||null;
+  },[activeVariants,sizes,colours,size,colour]);
   useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
-  const hasStock=activeVariants.length===0||variants.some(v=>Number(v.stock||0)>0);
   const selectedOutOfStock=activeVariants.length>0&&(!variant||Number(variant.stock||0)<=0);
   const openPicker=async wantBuyNow=>{
     setBuyNow(wantBuyNow);setQty(1);setOpen(true);
@@ -67,7 +66,7 @@ export default function ProductCard({product,image,variants=[],priority=false}){
         {sizes.length>0&&<label className="field">Size<select value={size} onChange={e=>setSize(e.target.value)}><option value="">Select Size</option>{sizes.map(x=>{const matching=activeVariants.filter(v=>norm(v.size)===norm(x)&&(!colour||norm(v.color)===norm(colour)));const available=matching.some(v=>Number(v.stock||0)>0);const outOfStock=matching.length>0&&!available;return <option key={x} value={x} disabled={outOfStock}>{x}{outOfStock?" — Out of Stock":""}</option>})}</select></label>}
         {activeVariants.length>0&&<div className={"variant-stock"+(selectedOutOfStock?" out-of-stock":"")}>{selectedOutOfStock?(variant?"Out of Stock":"Select an available option."):Number(variant.stock||0)+" item(s) available"}</div>}
         <label className="field">Quantity<input type="number" min="1" max={variant?.stock||undefined} value={qty} onChange={e=>setQty(e.target.value)}/></label>
-        <button className="buy-button" type="button" onClick={confirmAdd} disabled={selectedOutOfStock}>{buyNow?"Buy Now":"Add to Cart"}</button>
+        <button className="buy-button" type="button" onClick={confirmAdd} disabled={variantLoading||selectedOutOfStock}>{buyNow?"Buy Now":"Add to Cart"}</button>
       </div>
     </div>}
   </article>;
