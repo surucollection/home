@@ -188,11 +188,16 @@ function Register(){
  <label className="field">Password <span className="required-star">*</span><input name="password" type="password" value={f.password} onChange={change} required autoComplete="new-password"/></label>
  <label className="field">Confirm Password <span className="required-star">*</span><input name="confirm" type="password" value={f.confirm} onChange={change} required autoComplete="new-password"/></label>
  <label className="field">Mobile Number <span className="required-star">*</span><div className="phone-input-wrap"><span className="phone-country-code">+977</span><input name="phone" type="tel" value={f.phone} onChange={change} required autoComplete="tel-national" inputMode="numeric" maxLength="10" placeholder="10-digit mobile number"/></div></label>
- <label className="field">Delivery Address <span className="required-star">*</span><textarea name="address" rows="3" value={f.address} onChange={change} required/></label>
- <label className="field">Province <span className="required-star">*</span><select name="province" value={f.province} onChange={change} required><option value="">Select Province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
- <label className="field">District <span className="required-star">*</span><select name="district" value={f.district} onChange={change} required disabled={!f.province}><option value="">{f.province?"Select District":"Select Province First"}</option>{provinceDistricts(f.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
- <label className="field">City <span className="required-star">*</span><input name="city" value={f.city} onChange={change} required/></label>
- <label className="field">Postal Code <span className="optional-label">(Optional)</span><input name="postal_code" value={f.postal_code} onChange={change} inputMode="numeric" autoComplete="postal-code"/></label>
+ <div className="registration-address-container">
+  <div className="registration-address-heading"><h2>Delivery Address</h2><p>Where should we deliver your orders?</p></div>
+  <label className="field">Delivery Address <span className="required-star">*</span><textarea name="address" rows="3" value={f.address} onChange={change} required placeholder="House/street, area"/></label>
+  <div className="registration-address-grid">
+   <label className="field">Province <span className="required-star">*</span><select name="province" value={f.province} onChange={change} required><option value="">Select Province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
+   <label className="field">District <span className="required-star">*</span><select name="district" value={f.district} onChange={change} required disabled={!f.province}><option value="">{f.province?"Select District":"Select Province First"}</option>{provinceDistricts(f.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+   <label className="field">City <span className="required-star">*</span><input name="city" value={f.city} onChange={change} required placeholder="e.g. Gaur"/></label>
+   <label className="field">Postal Code <span className="optional-label">(Optional)</span><input name="postal_code" value={f.postal_code} onChange={change} inputMode="numeric" autoComplete="postal-code" placeholder="Postal code"/></label>
+  </div>
+ </div>
  <button className="btn" disabled={busy}>{busy?"Sending OTP…":verifyMethod==="mobile"?"Continue & Verify Mobile":"Continue & Verify Email"}</button>{msg&&<div className="message error">{msg}</div>}</form><div className="auth-google"><button type="button" className="google-auth-button" onClick={googleSignIn} disabled={busy}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button></div><div className="auth-links">Already have an account? <a href="login.html">Sign in</a></div></AuthLayout>
 }
 function Account(){
@@ -221,13 +226,16 @@ function Account(){
   setMsg("Saving…");
   const canonical=canonicalProvince(profile.province);
   const autoBranch=!profile.ncm_destination_branch?.trim()&&ncmBranches.length?matchNcmBranch(ncmBranches,profile.city,profile.district):"";
-  const{data,error}=await supabase.from("customers").update({name:(profile.first_name.trim()+" "+profile.last_name.trim()).trim(),first_name:profile.first_name.trim(),last_name:profile.last_name.trim(),phone:profile.phone.trim(),address:profile.address.trim(),city:profile.city.trim(),district:profile.district.trim(),province:canonical,postal_code:profile.postal_code?.trim()||null,ncm_destination_branch:profile.ncm_destination_branch?.trim()||autoBranch||null,updated_at:new Date().toISOString()}).eq("auth_user_id",session.user.id).select().maybeSingle();
+  const finalBranch=profile.ncm_destination_branch?.trim()||autoBranch||null;
+  const{data,error}=await supabase.from("customers").update({name:(profile.first_name.trim()+" "+profile.last_name.trim()).trim(),first_name:profile.first_name.trim(),last_name:profile.last_name.trim(),phone:profile.phone.trim(),address:profile.address.trim(),city:profile.city.trim(),district:profile.district.trim(),province:canonical,postal_code:profile.postal_code?.trim()||null,ncm_destination_branch:finalBranch,updated_at:new Date().toISOString()}).eq("auth_user_id",session.user.id).select().maybeSingle();
   if(error){setMsg(error.message);return}
   if(data){
     const{data:currentDefault}=await supabase.from("customer_addresses").select("id,label").eq("customer_id",data.id).eq("is_default",true).maybeSingle();
     const{error:addressError}=await supabase.rpc("save_customer_address",{p_address_id:currentDefault?.id||null,p_label:currentDefault?.label||"Home",p_full_name:(profile.first_name.trim()+" "+profile.last_name.trim()).trim(),p_phone:profile.phone.trim(),p_address:profile.address.trim(),p_city:profile.city.trim(),p_district:profile.district.trim(),p_province:canonical,p_postal_code:profile.postal_code?.trim()||null,p_is_default:true});
     if(addressError)console.warn("Default saved address could not be synchronized:",addressError);
-    setProfile(data);
+    const{data:synced,error:branchError}=await supabase.from("customers").update({ncm_destination_branch:finalBranch,updated_at:new Date().toISOString()}).eq("id",data.id).select().maybeSingle();
+    if(branchError)console.warn("NCM delivery branch could not be preserved:",branchError);
+    setProfile(synced||{...data,ncm_destination_branch:finalBranch});
   }
   setEditing(false);
   setMsg(autoBranch?"Account details saved; NCM delivery branch was selected automatically.":"Account details saved successfully.");
