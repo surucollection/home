@@ -5,7 +5,9 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const WEBHOOK_SECRET = Deno.env.get("NCM_WEBHOOK_SECRET")!;
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://suru.com.np",
+  "Access-Control-Allow-Headers": "authorization, x-cron-secret, x-ncm-webhook-secret, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json",
 };
 
@@ -70,7 +72,12 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    if (url.searchParams.get("secret") !== WEBHOOK_SECRET) {
+    const suppliedSecret =
+      req.headers.get("x-ncm-webhook-secret") ||
+      req.headers.get("x-cron-secret") ||
+      url.searchParams.get("secret") ||
+      "";
+    if (suppliedSecret !== WEBHOOK_SECRET) {
       return new Response("Unauthorized", { status: 401, headers: corsHeaders });
     }
 
