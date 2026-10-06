@@ -372,7 +372,8 @@ function Order(){
    if(fonepaySetupOrderId){setMsg("Your order was already created, but Fonepay setup needs to be retried. Use the payment setup button below instead of creating another order.");return}
    if(!cart.length){setMsg("Your cart is empty.");return}
    if(!session){location.href="login.html?return="+encodeURIComponent("/order.html?checkout=1");return}
-   if(!name.trim()||!phone.trim()||!address.trim()||!city.trim()||!district.trim()||!province.trim()){setMsg("Please fill in your full delivery address, province, district and city.");return}\n   if(payment==="Cash on Delivery"&&(!ncmBranch||!ncmRate?.advanceDeliveryCharge)){setMsg(ncmRateError||"Please select a valid NCM delivery branch and wait for the delivery charge to load.");return}
+   if(!name.trim()||!phone.trim()||!address.trim()||!city.trim()||!district.trim()||!province.trim()){setMsg("Please fill in your full delivery address, province, district and city.");return}
+   if(payment==="Cash on Delivery"&&(!ncmBranch||!ncmRate?.advanceDeliveryCharge)){setMsg(ncmRateError||"Please select a valid NCM delivery branch and wait for the delivery charge to load.");return}
    setBusy(true);setMsg("");
    const checkoutKey=checkoutIdempotencyRef.current||(crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join(""));checkoutIdempotencyRef.current=checkoutKey;
    try{
