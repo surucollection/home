@@ -18,7 +18,7 @@ begin
    if coalesce(new.cod_advance_payment_status,'')='' or new.cod_advance_payment_status='not_required' then new.cod_advance_payment_status:=case when v_amount>0 then 'pending' else 'paid' end; end if;
    new.cod_balance_due:=greatest(0,coalesce(new.total,0)-v_amount);
  elsif new.payment_method<>'cod' then
-   new.cod_advance_required:=0; new.cod_balance_due:=0; new.cod_advance_paid:=0; new.cod_advance_payment_status='not_required';
+   new.cod_advance_required:=0; new.cod_balance_due:=0; new.cod_advance_paid:=0; new.cod_advance_payment_status:='not_required';
  end if;
  return new;
 end; $$;
