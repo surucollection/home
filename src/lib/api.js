@@ -1,15 +1,25 @@
 import { createClient } from "@supabase/supabase-js";
 
 export const API="https://vkycraymxhkqxgpcpdzw.supabase.co/rest/v1/";
+const GET_CACHE=new Map();
+const GET_CACHE_MS=5000;
 export const KEY="sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC";
 export const supabase=createClient("https://vkycraymxhkqxgpcpdzw.supabase.co",KEY,{auth:{experimental:{passkey:true}}});
 
 export async function get(table,params={}){
   const u=new URL(API+table);
   Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+  const cacheable=table==="products"||table==="product_images";
+  const key=cacheable?u.toString():"";
+  if(cacheable){
+    const hit=GET_CACHE.get(key);
+    if(hit&&Date.now()-hit.time<GET_CACHE_MS)return hit.data;
+  }
   const r=await fetch(u,{headers:{apikey:KEY,Authorization:"Bearer "+KEY,Accept:"application/json"}});
   if(!r.ok)throw new Error((await r.json().catch(()=>({}))).message||"Request failed");
-  return r.json();
+  const data=await r.json();
+  if(cacheable)GET_CACHE.set(key,{time:Date.now(),data});
+  return data;
 }
 
 // Cloudinary automatically delivers AVIF/WebP when supported, compresses the image,
