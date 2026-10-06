@@ -68,7 +68,20 @@ Deno.serve(async req=>{
   const auth=await sb.rpc("verify_drive_sync_cron_secret",{p_secret:secret});
   if(auth.error||auth.data!==true)return ok({message:"Unauthorized."},401);
 
+  let leaseAcquired=false;
   try{
+    const leaseNow=new Date();
+    const leaseUntil=new Date(leaseNow.getTime()+15*60*1000);
+    const lease=await sb.from("drive_sync_leases")
+      .update({locked_until:leaseUntil.toISOString(),updated_at:leaseNow.toISOString()})
+      .eq("name","google-drive-image-sync")
+      .lt("locked_until",leaseNow.toISOString())
+      .select("name")
+      .maybeSingle();
+    if(lease.error)throw lease.error;
+    if(!lease.data)return ok({success:false,message:"Drive sync already running; this scheduled run was skipped."},409);
+    leaseAcquired=true;
+
     const t=await token();
     const p=await sb.from("products").select("id,product_code").not("product_code","is",null);
     if(p.error)throw p.error;
@@ -159,5 +172,12 @@ Deno.serve(async req=>{
   }catch(e){
     console.error("google-drive-image-sync",e);
     return ok({success:false,message:e instanceof Error?e.message:String(e).slice(0,500)||"Drive sync failed."},502);
+  }finally{
+    if(leaseAcquired){
+      const release=await sb.from("drive_sync_leases")
+        .update({locked_until:new Date(0).toISOString(),updated_at:new Date().toISOString()})
+        .eq("name","google-drive-image-sync");
+      if(release.error)console.error("google-drive-image-sync lease release",release.error);
+    }
   }
 });
