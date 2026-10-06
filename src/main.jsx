@@ -463,10 +463,7 @@ function Order(){
  },[checkout]);
  useEffect(()=>{(async()=>{
   try{
-    const[{data},{data:branches}]=await Promise.all([
-      supabase.auth.getSession(),
-      checkout?getNcmBranches():Promise.resolve([])
-    ]);
+    const{data}=await supabase.auth.getSession();
     setSession(data.session||null);
     if(!data.session)return;
     const{data:p}=await supabase.rpc("my_customer_profile");
@@ -480,19 +477,8 @@ function Order(){
     if(!district&&!p.district&&String(p.city||"").includes(","))setDistrict(String(p.city).split(",").slice(1).join(",").trim());
     if(!province)setProvince(canonicalProvince(p.province)||"");
     if(!postalCode)setPostalCode(p.postal_code||"");
-    setNcmBranch(p.ncm_destination_branch||"");
-    if(branches?.length){
-      setNcmBranches(prev=>prev.length?prev:branches);
-      const profileCity=String(p.city||"").split(",")[0].trim();
-      const profileDistrict=String(p.district||"").trim()||(
-        String(p.city||"").includes(",")?String(p.city).split(",").slice(1).join(",").trim():""
-      );
-      const profileProvince=canonicalProvince(p.province)||"";
-      const matched=matchNcmBranch(branches,profileCity,profileDistrict,null,profileProvince);
-      setNcmBranch(matched||"");
-    }
   }catch{}
- },[checkout]);
+ },[]);
  useEffect(()=>{
   if(!checkout||!ncmBranches.length)return;
   const c=String(city||"").trim();
@@ -532,7 +518,8 @@ function Order(){
    setDistrict(nextDistrict);
    setProvince(nextProvince);
    setPostalCode(a.postal_code||"");
-   const matched=matchNcmBranch(ncmBranches,nextCity,nextDistrict,null,nextProvince);
+   const branches=NCM_BRANCH_CACHE.items||ncmBranches;
+   const matched=branches.length?matchNcmBranch(branches,nextCity,nextDistrict,null,nextProvince):"";
    setNcmBranch(matched||"");
    setMsg("");
  };
