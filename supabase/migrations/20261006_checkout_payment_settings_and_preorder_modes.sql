@@ -65,6 +65,8 @@ end; $$;
 revoke all on function public.create_preorder_payment_intent(uuid,jsonb,text,text,text,integer,text,text,text,text) from public,anon,authenticated;
 grant execute on function public.create_preorder_payment_intent(uuid,jsonb,text,text,text,integer,text,text,text,text) to service_role;
 
+drop function if exists public.create_preorder_payment_intent(uuid,jsonb,text,text,text,integer,text,text,text);
+
 create or replace function public.finalize_preorder_payment_intent(p_intent_id uuid,p_user_id uuid)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare v_intent public.preorder_payment_intents%rowtype; v_order_id uuid; v_order_number text; v_regular numeric(12,2); v_discount numeric(12,2);
