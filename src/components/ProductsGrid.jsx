@@ -10,6 +10,7 @@ export default function ProductsGrid({limit,category,featured=false}){
 
   const load=useCallback(async(reset=false)=>{
     const id=++requestId.current;
+    const pageSize=limit?Math.max(1,Math.min(Number(limit)||1,PAGE_SIZE)):PAGE_SIZE;
     const offset=reset?0:p.length;
     if(reset)setLoading(true);else setLoadingMore(true);
     setErr("");
@@ -19,7 +20,7 @@ export default function ProductsGrid({limit,category,featured=false}){
         is_active:"eq.true",
         "product_sizes.is_active":"eq.true",
         order:"created_at.desc",
-        limit:String(PAGE_SIZE),
+        limit:String(pageSize),
         offset:String(offset)
       };
       if(category)params.category="eq."+category;
@@ -28,7 +29,7 @@ export default function ProductsGrid({limit,category,featured=false}){
       if(id!==requestId.current)return;
       const next=rows||[];
       setP(prev=>reset?next:[...prev,...next]);
-      setHasMore(next.length===PAGE_SIZE);
+      setHasMore(next.length===pageSize);
     }catch(e){
       if(id===requestId.current)setErr(e.message||"Unable to load products.");
     }finally{
@@ -52,8 +53,8 @@ export default function ProductsGrid({limit,category,featured=false}){
           key={product.id}
           product={product}
           image={image}
-          variants={product.product_sizes||[]}
-          priority={index<4}
+          variants={[]}
+          priority={index<2}
         />;
       })}
     </div>
