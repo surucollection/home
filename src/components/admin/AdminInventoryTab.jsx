@@ -33,8 +33,8 @@ export default function AdminInventoryTab({inventory,inventoryEditing,setInvento
          <div className="inventory-variant-head"><span>Size</span><span>Colour</span><span>Stock</span><span></span></div>
          {(p.product_sizes||[]).map(s=><div className="inventory-variant-compact-row" key={s.id}>
            <div className="inventory-variant-value" title={s.size||"—"}>{s.size||"—"}</div>
-           <div className="inventory-variant-value" title={s.color||"—"}>{s.color||"—"}</div>
-           <input type="number" min="0" value={inventoryDrafts[p.id]?.[s.id]??s.stock??0} onChange={e=>setInventoryDrafts(d=>({...d,[p.id]:{...(d[p.id]||{}),[s.id]:e.target.value}}))}/>
+           <input type="text" className="inventory-variant-color" aria-label={"Colour for "+(s.size||"variant")} value={inventoryDrafts[p.id]?.[s.id]?.color??s.color??""} onChange={e=>setInventoryDrafts(d=>({...d,[p.id]:{...(d[p.id]||{}),[s.id]:{...((d[p.id]||{})[s.id]||{}),color:e.target.value}}}))} placeholder="Colour"/>
+           <input type="number" min="0" value={inventoryDrafts[p.id]?.[s.id]?.stock??s.stock??0} onChange={e=>setInventoryDrafts(d=>({...d,[p.id]:{...(d[p.id]||{}),[s.id]:{...((d[p.id]||{})[s.id]||{}),stock:e.target.value}}}))}/>
            <button type="button" className="danger inventory-variant-remove" title="Delete variant" aria-label={"Delete "+(s.size||"")+" "+(s.color||"")+" variant"} onClick={()=>deleteVariant(p.id,s)}>×</button>
          </div>)}
        </div>
