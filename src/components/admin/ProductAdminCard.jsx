@@ -45,7 +45,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       bodyClassName="admin-product-modal-body"
       maxWidth="900px"
       closeDisabled={imagesLoading||driveBusy}
-      footer={<div className="admin-product-modal-footer-content"><button className="secondary" onClick={close}>Cancel</button><button className="primary" onClick={()=>saveProduct(e,images)} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div></div>}
+      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>saveProduct(e,images)} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div>}
     >
 
           <div className="admin-form">
@@ -64,9 +64,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
               {imageLinks[0]&&<div className="admin-image-preview"><small>Image preview</small><img src={imageUrl(imageLinks[0],400)} alt="Product preview" onError={x=>{x.currentTarget.style.display="none"}}/></div>}
             </div>
           </div>
-        </div>
         
     </AdminModal>
-}
   </div>
 }
