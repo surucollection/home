@@ -44,7 +44,6 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       subtitle={p.product_code+" · "+p.name}
       bodyClassName="admin-product-modal-body"
       maxWidth="900px"
-      closeDisabled={imagesLoading||driveBusy}
       footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>saveProduct(e,images)} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div>}
     >
 
