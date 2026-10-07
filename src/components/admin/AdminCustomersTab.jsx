@@ -13,6 +13,7 @@ export default function AdminCustomersTab({
  const[addressDraft,setAddressDraft]=useState({});
  const[addressSaving,setAddressSaving]=useState(false);
  const editAddress=a=>{setAddressEditing(a.id);setAddressDraft({...a});};
+ const addAddress=()=>{setAddressEditing("new");setAddressDraft({label:"",full_name:selectedCustomer?.name||"",mobile:selectedCustomer?.phone||"",address:"",city:"",district:"",province:"",postal_code:"",is_default:!(selectedCustomer?.addresses||[]).length});};
  const cancelAddressEdit=()=>{setAddressEditing(null);setAddressDraft({});};
  const saveAddress=async()=>{
    if(!addressEditing)return;
@@ -20,9 +21,11 @@ export default function AdminCustomersTab({
    try{
      const payload={label:String(addressDraft.label||"").trim()||null,full_name:String(addressDraft.full_name||"").trim(),mobile:String(addressDraft.mobile||"").trim(),address:String(addressDraft.address||"").trim(),city:String(addressDraft.city||"").trim(),district:String(addressDraft.district||"").trim(),province:String(addressDraft.province||"").trim(),postal_code:String(addressDraft.postal_code||"").trim()||null};
      if(!payload.full_name||!payload.mobile||!payload.address||!payload.city||!payload.district||!payload.province)throw Error("Please complete all required address fields.");
-     const{data,error}=await supabase.from("customer_addresses").update(payload).eq("id",addressEditing).eq("customer_id",selectedCustomer.id).select("*").single();
+     const{data,error}=await (addressEditing==="new"
+       ? supabase.from("customer_addresses").insert({...payload,customer_id:selectedCustomer.id,is_default:!!addressDraft.is_default}).select("*").single()
+       : supabase.from("customer_addresses").update(payload).eq("id",addressEditing).eq("customer_id",selectedCustomer.id).select("*").single());
      if(error)throw error;
-     setSelectedCustomer(c=>({...c,addresses:(c.addresses||[]).map(a=>a.id===data.id?data:a)}));
+     setSelectedCustomer(c=>({...c,addresses:addressEditing==="new"?[...(c.addresses||[]),data]:(c.addresses||[]).map(a=>a.id===data.id?data:a)}));
      cancelAddressEdit();
    }catch(e){alert(e?.message||"Unable to save address.")}finally{setAddressSaving(false)}
  };
@@ -57,7 +60,7 @@ export default function AdminCustomersTab({
            </div>}
 
        <div className="admin-customer-addresses">
-         <div className="admin-customer-orders-heading"><h3>Saved Addresses</h3><span>{(selectedCustomer.addresses||[]).length} address{(selectedCustomer.addresses||[]).length===1?"":"es"}</span></div>
+         <div className="admin-customer-orders-heading"><h3>Saved Addresses</h3><div className="admin-customer-address-heading-actions"><span>{(selectedCustomer.addresses||[]).length} address{(selectedCustomer.addresses||[]).length===1?"":"es"}</span><button type="button" className="primary" onClick={addAddress} disabled={addressSaving||addressEditing!==null}>+ Add Address</button></div></div>
          {(selectedCustomer.addresses||[]).length
            ? <div className="admin-customer-address-list">{selectedCustomer.addresses.map(a=>
              <div className="admin-customer-address-card" key={a.id}>
@@ -75,7 +78,7 @@ export default function AdminCustomersTab({
                        <label>District *<input value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}/></label>
                        <label>Province *<input value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value})}/></label>
                      </div>
-                     <div className="admin-customer-address-actions"><button type="button" className="secondary" onClick={cancelAddressEdit} disabled={addressSaving}>Cancel</button><button type="button" className="primary" onClick={saveAddress} disabled={addressSaving}>{addressSaving?"Saving…":"Save Address"}</button></div>
+                     <label className="admin-customer-address-default"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>setAddressDraft({...addressDraft,is_default:e.target.checked})}/> Default address</label><div className="admin-customer-address-actions"><button type="button" className="secondary" onClick={cancelAddressEdit} disabled={addressSaving}>Cancel</button><button type="button" className="primary" onClick={saveAddress} disabled={addressSaving}>{addressSaving?"Saving…":"Save Address"}</button></div>
                    </div>
                  : <div className="admin-customer-address-view">
                      <div className="admin-customer-address-title"><strong>{a.label||"Address"}</strong>{a.is_default&&<span className="badge active">Default</span>}<button type="button" className="secondary" onClick={()=>editAddress(a)}>Edit</button></div>
