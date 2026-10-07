@@ -5315,3 +5315,111 @@ a {
     padding:7px 8px!important;
   }
 }
+
+/* Compact customer tab */
+.admin-customer-compact-form{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.admin-customer-compact-form .admin-customer-compact-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  margin:0;
+}
+.admin-customer-compact-form .admin-customer-compact-grid>label,
+.admin-customer-compact-form>label{
+  min-width:0;
+  margin:0;
+  color:#554344;
+  font-size:11px;
+  font-weight:700;
+}
+.admin-customer-compact-form input,
+.admin-customer-compact-form select{
+  width:100%;
+  min-width:0;
+  min-height:34px;
+  box-sizing:border-box;
+  margin-top:4px;
+  padding:7px 8px;
+  border:1px solid #ded3cd;
+  border-radius:7px;
+  background:#fff;
+  font:inherit;
+  font-size:11px;
+}
+.admin-customer-compact-form textarea{
+  width:100%;
+  box-sizing:border-box;
+  margin-top:4px;
+  padding:7px 8px;
+  min-height:46px;
+  border:1px solid #ded3cd;
+  border-radius:7px;
+  font:inherit;
+  font-size:11px;
+}
+.admin-customer-compact-form .admin-customer-location-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  margin-top:0;
+}
+.customer-profile-compact-grid{
+  gap:5px!important;
+}
+.customer-profile-compact-grid>div{
+  padding:7px 8px!important;
+}
+.customer-profile-compact-grid b{
+  margin-bottom:2px!important;
+  font-size:8px!important;
+}
+.customer-profile-compact-grid span{
+  font-size:11px!important;
+}
+.admin-customer-orders{
+  margin-top:9px!important;
+  padding-top:8px!important;
+}
+.admin-customer-orders-heading{
+  margin-bottom:5px!important;
+}
+.admin-customer-orders-heading h3{
+  font-size:14px!important;
+}
+.admin-customer-orders-heading span{
+  font-size:10px;
+}
+.admin-customer-orders-table{
+  min-width:0!important;
+  width:100%;
+}
+.admin-customer-orders-table th,
+.admin-customer-orders-table td{
+  padding:5px 6px!important;
+  font-size:10px!important;
+}
+.admin-customer-tab .toolbar{
+  gap:6px;
+}
+@media(max-width:640px){
+  .admin-customer-compact-form .admin-customer-compact-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:6px;
+  }
+  .admin-customer-compact-form .admin-customer-location-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .admin-customer-compact-form input,
+  .admin-customer-compact-form select{
+    min-height:33px;
+    padding:6px 7px;
+    font-size:10px;
+  }
+  .admin-customer-compact-form textarea{
+    min-height:44px;
+    padding:6px 7px;
+    font-size:10px;
+  }
+}
