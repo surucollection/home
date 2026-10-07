@@ -11,7 +11,7 @@ export default function AdminCustomersTab({
  const close=()=>setSelectedCustomer(null);
 
  return <><div className="page-title"><div><h2>Customers</h2><p>View registered customer accounts and their order history.</p></div></div>
-   <div className="card">
+   <div className="card admin-customer-tab">
      <div className="toolbar">
        <input placeholder="Search name or phone" value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)}/>
        <select value={customerStatus} onChange={e=>setCustomerStatus(e.target.value)}><option value="all">All customers</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
