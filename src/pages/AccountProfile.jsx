@@ -70,7 +70,6 @@ function AccountProfile(){
        </div>
      })}
    </div>
-   <button className="btn secondary" type="button" onClick={async()=>{await supabase.auth.signOut();location.href="/login.html"}}>Logout</button>
  </section></main><Footer/></>;
 }
 export default AccountProfile;
