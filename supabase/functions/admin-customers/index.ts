@@ -77,16 +77,16 @@ Deno.serve(async (req) => {
         last_name: String(body.last_name || "").trim(),
         phone: String(body.phone || "").trim(),
         email: String(body.email || "").trim().toLowerCase(),
-        address: String(body.address || "").trim(),
-        city: String(body.city || "").trim(),
-        district: String(body.district || "").trim(),
-        province: String(body.province || "").trim(),
-        postal_code: String(body.postal_code || "").trim() || null,
+        address: body.address === undefined ? null : String(body.address || "").trim(),
+        city: body.city === undefined ? null : String(body.city || "").trim(),
+        district: body.district === undefined ? null : String(body.district || "").trim(),
+        province: body.province === undefined ? null : String(body.province || "").trim(),
+        postal_code: body.postal_code === undefined ? null : (String(body.postal_code || "").trim() || null),
         is_active: body.is_active !== false,
         updated_at: new Date().toISOString(),
       };
-      if (!fields.name || !fields.first_name || !fields.last_name || !fields.phone || !fields.email || !fields.address || !fields.city || !fields.district || !fields.province) {
-        throw new Error("Name, email, phone, address, city, district and province are required");
+      if (!fields.name || !fields.first_name || !fields.last_name || !fields.phone || !fields.email) {
+        throw new Error("Name, email and phone are required");
       }
 
       const existing = await db("customers?id=eq." + encodeURIComponent(customerId) + "&select=*");
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       const customer = rows?.[0];
       if (!customer) throw new Error("Customer not found");
 
-      if (customer.auth_user_id) {
+      for (const key of ["address","city","district","province","postal_code"]) {\n        if (fields[key as keyof typeof fields] === null) fields[key as keyof typeof fields] = customer[key] ?? null;\n      }\n\n      if (customer.auth_user_id) {
         const authPatch: Record<string, unknown> = {
           email: fields.email,
           user_metadata: {
