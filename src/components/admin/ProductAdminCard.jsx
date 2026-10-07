@@ -79,7 +79,10 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
           <label><input type="checkbox" checked={!!e.is_featured} onChange={x=>setE({...e,is_featured:x.target.checked})}/> Featured</label>
         </div>
 
-        <label className="admin-product-description-field">Description<textarea rows="3" value={e.description??""} onChange={x=>setE({...e,description:x.target.value})}/></label>
+        <div className="admin-product-category-description">
+          <label>Category<select value={e.category||""} onChange={x=>setE({...e,category:x.target.value})} required><option value="" disabled>Select Category</option>{["Sarees","Lehengas","Suits","Gowns","Kurtis","Dupattas","Kids Wear","Accessories"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>
+          <label className="admin-product-description-field">Description<textarea rows="2" value={e.description??""} onChange={x=>setE({...e,description:x.target.value})}/></label>
+        </div>
 
         <div className="admin-product-section admin-product-drive-section">
           <div className="admin-product-inline-title"><b>Google Drive Image Folder</b><small>Share the folder as “Anyone with the link”.</small></div>
