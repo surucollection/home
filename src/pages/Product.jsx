@@ -101,7 +101,7 @@ function Product(){
   const nextCity=String(a.city||"").trim(),nextDistrict=String(a.district||"").trim(),nextProvince=canonicalProvince(a.province)||"";
   setPreorderSelectedAddressId(a.id||"");
   setPreorderCustomer({name:a.full_name||"",phone:a.phone||"",address:a.address||"",city:nextCity,district:nextDistrict,province:nextProvince,postal_code:a.postal_code||""});
-  const branches=NCM_BRANCH_CACHE.items||preorderNcmBranches;
+  const branches=preorderNcmBranches;
   const matched=branches.length?matchNcmBranch(branches,nextCity,nextDistrict,null,nextProvince):"";
   setPreorderNcmBranch(matched||"");
  };
