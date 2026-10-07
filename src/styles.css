@@ -265,3 +265,31 @@
   .product-admin-title b,.inventory-admin-title b{font-size:13px!important;line-height:1.22!important}
   .product-admin-meta,.inventory-admin-meta{max-width:100%;overflow:hidden}
 }
+
+
+/* Compact customer saved addresses */
+.admin-customer-basic-only{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.admin-customer-addresses{margin-top:10px;padding-top:9px;border-top:1px solid #eee4df}
+.admin-customer-address-list{display:flex;flex-direction:column;gap:6px}
+.admin-customer-address-card{border:1px solid #e5dbd6;border-radius:8px;background:#fff;padding:7px 8px}
+.admin-customer-address-view{min-width:0}
+.admin-customer-address-title{display:flex;align-items:center;gap:6px;min-height:22px}
+.admin-customer-address-title strong{font-size:11px;color:#4b3d3e}
+.admin-customer-address-title .badge{font-size:8px;padding:2px 5px}
+.admin-customer-address-title button{margin-left:auto;padding:4px 8px;font-size:9px}
+.admin-customer-address-main{display:grid;grid-template-columns:auto auto 1fr;gap:2px 8px;margin-top:4px;font-size:10px;color:#65595a;line-height:1.3}
+.admin-customer-address-main b{color:#3f3435}
+.admin-customer-address-main span:nth-child(3){grid-column:1/-1}
+.admin-customer-address-main span:nth-child(4){grid-column:1/-1}
+.admin-customer-address-edit{display:flex;flex-direction:column;gap:6px}
+.admin-customer-address-edit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.admin-customer-address-edit label{font-size:9px;font-weight:700;color:#554344}
+.admin-customer-address-edit input,.admin-customer-address-edit textarea{width:100%;box-sizing:border-box;margin-top:3px;padding:5px 6px;border:1px solid #ded3cd;border-radius:6px;font:inherit;font-size:10px;min-height:30px}
+.admin-customer-address-edit textarea{min-height:42px;resize:vertical}
+.admin-customer-address-actions{display:flex;justify-content:flex-end;gap:5px}
+.admin-customer-address-actions button{padding:5px 9px;font-size:9px}
+@media(max-width:640px){
+ .admin-customer-basic-only{grid-template-columns:1fr!important}
+ .admin-customer-address-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .admin-customer-address-main{grid-template-columns:1fr 1fr}
+}
