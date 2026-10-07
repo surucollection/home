@@ -29,8 +29,8 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       <div className="product-admin-thumb">
         {imageLinks[0]?<img src={imageUrl(imageLinks[0],160)} alt={p.name||"Product"} loading="lazy" onError={e=>{e.currentTarget.style.visibility="hidden"}}/>:<span aria-hidden="true">No image</span>}
       </div>
-      <div className="product-admin-info">
-        <div className="product-admin-title"><b>{p.name}</b><small>{p.product_code} · {p.category}</small></div>
+      <div className="product-admin-info" style={{minWidth:0,width:"100%",maxWidth:"100%",overflow:"hidden"}}>
+        <div className="product-admin-title" style={{minWidth:0,maxWidth:"100%",overflow:"hidden"}}><b style={{display:"block",whiteSpace:"normal",overflowWrap:"anywhere",wordBreak:"break-word",maxWidth:"100%"}}>{p.name}</b><small>{p.product_code} · {p.category}</small></div>
         <div className="product-admin-meta"><b>{money(p.price)}</b><span>MOQ {p.moq}</span><span className={p.is_active?"badge active":"badge inactive"}>{p.is_active?"Active":"Inactive"}</span>{p.is_featured&&<span className="badge">Featured</span>}</div>
       </div>
       <button className="primary product-admin-edit" onClick={()=>setEditing(p)}>Edit Product</button>
