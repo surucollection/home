@@ -17,3 +17,5 @@ import CustomerAddressesPanel from "../components/customer/CustomerAddressesPane
 import { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone } from "../lib/appShared.js";
 
 function Products(){const params=new URLSearchParams(location.search);const category=params.get("category")||"";const featured=params.get("featured")==="true";return <><Header/><main><Hero eyebrow={featured?"HANDPICKED FOR YOU":"SHOP SURU"} title={featured?"Featured Products":category||"Our Products"} text={featured?"Explore all products selected as featured favourites.":category?"Explore our "+category+" collection.":"Explore our complete collection of traditional and ethnic wear."}/><section className="section shop-section products-page-section"><ProductsGrid category={category} featured={featured}/></section></main><Footer/></>}
+
+export default Products;
