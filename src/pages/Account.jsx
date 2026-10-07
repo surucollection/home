@@ -106,3 +106,5 @@ const openOrder=async(o)=>{setSelectedOrderBusy(true);try{const{data,error}=awai
  {!ordersOnly&&!addressesOnly&&<button className="btn secondary" onClick={logout}>Logout</button>}
  </section></main><Footer/></>
 }
+
+export default Account;
