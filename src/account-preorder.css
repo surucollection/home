@@ -1,22 +1,70 @@
-/* Targeted account/profile and preorder checkout presentation. Existing business logic is unchanged. */
-.account-profile-only{max-width:760px;margin:32px auto}
-.account-profile-heading{margin-bottom:22px}
-.account-profile-heading h1{margin:4px 0 6px}
-.account-profile-fields{display:flex;flex-direction:column;border:1px solid #e8dfda;border-radius:16px;background:#fff;overflow:hidden;margin-bottom:18px}
-.account-profile-field{padding:20px;border-bottom:1px solid #eee5e0}
+/* My Account — profile + sign-in security redesign */
+.account-page{width:min(1040px,calc(100% - 24px))!important;padding:34px 0 68px!important}
+.account-page .account-profile-only{max-width:none;margin:0 auto!important;padding:0!important;overflow:hidden}
+.account-profile-hero{padding:clamp(24px,5vw,42px) clamp(20px,5vw,46px);background:linear-gradient(135deg,#fffaf7 0%,#f8eee8 100%);border-bottom:1px solid #eee2dc}
+.account-profile-identity{display:flex;align-items:center;gap:18px}
+.account-profile-avatar{width:64px;height:64px;flex:none;border-radius:50%;display:grid;place-items:center;background:#76292d;color:#fff;font:600 28px/1 Georgia,"Times New Roman",serif;box-shadow:0 10px 24px rgba(118,41,45,.18)}
+.account-profile-hero h1{margin:2px 0 6px!important;color:#4a292b!important;font:500 clamp(30px,5vw,44px)/1.15 Georgia,"Times New Roman",serif!important}
+.account-profile-hero .product-code{margin:0 0 4px}
+.account-profile-subtitle{margin:0;color:#756763;font-size:15px;line-height:1.65}
+.account-profile-message{margin:18px 24px 0!important}
+.account-section{padding:clamp(24px,5vw,40px) clamp(20px,5vw,46px);border-bottom:1px solid #eee4de}
+.account-section:last-child{border-bottom:0}
+.account-section-heading{margin-bottom:20px}
+.account-section-heading .account-section-kicker{margin:0 0 4px;color:#9b7661;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.account-section-heading h2{margin:0 0 5px;color:#4a292b;font:500 clamp(24px,3vw,31px)/1.2 Georgia,"Times New Roman",serif}
+.account-section-heading p:not(.account-section-kicker){margin:0;color:#756763;font-size:14px;line-height:1.6}
+.account-profile-fields{display:flex;flex-direction:column;border:1px solid #e8ddd7;border-radius:16px;background:#fff;overflow:hidden}
+.account-profile-field{padding:19px 20px;border-bottom:1px solid #eee6e1}
 .account-profile-field:last-child{border-bottom:0}
-.account-profile-field-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#78666a;margin-bottom:8px}
-.account-profile-value-row,.account-profile-edit-row{display:flex;align-items:center;gap:12px}
-.account-profile-value-row>span{flex:1;font-size:16px;color:#30272a;word-break:break-word}
-.account-profile-edit-row{align-items:stretch;flex-direction:column}
-.account-profile-edit-row input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #d8ceca;border-radius:10px;font:inherit;background:#fff}
-.account-profile-actions{display:flex;gap:10px}
-.account-profile-update{flex:none}
-@media(max-width:600px){
- .account-profile-only{margin:18px 12px}
+.account-profile-field-label{margin-bottom:8px;color:#8a7470;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.account-profile-value-row{display:flex;align-items:center;gap:14px}
+.account-profile-value-row>span{flex:1;min-width:0;color:#30272a;font-size:16px;line-height:1.45;overflow-wrap:anywhere}
+.account-profile-edit-row{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+.account-profile-input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #d8cec9;border-radius:10px;background:#fff;color:#30272a;font:inherit;font-size:15px;outline:none}
+.account-profile-input:focus{border-color:#9d6e59;box-shadow:0 0 0 3px rgba(157,110,89,.11)}
+.account-profile-actions{display:flex;flex-wrap:wrap;gap:9px}
+.account-profile-actions .btn{min-height:42px;border-radius:10px}
+.account-profile-update{flex:none;min-height:40px!important;padding:8px 15px!important;border-radius:999px!important}
+.account-security-section{background:#fffdfb}
+.account-security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.account-security-card{display:flex;align-items:flex-start;gap:14px;min-width:0;padding:20px;border:1px solid #e7ddd7;border-radius:16px;background:#fff;box-shadow:0 8px 24px rgba(75,35,39,.035)}
+.account-security-icon{width:42px;height:42px;flex:none;display:grid;place-items:center;border-radius:12px;background:#f5e9e1;color:#76292d;font-size:22px;font-weight:700}
+.google-security-g{font-family:Arial,sans-serif;color:#4285f4;background:#f2f5fb}
+.account-security-content{min-width:0;flex:1}
+.account-security-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.account-security-title-row h3{margin:0;color:#4a292b;font-size:18px}
+.account-security-status{flex:none;padding:5px 9px;border-radius:999px;background:#f7f2ee;color:#765e58;font-size:11px;font-weight:800;white-space:nowrap}
+.account-security-card> .account-security-content>p{margin:7px 0 14px;color:#756763;font-size:13px;line-height:1.6}
+.account-security-action{min-height:40px!important;padding:9px 15px!important;border-radius:10px!important}
+.account-security-muted{color:#78696a;font-size:13px}
+.passkey-list{display:flex;flex-direction:column;gap:8px;margin:10px 0 12px}
+.passkey-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #ece3de;border-radius:10px;background:#fcfaf8}
+.passkey-details{min-width:0;display:flex;flex-direction:column;gap:2px}
+.passkey-details strong{color:#453537;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.passkey-details span{color:#8a7775;font-size:11px}
+.passkey-delete-button{flex:none;border:1px solid #e2d1cc;border-radius:8px;background:#fff;color:#8a2e34;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.passkey-delete-button:disabled{opacity:.55;cursor:wait}
+.account-security-card .message{margin-top:11px}
+.account-security-card .message.success{background:#eef7ef;color:#2f6b3b}
+.account-security-card .message.error{background:#fff0f0;color:#8a2026}
+.account-password-form{display:grid;gap:10px;margin-top:11px}
+.account-password-form .field{margin:0;color:#554344;font-size:12px;font-weight:700}
+.account-password-form input{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:11px 12px;border:1px solid #ded3cd;border-radius:9px;background:#fff;color:#302525;font-size:14px}
+.account-password-form input:focus{border-color:#9d6e59;outline:2px solid rgba(157,110,89,.12)}
+.account-password-form .account-profile-actions{margin-top:2px}
+@media(max-width:700px){
+ .account-page{width:calc(100% - 16px)!important;padding:14px 0 38px!important}
+ .account-profile-identity{align-items:flex-start;gap:13px}
+ .account-profile-avatar{width:52px;height:52px;font-size:23px}
+ .account-section{padding:24px 16px}
  .account-profile-field{padding:16px}
  .account-profile-value-row{align-items:flex-start}
- .account-profile-update{padding:9px 13px}
+ .account-profile-update{padding:8px 12px!important}
+ .account-security-grid{grid-template-columns:1fr}
+ .account-security-card{padding:17px}
+ .account-security-title-row{align-items:flex-start}
+ .account-security-status{font-size:10px}
 }
 
 /* Pre-order mini checkout modal. Business and payment logic remains in Product.jsx. */
