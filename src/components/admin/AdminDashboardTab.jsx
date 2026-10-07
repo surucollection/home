@@ -1,0 +1,3 @@
+import React from "react";
+import OrderTable from "./OrderTable.jsx";
+export default function AdminDashboardTab({stats,dashboardOrders}){return <><div className="page-title"><div><h2>Dashboard</h2><p>Overview of your online store.</p></div></div><div className="stats"><div className="stat"><small>Total Orders</small><strong>{stats.orders}</strong></div><div className="stat"><small>Pending Orders</small><strong>{stats.pending}</strong></div><div className="stat"><small>Products</small><strong>{stats.products}</strong></div></div><div className="card"><h3>Recent Orders</h3><OrderTable rows={dashboardOrders.slice(0,5)} compact/></div></>;}
