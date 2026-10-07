@@ -97,5 +97,23 @@ export default function AdminCustomersTab({
        </div>
      </div>}
    </AdminModal>
- </>;
+
+   <AdminModal open={!!selectedCustomer&&addressEditing==="new"} onClose={cancelAddressEdit} closeDisabled={addressSaving} title="Add Customer Address" subtitle={"Add a new saved address for "+(selectedCustomer?.name||"customer")} backdropClassName="admin-modal-layer-backdrop" shellClassName="admin-modal-layer-shell" maxWidth="720px"
+     footer={<div className="admin-customer-modal-footer-content"><button type="button" className="secondary" onClick={cancelAddressEdit} disabled={addressSaving}>Cancel</button><button type="button" className="primary" onClick={saveAddress} disabled={addressSaving}>{addressSaving?"Saving…":"Save Address"}</button></div>}>
+     <div className="admin-customer-address-edit admin-customer-address-add-form">
+       <div className="admin-customer-address-edit-grid">
+         <label>Label<input value={addressDraft.label||""} onChange={e=>setAddressDraft({...addressDraft,label:e.target.value})} placeholder="Home, Office, etc."/></label>
+         <label>Name *<input value={addressDraft.full_name||""} onChange={e=>setAddressDraft({...addressDraft,full_name:e.target.value})}/></label>
+         <label>Mobile *<input value={addressDraft.mobile||""} onChange={e=>setAddressDraft({...addressDraft,mobile:e.target.value})}/></label>
+         <label>Postal Code<input value={addressDraft.postal_code||""} onChange={e=>setAddressDraft({...addressDraft,postal_code:e.target.value})}/></label>
+       </div>
+       <label>Address *<textarea rows="3" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
+       <div className="admin-customer-address-edit-grid">
+         <label>City *<input value={addressDraft.city||""} onChange={e=>setAddressDraft({...addressDraft,city:e.target.value})}/></label>
+         <label>District *<input value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}/></label>
+         <label>Province *<input value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value})}/></label>
+       </div>
+       <label className="admin-customer-address-default"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>setAddressDraft({...addressDraft,is_default:e.target.checked})}/> Default address</label>
+     </div>
+   </AdminModal> </>;
 }
