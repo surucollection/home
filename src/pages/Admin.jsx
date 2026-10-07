@@ -1,17 +1,6 @@
 import React,{useEffect,useMemo,useRef,useState} from "react";
-import QRCode from "qrcode";
-import { supabase, get, money, norm, imageUrl } from "../lib/api.js";
-import { readCart, addCart, removeCart, clearCart, cartKey } from "../lib/cart.js";
-import { openInvoice, openCustomerInvoice } from "../lib/invoice.js";
-import Header from "../components/Header.jsx";
-import Footer from "../components/Footer.jsx";
-import Hero from "../components/Hero.jsx";
-import CollectionCard from "../components/CollectionCard.jsx";
-import ProductsGrid from "../components/ProductsGrid.jsx";
-import AuthLayout from "../components/AuthLayout.jsx";
-import OrderTable from "../components/admin/OrderTable.jsx";
-import ProductAdminCard from "../components/admin/ProductAdminCard.jsx";
-import StockRow from "../components/admin/StockRow.jsx";
+import { supabase, money, norm } from "../lib/api.js";
+import { openInvoice } from "../lib/invoice.js";
 import PreorderAdminQueue from "../components/admin/PreorderAdminQueue.jsx";
 import AdminHeader from "../components/admin/AdminHeader.jsx";
 import AdminSidebar from "../components/admin/AdminSidebar.jsx";
@@ -22,7 +11,6 @@ import AdminInventoryTab from "../components/admin/AdminInventoryTab.jsx";
 import AdminCustomersTab from "../components/admin/AdminCustomersTab.jsx";
 import AdminSettingsTab from "../components/admin/AdminSettingsTab.jsx";
 import AdminReportsTab from "../components/admin/AdminReportsTab.jsx";
-import CustomerAddressesPanel from "../components/customer/CustomerAddressesPanel.jsx";
 import { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone } from "../lib/appShared.js";
 
 function Admin(){
