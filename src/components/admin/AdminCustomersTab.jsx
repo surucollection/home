@@ -12,7 +12,7 @@ export default function AdminCustomersTab({
  const[addressEditing,setAddressEditing]=useState(null);
  const[addressDraft,setAddressDraft]=useState({});
  const[addressSaving,setAddressSaving]=useState(false),[addressMessage,setAddressMessage]=useState("");
- const editAddress=a=>{setAddressMessage("");setAddressEditing(a.id);setAddressDraft({...a,phone:a.phone||a.mobile||""});};
+ const editAddress=a=>{setAddressMessage("");setAddressEditing(a.id);setAddressDraft({...a,phone:a.phone||""});};
  const addAddress=()=>{setAddressMessage("");setAddressEditing("new");setAddressDraft({label:"",full_name:selectedCustomer?.name||"",phone:selectedCustomer?.phone||"",address:"",city:"",district:"",province:"",postal_code:"",is_default:!(selectedCustomer?.addresses||[]).length});};
  const cancelAddressEdit=()=>{setAddressEditing(null);setAddressDraft({});};
  const saveAddress=async()=>{
@@ -20,7 +20,7 @@ export default function AdminCustomersTab({
    setAddressSaving(true);
    setAddressMessage("");
    try{
-     const payload={label:String(addressDraft.label||"").trim()||"Home",full_name:String(addressDraft.full_name||"").trim(),phone:String(addressDraft.phone||addressDraft.mobile||"").trim(),address:String(addressDraft.address||"").trim(),city:String(addressDraft.city||"").trim(),district:String(addressDraft.district||"").trim(),province:String(addressDraft.province||"").trim(),postal_code:String(addressDraft.postal_code||"").trim()||null};
+     const payload={label:String(addressDraft.label||"").trim()||"Home",full_name:String(addressDraft.full_name||"").trim(),phone:String(addressDraft.phone||"").trim(),address:String(addressDraft.address||"").trim(),city:String(addressDraft.city||"").trim(),district:String(addressDraft.district||"").trim(),province:String(addressDraft.province||"").trim(),postal_code:String(addressDraft.postal_code||"").trim()||null};
      if(!payload.full_name||!payload.phone||!payload.address||!payload.city||!payload.district||!payload.province)throw Error("Please complete all required address fields.");
      const makeDefault=!!addressDraft.is_default;
      if(makeDefault) {
@@ -83,7 +83,7 @@ export default function AdminCustomersTab({
                      <div className="admin-customer-address-edit-grid">
                        <label>Label<input value={addressDraft.label||""} onChange={e=>setAddressDraft({...addressDraft,label:e.target.value})}/></label>
                        <label>Name *<input value={addressDraft.full_name||""} onChange={e=>setAddressDraft({...addressDraft,full_name:e.target.value})}/></label>
-                       <label>Mobile *<input value={addressDraft.phone||addressDraft.mobile||""} onChange={e=>setAddressDraft({...addressDraft,phone:e.target.value})}/></label>
+                       <label>Mobile *<input value={addressDraft.phone||""} onChange={e=>setAddressDraft({...addressDraft,phone:e.target.value})}/></label>
                        <label>Postal Code<input value={addressDraft.postal_code||""} onChange={e=>setAddressDraft({...addressDraft,postal_code:e.target.value})}/></label>
                      </div>
                      <label>Address *<textarea rows="2" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
@@ -96,7 +96,7 @@ export default function AdminCustomersTab({
                    </div>
                  : <div className="admin-customer-address-view">
                      <div className="admin-customer-address-title"><strong>{a.label||"Address"}</strong>{a.is_default&&<span className="badge active">Default</span>}<button type="button" className="secondary" onClick={()=>editAddress(a)}>Edit</button></div>
-                     <div className="admin-customer-address-main"><b>{a.full_name||"—"}</b><span>{a.mobile||"—"}</span><span>{a.address||"—"}</span><span>{[a.city,a.district,a.province,a.postal_code].filter(Boolean).join(", ")||"—"}</span></div>
+                     <div className="admin-customer-address-main"><b>{a.full_name||"—"}</b><span>{a.phone||"—"}</span><span>{a.address||"—"}</span><span>{[a.city,a.district,a.province,a.postal_code].filter(Boolean).join(", ")||"—"}</span></div>
                    </div>}
              </div>
            )}</div>
@@ -118,7 +118,7 @@ export default function AdminCustomersTab({
        <div className="admin-customer-address-edit-grid">
          <label>Label<input value={addressDraft.label||""} onChange={e=>setAddressDraft({...addressDraft,label:e.target.value})} placeholder="Home, Office, etc."/></label>
          <label>Name *<input value={addressDraft.full_name||""} onChange={e=>setAddressDraft({...addressDraft,full_name:e.target.value})}/></label>
-         <label>Mobile *<input value={addressDraft.mobile||""} onChange={e=>setAddressDraft({...addressDraft,mobile:e.target.value})}/></label>
+         <label>Mobile *<input value={addressDraft.phone||""} onChange={e=>setAddressDraft({...addressDraft,phone:e.target.value})}/></label>
          <label>Postal Code<input value={addressDraft.postal_code||""} onChange={e=>setAddressDraft({...addressDraft,postal_code:e.target.value})}/></label>
        </div>
        <label>Address *<textarea rows="3" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
