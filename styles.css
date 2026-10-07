@@ -5224,17 +5224,39 @@ a {
 .admin-product-checks{
   display:grid!important;
   grid-template-columns:max-content max-content max-content minmax(150px,1fr)!important;
-  align-items:end;
+  align-items:center!important;
   gap:10px!important;
   width:100%;
+  min-height:36px;
+}
+.admin-product-checks>label:not(.admin-product-category-inline){
+  display:flex!important;
+  align-items:center!important;
+  gap:5px;
+  margin:0!important;
+  min-height:36px;
+  white-space:nowrap;
+  line-height:1!important;
+}
+.admin-product-checks>label:not(.admin-product-category-inline) input[type="checkbox"]{
+  margin:0!important;
+  width:15px;
+  height:15px;
+  flex:0 0 15px;
+  vertical-align:middle;
 }
 .admin-product-checks .admin-product-category-inline{
-  display:grid!important;
-  grid-template-columns:max-content minmax(110px,1fr);
-  align-items:center;
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
   gap:6px;
   margin:0!important;
   min-width:0;
+  min-height:36px;
+  line-height:1!important;
+}
+.admin-product-checks .admin-product-category-inline select{
+  align-self:center!important;
 }
 .admin-product-checks .admin-product-category-inline select{
   width:100%;
