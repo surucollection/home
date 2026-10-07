@@ -1,5 +1,6 @@
 import React,{useEffect,useState} from "react";
 import { money, supabase, imageUrl } from "../../lib/api.js";
+import AdminModal from "./AdminModal.jsx";
 
 export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const[e,setE]=useState({...p});
@@ -36,13 +37,17 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       <button className="primary product-admin-edit" onClick={()=>setEditing(p)}>Edit Product</button>
     </div>
 
-    {editing&&<div className="admin-product-modal" role="dialog" aria-modal="true" aria-labelledby={"edit-product-"+p.id} onMouseDown={e=>{if(e.target===e.currentTarget)close()}}>
-      <div className="admin-product-modal-card" onMouseDown={e=>e.stopPropagation()}>
-        <div className="admin-product-modal-header">
-          <div><h3 id={"edit-product-"+p.id}>Edit Product</h3><p>{p.product_code} · {p.name}</p></div>
-          <button type="button" className="secondary admin-modal-close" onClick={close} aria-label="Close">×</button>
-        </div>
-        <div className="admin-product-modal-body">
+    <AdminModal
+      open={!!editing}
+      onClose={close}
+      title="Edit Product"
+      subtitle={p.product_code+" · "+p.name}
+      bodyClassName="admin-product-modal-body"
+      maxWidth="900px"
+      closeDisabled={imagesLoading||driveBusy}
+      footer={<div className="admin-product-modal-footer-content"><button className="secondary" onClick={close}>Cancel</button><button className="primary" onClick={()=>saveProduct(e,images)} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div></div>}
+    >
+
           <div className="admin-form">
             <div className="form-grid">{[["product_code","Product Code"],["name","Product Name"],["price","Price"],["compare_at_price","Compare-at Price"],["moq","MOQ"],["fabric","Fabric"],["color","Colour"],["pattern","Pattern"]].map(([k,l])=><label key={k}>{l}<input value={e[k]??""} onChange={x=>setE({...e,[k]:x.target.value})}/></label>)}<label>Category<select value={e.category||""} onChange={x=>setE({...e,category:x.target.value})} required><option value="" disabled>Select Category</option>{["Sarees","Lehengas","Suits","Gowns","Kurtis","Dupattas","Kids Wear","Accessories"].map(x=><option key={x} value={x}>{x}</option>)}</select></label></div>
             <label>Description<textarea value={e.description||""} onChange={x=>setE({...e,description:x.target.value})}/></label>
@@ -60,8 +65,8 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
             </div>
           </div>
         </div>
-        <div className="admin-product-modal-footer"><button className="secondary" onClick={close}>Cancel</button><button className="primary" onClick={()=>saveProduct(e,images)} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div>
-      </div>
-    </div>}
+        
+    </AdminModal>
+}
   </div>
 }
