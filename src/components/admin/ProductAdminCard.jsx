@@ -30,7 +30,6 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const updateImage=(index,patch)=>setImages(prev=>prev.map((x,i)=>i===index?{...x,...patch}:x));
   const addImage=()=>setImages(prev=>[...prev,{id:null,image_url:"",alt_text:p.name||"",color:"",is_main:false}]);
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
-  const mainImage=imageLinks.find(x=>x.is_main)||imageLinks[0]||null;
   const close=()=>setEditing(null);
 
   return <div className="product-admin-card">
@@ -64,7 +63,6 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
           <label>Price<input type="number" min="0" value={e.price??""} onChange={x=>setE({...e,price:x.target.value})}/></label>
           <label>Compare-at Price<input type="number" min="0" value={e.compare_at_price??""} onChange={x=>setE({...e,compare_at_price:x.target.value})}/></label>
           <label>MOQ<input type="number" min="1" value={e.moq??1} onChange={x=>setE({...e,moq:x.target.value})}/></label>
-          <label>Category<select value={e.category||""} onChange={x=>setE({...e,category:x.target.value})} required><option value="" disabled>Select Category</option>{["Sarees","Lehengas","Suits","Gowns","Kurtis","Dupattas","Kids Wear","Accessories"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>
         </div>
 
         <div className="admin-product-row admin-product-row-attributes">
@@ -77,12 +75,10 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
           <label><input type="checkbox" checked={!!e.preorder_enabled} onChange={x=>setE({...e,preorder_enabled:x.target.checked})}/> Preorder</label>
           <label><input type="checkbox" checked={!!e.is_active} onChange={x=>setE({...e,is_active:x.target.checked})}/> Active</label>
           <label><input type="checkbox" checked={!!e.is_featured} onChange={x=>setE({...e,is_featured:x.target.checked})}/> Featured</label>
+          <label className="admin-product-category-inline">Category<select value={e.category||""} onChange={x=>setE({...e,category:x.target.value})} required><option value="" disabled>Select Category</option>{["Sarees","Lehengas","Suits","Gowns","Kurtis","Dupattas","Kids Wear","Accessories"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>
         </div>
 
-        <div className="admin-product-category-description">
-          <label>Category<select value={e.category||""} onChange={x=>setE({...e,category:x.target.value})} required><option value="" disabled>Select Category</option>{["Sarees","Lehengas","Suits","Gowns","Kurtis","Dupattas","Kids Wear","Accessories"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>
-          <label className="admin-product-description-field">Description<textarea rows="2" value={e.description??""} onChange={x=>setE({...e,description:x.target.value})}/></label>
-        </div>
+        <label className="admin-product-description-field">Description<textarea rows="2" value={e.description??""} onChange={x=>setE({...e,description:x.target.value})}/></label>
 
         <div className="admin-product-section admin-product-drive-section">
           <div className="admin-product-inline-title"><b>Google Drive Image Folder</b><small>Share the folder as “Anyone with the link”.</small></div>
@@ -104,8 +100,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
 
         <div className="admin-product-section admin-product-images-section">
           <div className="product-images-toolbar">
-            <div className="admin-product-inline-title"><b>Product Images</b><small>Image links and colour assignment.</small></div>
-            <div className="product-images-main-preview"><span>Main</span>{mainImage?<img src={imageUrl(mainImage.image_url,96)} alt="Main product" onError={x=>{x.currentTarget.style.display="none"}}/>:<em>No image</em>}</div>
+            <div className="admin-product-inline-title"><b>Product Images</b><small>First image is the main image.</small></div>
             <button type="button" className="secondary" onClick={addImage}>+ Add Image</button>
           </div>
 
