@@ -1,6 +1,20 @@
 import React,{useState} from "react";
 import { money,supabase } from "../../lib/api.js";
 import AdminModal from "./AdminModal.jsx";
+const NEPAL_PROVINCES=[
+  "Koshi","Madhesh","Bagmati","Gandaki","Lumbini","Karnali","Sudurpashchim"
+];
+const NEPAL_DISTRICTS={
+  Koshi:["Bhojpur","Dhankuta","Ilam","Jhapa","Khotang","Morang","Okhaldhunga","Panchthar","Sankhuwasabha","Solukhumbu","Sunsari","Taplejung","Terhathum","Udayapur"],
+  Madhesh:["Bara","Dhanusha","Mahottari","Parsa","Rautahat","Saptari","Sarlahi","Siraha"],
+  Bagmati:["Bhaktapur","Chitwan","Dhading","Dolakha","Kathmandu","Kavrepalanchok","Lalitpur","Makwanpur","Nuwakot","Ramechhap","Rasuwa","Sindhuli","Sindhupalchok"],
+  Gandaki:["Baglung","Gorkha","Kaski","Lamjung","Manang","Mustang","Myagdi","Nawalpur","Parbat","Syangja","Tanahun"],
+  Lumbini:["Arghakhanchi","Banke","Bardiya","Dang","Gulmi","Kapilvastu","Palpa","Pyuthan","Rolpa","Rukum East","Rupandehi"],
+  Karnali:["Dailekh","Dolpa","Humla","Jajarkot","Jumla","Kalikot","Mugu","Rukum West","Salyan","Surkhet"],
+  Sudurpashchim:["Achham","Baitadi","Bajhang","Bajura","Dadeldhura","Darchula","Doti","Kailali","Kanchanpur"]
+};
+const districtOptions=province=>(NEPAL_DISTRICTS[province]||[]); 
+
 
 export default function AdminCustomersTab({
  customerSearch,setCustomerSearch,customerStatus,setCustomerStatus,
@@ -89,8 +103,8 @@ export default function AdminCustomersTab({
                      <label>Address *<textarea rows="2" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
                      <div className="admin-customer-address-edit-grid">
                        <label>City *<input value={addressDraft.city||""} onChange={e=>setAddressDraft({...addressDraft,city:e.target.value})}/></label>
-                       <label>District *<input value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}/></label>
-                       <label>Province *<input value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value})}/></label>
+                       <label>District *<select value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}><option value="">Select district</option>{districtOptions(addressDraft.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+                       <label>Province *<select value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value,district:""})}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p} value={p}>{p}</option>)}</select></label>
                      </div>
                      <label className="admin-customer-address-default"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>setAddressDraft({...addressDraft,is_default:e.target.checked})}/> Default address</label><div className="admin-customer-address-actions"><button type="button" className="secondary" onClick={cancelAddressEdit} disabled={addressSaving}>Cancel</button><button type="button" className="primary" onClick={saveAddress} disabled={addressSaving}>{addressSaving?"Saving…":"Save Address"}</button></div>
                    </div>
@@ -124,8 +138,8 @@ export default function AdminCustomersTab({
        <label>Address *<textarea rows="3" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
        <div className="admin-customer-address-edit-grid">
          <label>City *<input value={addressDraft.city||""} onChange={e=>setAddressDraft({...addressDraft,city:e.target.value})}/></label>
-         <label>District *<input value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}/></label>
-         <label>Province *<input value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value})}/></label>
+         <label>District *<select value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}><option value="">Select district</option>{districtOptions(addressDraft.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+         <label>Province *<select value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value,district:""})}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p} value={p}>{p}</option>)}</select></label>
        </div>
        <label className="admin-customer-address-default"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>setAddressDraft({...addressDraft,is_default:e.target.checked})}/> Default address</label>
      </div>
