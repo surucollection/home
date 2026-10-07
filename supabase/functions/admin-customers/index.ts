@@ -95,7 +95,11 @@ Deno.serve(async (req) => {
       const customer = rows?.[0];
       if (!customer) throw new Error("Customer not found");
 
-      for (const key of ["address","city","district","province","postal_code"]) {\n        if (fields[key as keyof typeof fields] === null) fields[key as keyof typeof fields] = customer[key] ?? null;\n      }\n\n      if (customer.auth_user_id) {
+      for (const key of ["address","city","district","province","postal_code"]) {
+        if (fields[key as keyof typeof fields] === null) fields[key as keyof typeof fields] = customer[key] ?? null;
+      }
+
+      if (customer.auth_user_id) {
         const authPatch: Record<string, unknown> = {
           email: fields.email,
           user_metadata: {
