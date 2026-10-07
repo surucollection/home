@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       const customerId = String(body.customer_id || "").trim();
       if (!customerId) throw new Error("Customer ID is required");
 
-      const fields = {
+      const fields: Record<string, unknown> = {
         name: String(body.name || "").trim(),
         first_name: String(body.first_name || "").trim(),
         last_name: String(body.last_name || "").trim(),
