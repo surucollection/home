@@ -19,40 +19,29 @@
  .account-profile-update{padding:9px 13px}
 }
 
-/* Pre-order is a mini checkout modal instead of an inline product-page form. */
-.preorder-checkout-form{
- position:fixed!important;
- z-index:10001!important;
- top:50%!important;
- left:50%!important;
- transform:translate(-50%,-50%)!important;
- width:min(680px,calc(100vw - 28px))!important;
- max-height:min(88vh,820px)!important;
- overflow-y:auto!important;
- margin:0!important;
- padding:24px!important;
- box-sizing:border-box!important;
- border:1px solid #e5d9d4!important;
- border-radius:18px!important;
- background:#fff!important;
- box-shadow:0 24px 70px rgba(35,20,25,.28)!important;
-}
-.preorder-checkout-form::before{
- content:"";
- position:fixed;
- z-index:-1;
- top:50%;
- left:50%;
- width:100vw;
- height:100vh;
- transform:translate(-50%,-50%);
- background:rgba(20,14,17,.58);
-}
-.preorder-checkout-form h3{margin:0 0 6px;font-size:24px}
-.preorder-checkout-form>.form-note{margin:0 0 18px}
-.preorder-checkout-form .product-action-buttons{position:sticky;bottom:0;background:#fff;padding-top:12px;margin-top:12px;border-top:1px solid #eee5e0}
-.preorder-payment-box{border-radius:14px}
+/* Pre-order mini checkout modal. Business and payment logic remains in Product.jsx. */
+.preorder-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(20,14,17,.58)}
+.preorder-modal{width:min(720px,100%);max-height:min(90vh,840px);overflow:auto;box-sizing:border-box;background:#fff;border:1px solid #e5d9d4;border-radius:18px;box-shadow:0 24px 70px rgba(35,20,25,.28)}
+.preorder-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 24px 14px;border-bottom:1px solid #eee5e0}
+.preorder-modal-header .product-code{margin:0 0 4px}
+.preorder-modal-header h3{margin:0;font-size:24px;line-height:1.2}
+.preorder-modal-close{width:40px;height:40px;flex:none;border:1px solid #e2d8d4;border-radius:50%;background:#fff;color:#3b2b30;font-size:26px;line-height:1;cursor:pointer}
+.preorder-modal-close:hover:not(:disabled){background:#faf4f1}
+.preorder-modal-close:disabled{opacity:.45;cursor:not-allowed}
+.preorder-mini-summary{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 24px;background:#faf7f5;border-bottom:1px solid #eee5e0}
+.preorder-mini-summary div{min-width:0}
+.preorder-mini-summary strong{display:block;color:#322629;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preorder-mini-summary span{display:block;color:#77676b;font-size:12px;margin-top:3px}
+.preorder-modal .order-form{position:relative;top:auto;margin:0;padding:24px;border:0;border-radius:0;box-shadow:none;background:#fff}
+.preorder-modal .order-form h3{margin:0 0 6px}
+.preorder-modal .order-form>.form-note{margin:0 0 18px}
+.preorder-modal .product-action-buttons{position:sticky;bottom:-24px;margin:12px -24px -24px;padding:14px 24px 24px;background:#fff;border-top:1px solid #eee5e0}
 @media(max-width:600px){
- .preorder-checkout-form{width:calc(100vw - 16px)!important;max-height:92vh!important;padding:18px!important;border-radius:14px!important}
- .preorder-checkout-form h3{font-size:21px}
+ .preorder-modal-backdrop{padding:8px}
+ .preorder-modal{width:100%;max-height:94vh;border-radius:14px}
+ .preorder-modal-header{padding:18px 18px 12px}
+ .preorder-modal-header h3{font-size:21px}
+ .preorder-mini-summary{padding:11px 18px}
+ .preorder-modal .order-form{padding:18px}
+ .preorder-modal .product-action-buttons{bottom:-18px;margin:12px -18px -18px;padding:12px 18px 18px}
 }
