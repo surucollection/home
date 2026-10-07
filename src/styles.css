@@ -310,3 +310,6 @@
 .admin-customer-name-link{border:0;background:none;padding:0;margin:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-align:left}
 .admin-customer-name-link:hover{text-decoration:underline}
 .admin-customer-tab td:nth-child(3){color:inherit!important}
+
+
+.admin-customer-address-message{margin:0 0 10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:600}.admin-customer-address-message.success{background:#ecfdf3;color:#166534;border:1px solid #bbf7d0}.admin-customer-address-message.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
