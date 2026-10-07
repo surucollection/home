@@ -293,3 +293,9 @@
  .admin-customer-address-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .admin-customer-address-main{grid-template-columns:1fr 1fr}
 }
+
+
+.admin-customer-address-heading-actions{display:flex;align-items:center;gap:7px}
+.admin-customer-address-heading-actions button{padding:4px 8px;font-size:9px}
+.admin-customer-address-default{display:flex!important;align-items:center;gap:5px;font-size:9px!important}
+.admin-customer-address-default input{width:auto!important;min-height:0!important;margin:0!important;padding:0!important}
