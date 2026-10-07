@@ -1,0 +1,2 @@
+import React from "react";
+export default function AdminHeader({email,onLogout}){return <header className="app-header"><div className="brand"><img src="/assets/suru-logo-official.png" alt="Suru Collection"/><strong>Admin</strong></div><div className="header-actions"><span className="user-email">{email}</span><button className="secondary" onClick={onLogout}>Sign Out</button></div></header>}
