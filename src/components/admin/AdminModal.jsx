@@ -28,8 +28,8 @@ export default function AdminModal({
 
   if(!open)return null;
 
-  return <div className="admin-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!closeDisabled)onClose?.()}}>
-    <section className="admin-modal-shell" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title" style={{maxWidth}} onMouseDown={e=>e.stopPropagation()}>
+  return <div className={"admin-modal-backdrop "+backdropClassName} role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!closeDisabled)onClose?.()}}>
+    <section className={"admin-modal-shell "+shellClassName} role="dialog" aria-modal="true" aria-labelledby="admin-modal-title" style={{maxWidth}} onMouseDown={e=>e.stopPropagation()}>
       <header className="admin-modal-header">
         <div className="admin-modal-heading">
           <h3 id="admin-modal-title">{title}</h3>
