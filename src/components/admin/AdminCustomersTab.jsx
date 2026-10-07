@@ -11,23 +11,37 @@ export default function AdminCustomersTab({
  const close=()=>setSelectedCustomer(null);
  const[addressEditing,setAddressEditing]=useState(null);
  const[addressDraft,setAddressDraft]=useState({});
- const[addressSaving,setAddressSaving]=useState(false);
- const editAddress=a=>{setAddressEditing(a.id);setAddressDraft({...a});};
- const addAddress=()=>{setAddressEditing("new");setAddressDraft({label:"",full_name:selectedCustomer?.name||"",mobile:selectedCustomer?.phone||"",address:"",city:"",district:"",province:"",postal_code:"",is_default:!(selectedCustomer?.addresses||[]).length});};
+ const[addressSaving,setAddressSaving]=useState(false),[addressMessage,setAddressMessage]=useState("");
+ const editAddress=a=>{setAddressMessage("");setAddressEditing(a.id);setAddressDraft({...a,phone:a.phone||a.mobile||""});};
+ const addAddress=()=>{setAddressMessage("");setAddressEditing("new");setAddressDraft({label:"",full_name:selectedCustomer?.name||"",phone:selectedCustomer?.phone||"",address:"",city:"",district:"",province:"",postal_code:"",is_default:!(selectedCustomer?.addresses||[]).length});};
  const cancelAddressEdit=()=>{setAddressEditing(null);setAddressDraft({});};
  const saveAddress=async()=>{
    if(!addressEditing)return;
    setAddressSaving(true);
+   setAddressMessage("");
    try{
-     const payload={label:String(addressDraft.label||"").trim()||null,full_name:String(addressDraft.full_name||"").trim(),mobile:String(addressDraft.mobile||"").trim(),address:String(addressDraft.address||"").trim(),city:String(addressDraft.city||"").trim(),district:String(addressDraft.district||"").trim(),province:String(addressDraft.province||"").trim(),postal_code:String(addressDraft.postal_code||"").trim()||null};
-     if(!payload.full_name||!payload.mobile||!payload.address||!payload.city||!payload.district||!payload.province)throw Error("Please complete all required address fields.");
-     const{data,error}=await (addressEditing==="new"
-       ? supabase.from("customer_addresses").insert({...payload,customer_id:selectedCustomer.id,is_default:!!addressDraft.is_default}).select("*").single()
-       : supabase.from("customer_addresses").update(payload).eq("id",addressEditing).eq("customer_id",selectedCustomer.id).select("*").single());
+     const payload={label:String(addressDraft.label||"").trim()||"Home",full_name:String(addressDraft.full_name||"").trim(),phone:String(addressDraft.phone||addressDraft.mobile||"").trim(),address:String(addressDraft.address||"").trim(),city:String(addressDraft.city||"").trim(),district:String(addressDraft.district||"").trim(),province:String(addressDraft.province||"").trim(),postal_code:String(addressDraft.postal_code||"").trim()||null};
+     if(!payload.full_name||!payload.phone||!payload.address||!payload.city||!payload.district||!payload.province)throw Error("Please complete all required address fields.");
+     const makeDefault=!!addressDraft.is_default;
+     if(makeDefault) {
+       const{error:clearError}=await supabase.from("customer_addresses").update({is_default:false}).eq("customer_id",selectedCustomer.id).eq("is_default",true);
+       if(clearError)throw clearError;
+     }
+     let data,error;
+     if(addressEditing==="new"){
+       ({data,error}=await supabase.from("customer_addresses").insert({...payload,customer_id:selectedCustomer.id,is_default:makeDefault||!(selectedCustomer.addresses||[]).length}).select("*").single());
+     }else{
+       ({data,error}=await supabase.from("customer_addresses").update({...payload,is_default:makeDefault}).eq("id",addressEditing).eq("customer_id",selectedCustomer.id).select("*").single());
+     }
      if(error)throw error;
      setSelectedCustomer(c=>({...c,addresses:addressEditing==="new"?[...(c.addresses||[]),data]:(c.addresses||[]).map(a=>a.id===data.id?data:a)}));
      cancelAddressEdit();
-   }catch(e){alert(e?.message||"Unable to save address.")}finally{setAddressSaving(false)}
+     setAddressMessage(addressEditing==="new"?"Address saved successfully.":"Address updated successfully.");
+     window.setTimeout(()=>setAddressMessage(""),3000);
+   }catch(e){
+     setAddressMessage(e?.message||"Unable to save address.");
+     window.setTimeout(()=>setAddressMessage(""),4000);
+   }finally{setAddressSaving(false)}
  };
 
  return <><div className="page-title"><div><h2>Customers</h2><p>View registered customer accounts and their order history.</p></div></div>
@@ -59,7 +73,7 @@ export default function AdminCustomersTab({
              {[["Name",selectedCustomer.name],["Email",selectedCustomer.email],["Phone",selectedCustomer.phone]].map(([l,v])=><div key={l}><b>{l}</b><span>{v||"—"}</span></div>)}
            </div>}
 
-       <div className="admin-customer-addresses">
+       <div className="admin-customer-addresses">{addressMessage&&<div className={"admin-customer-address-message "+(addressMessage.toLowerCase().includes("success")?"success":"error")} role="status">{addressMessage}</div>}
          <div className="admin-customer-orders-heading"><h3>Saved Addresses</h3><div className="admin-customer-address-heading-actions"><span>{(selectedCustomer.addresses||[]).length} address{(selectedCustomer.addresses||[]).length===1?"":"es"}</span><button type="button" className="primary" onClick={addAddress} disabled={addressSaving||addressEditing!==null}>+ Add Address</button></div></div>
          {(selectedCustomer.addresses||[]).length
            ? <div className="admin-customer-address-list">{selectedCustomer.addresses.map(a=>
@@ -69,7 +83,7 @@ export default function AdminCustomersTab({
                      <div className="admin-customer-address-edit-grid">
                        <label>Label<input value={addressDraft.label||""} onChange={e=>setAddressDraft({...addressDraft,label:e.target.value})}/></label>
                        <label>Name *<input value={addressDraft.full_name||""} onChange={e=>setAddressDraft({...addressDraft,full_name:e.target.value})}/></label>
-                       <label>Mobile *<input value={addressDraft.mobile||""} onChange={e=>setAddressDraft({...addressDraft,mobile:e.target.value})}/></label>
+                       <label>Mobile *<input value={addressDraft.phone||addressDraft.mobile||""} onChange={e=>setAddressDraft({...addressDraft,phone:e.target.value})}/></label>
                        <label>Postal Code<input value={addressDraft.postal_code||""} onChange={e=>setAddressDraft({...addressDraft,postal_code:e.target.value})}/></label>
                      </div>
                      <label>Address *<textarea rows="2" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
