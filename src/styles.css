@@ -305,3 +305,8 @@
 .admin-modal-layer-shell{z-index:1201}
 .admin-customer-address-add-form{padding:2px}
 .admin-customer-address-add-form .admin-customer-address-edit-grid{margin-bottom:2px}
+
+/* Customer table: name opens details; keep district text neutral */
+.admin-customer-name-link{border:0;background:none;padding:0;margin:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-align:left}
+.admin-customer-name-link:hover{text-decoration:underline}
+.admin-customer-tab td:nth-child(3){color:inherit!important}
