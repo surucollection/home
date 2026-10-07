@@ -11,6 +11,8 @@ export default function AdminModal({
   bodyClassName="",
   maxWidth="900px",
   closeDisabled=false,
+  backdropClassName="",
+  shellClassName="",
 }) {
   useEffect(()=>{
     if(!open)return;
