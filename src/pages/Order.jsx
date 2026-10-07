@@ -1,0 +1,146 @@
+import React,{useEffect,useMemo,useRef,useState} from "react";
+import QRCode from "qrcode";
+import { supabase, get, money, norm, imageUrl } from "../lib/api.js";
+import { readCart, addCart, removeCart, clearCart, cartKey } from "../lib/cart.js";
+import { openInvoice, openCustomerInvoice } from "../lib/invoice.js";
+import Header from "../components/Header.jsx";
+import Footer from "../components/Footer.jsx";
+import Hero from "../components/Hero.jsx";
+import CollectionCard from "../components/CollectionCard.jsx";
+import ProductsGrid from "../components/ProductsGrid.jsx";
+import AuthLayout from "../components/AuthLayout.jsx";
+import OrderTable from "../components/admin/OrderTable.jsx";
+import ProductAdminCard from "../components/admin/ProductAdminCard.jsx";
+import StockRow from "../components/admin/StockRow.jsx";
+import PreorderAdminQueue from "../components/admin/PreorderAdminQueue.jsx";
+import CustomerAddressesPanel from "../components/customer/CustomerAddressesPanel.jsx";
+import { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone } from "../lib/appShared.js";
+
+function Order(){
+ const checkoutIdempotencyRef=useRef("");
+ const[cart,setCart]=useState(()=>readCart()),[ncmRate,setNcmRate]=useState(null),[ncmRateBusy,setNcmRateBusy]=useState(false),[ncmRateError,setNcmRateError]=useState(""),[checkout,setCheckout]=useState(()=>new URLSearchParams(location.search).get("checkout")==="1"),[session,setSession]=useState(null),[customerId,setCustomerId]=useState(""),[selectedAddressId,setSelectedAddressId]=useState(""),[name,setName]=useState(""),[phone,setPhone]=useState(""),[address,setAddress]=useState(""),[city,setCity]=useState(""),[district,setDistrict]=useState(""),[province,setProvince]=useState(""),[postalCode,setPostalCode]=useState(""),[payment,setPayment]=useState("Cash on Delivery"),[advanceMethod,setAdvanceMethod]=useState("Fonepay"),[paymentRef,setPaymentRef]=useState(""),[busy,setBusy]=useState(false),[msg,setMsg]=useState(""),[success,setSuccess]=useState(""),[ncmBranches,setNcmBranches]=useState([]),[ncmBranch,setNcmBranch]=useState(""),[ncmBranchBusy,setNcmBranchBusy]=useState(false),[couponCode,setCouponCode]=useState(""),[appliedCoupon,setAppliedCoupon]=useState(null),[couponBusy,setCouponBusy]=useState(false),[fonepayQrImage,setFonepayQrImage]=useState(""),[fonepaySetupOrderId,setFonepaySetupOrderId]=useState(()=>{try{return sessionStorage.getItem("suru-fonepay-setup-order")||""}catch{return ""}}),[fonepaySetupPurpose,setFonepaySetupPurpose]=useState(()=>{try{return sessionStorage.getItem("suru-fonepay-setup-purpose")||"full"}catch{return "full"}}),[fonepayPayment,setFonepayPayment]=useState(()=>{try{const raw=sessionStorage.getItem("suru-fonepay-pending");if(!raw)return null;const v=JSON.parse(raw);return v&&v.orderId&&Date.now()-Number(v.createdAt||0)<15*60*1000?{...v,purpose:v.purpose||"full"}:null}catch{return null}}),[fonepayBusy,setFonepayBusy]=useState(false);
+ useEffect(()=>{const f=()=>{setCart(readCart());setAppliedCoupon(null)};addEventListener("suruCartChanged",f);return()=>removeEventListener("suruCartChanged",f)},[]);
+ useEffect(()=>{if(fonepayPayment){try{sessionStorage.setItem("suru-fonepay-pending",JSON.stringify(fonepayPayment))}catch{}}else{try{sessionStorage.removeItem("suru-fonepay-pending")}catch{}}},[fonepayPayment]);
+ useEffect(()=>{if(!fonepayPayment?.orderId)return;const expiresAt=Number(fonepayPayment.createdAt||0)+15*60*1000;const delay=Math.max(0,expiresAt-Date.now());const timer=setTimeout(()=>{setFonepayPayment(null);setFonepayBusy(false);setMsg(fonepayPayment.purpose==="cod_advance"?"This COD advance payment session expired. Your order is not confirmed yet; you can retry the advance payment.":"This Fonepay payment session expired. Your order was not marked as paid. Please contact Suru Collection with your order number before retrying.")},delay);return()=>clearTimeout(timer)},[fonepayPayment?.orderId,fonepayPayment?.createdAt]);
+ useEffect(()=>{if(!fonepayPayment)return;const warn=e=>{e.preventDefault();e.returnValue="A Fonepay payment is still in progress.";return e.returnValue};addEventListener("beforeunload",warn);return()=>removeEventListener("beforeunload",warn)},[fonepayPayment]);
+ useEffect(()=>{if(!fonepaySetupOrderId){try{sessionStorage.removeItem("suru-fonepay-setup-order");sessionStorage.removeItem("suru-fonepay-setup-purpose")}catch{};return}try{sessionStorage.setItem("suru-fonepay-setup-order",fonepaySetupOrderId);sessionStorage.setItem("suru-fonepay-setup-purpose",fonepaySetupPurpose||"full")}catch{}},[fonepaySetupOrderId,fonepaySetupPurpose]);
+ useEffect(()=>{let active=true;if(!fonepayPayment?.qrString){setFonepayQrImage("");return}QRCode.toDataURL(String(fonepayPayment.qrString),{width:560,margin:2,errorCorrectionLevel:"M"}).then(url=>{if(active)setFonepayQrImage(url)}).catch(()=>{if(active)setFonepayQrImage("")});return()=>{active=false}},[fonepayPayment?.qrString]);
+ useEffect(()=>{
+  if(!checkout)return;
+  let active=true;
+  setNcmBranchBusy(true);
+  getNcmBranches()
+    .then(bs=>{
+      if(!active)return;
+      setNcmBranches(bs);
+    })
+    .catch(()=>{})
+    .finally(()=>{if(active)setNcmBranchBusy(false)});
+  return()=>{active=false};
+ },[checkout]);
+ useEffect(()=>{(async()=>{
+  try{
+    const{data}=await supabase.auth.getSession();
+    setSession(data.session||null);
+    if(!data.session)return;
+    const{data:p}=await supabase.rpc("my_customer_profile");
+    if(!p)return;
+    setCustomerId(p.id||"");
+    if(!name)setName(p.name||"");
+    if(!phone)setPhone(p.phone||"");
+    if(!address)setAddress(p.address||"");
+    if(!city){const savedCity=String(p.city||"").trim();if(savedCity)setCity(savedCity.split(",")[0].trim());}
+    if(!district&&p.district)setDistrict(p.district);
+    if(!district&&!p.district&&String(p.city||"").includes(","))setDistrict(String(p.city).split(",").slice(1).join(",").trim());
+    if(!province)setProvince(canonicalProvince(p.province)||"");
+    if(!postalCode)setPostalCode(p.postal_code||"");
+  }catch{}
+  })().catch(()=>{});
+ },[]);
+ useEffect(()=>{
+  if(!checkout||!ncmBranches.length)return;
+  const c=String(city||"").trim();
+  const d=String(district||"").trim();
+  const p=String(province||"").trim();
+  if(!c&&!d&&!p){
+    setNcmBranch("");
+    return;
+  }
+  const matched=matchNcmBranch(ncmBranches,c,d,null,p);
+  setNcmBranch(matched||"");
+ },[checkout,province,district,city,ncmBranches.length]);
+ useEffect(()=>{let active=true;
+  if(!ncmBranch){setNcmRate(null);setNcmRateError("");setNcmRateBusy(false);return()=>{active=false}};
+  setNcmRateBusy(true);setNcmRateError("");
+  supabase.functions.invoke("ncm-rate",{body:{destinationBranch:ncmBranch}}).then(({data,error})=>{
+    if(!active)return;
+    if(error||data?.error){setNcmRate(null);setNcmRateError(data?.error||error?.message||"Unable to calculate NCM delivery charge.");return}
+    setNcmRate(data||null);
+  }).catch(e=>{if(active){setNcmRate(null);setNcmRateError(e?.message||"Unable to calculate NCM delivery charge.")}}).finally(()=>{if(active)setNcmRateBusy(false)});
+  return()=>{active=false};
+ },[ncmBranch]);
+ useEffect(()=>{if(!fonepayPayment?.orderId)return;let stopped=false;let timer=null;let socket=null;const finish=async()=>{if(stopped)return;const{data,error}=await supabase.functions.invoke("fonepay-payment",{body:{action:"status",orderId:fonepayPayment.orderId,purpose:fonepayPayment.purpose||"full"}});if(error||!data)return;if(data.verified){stopped=true;if(timer)clearInterval(timer);if(socket)socket.close();setFonepayPayment(null);setFonepaySetupOrderId("");setFonepayBusy(false);setSuccess((fonepayPayment.purpose==="cod_advance"?"COD order ":"Order ")+(data.orderNumber||"")+" was confirmed successfully."+(fonepayPayment.purpose==="cod_advance"?" NPR "+money(data.balanceDue||fonepayPayment.balanceDue||0)+" remains payable on delivery.":""));clear();setAppliedCoupon(null);setCouponCode("");setMsg("")}};const handleSocketMessage=(event)=>{if(stopped)return;try{const outer=typeof event.data==="string"?JSON.parse(event.data):event.data;const raw=outer?.transactionStatus;const status=typeof raw==="string"?JSON.parse(raw):raw;if(status?.paymentSuccess===true||status?.success===true)finish()}catch(e){console.warn("Fonepay WebSocket message could not be parsed",e)}};try{const wsUrl=fonepayPayment?.websocketId;if(wsUrl){socket=new WebSocket(wsUrl);socket.onmessage=handleSocketMessage;socket.onerror=()=>console.warn("Fonepay WebSocket unavailable; continuing with status polling.");}}catch(e){console.warn("Fonepay WebSocket could not be opened; continuing with status polling.",e)}finish();timer=setInterval(finish,4000);return()=>{stopped=true;if(timer)clearInterval(timer);if(socket)socket.close()}},[fonepayPayment?.orderId,fonepayPayment?.websocketId]);
+ const total=useMemo(()=>Math.round(cart.reduce((n,x)=>n+Number(x.price||0)*Number(x.quantity??x.qty??0),0)),[cart]); const checkoutDiscount=Math.round(Number(appliedCoupon?.discount_amount||0)); const checkoutTotal=Math.round(Math.max(0,total-checkoutDiscount)); const codAdvanceDue=Math.min(Number(ncmRate?.advanceDeliveryCharge||0),checkoutTotal);
+ const remove=item=>setCart(removeCart(item));
+ const clear=()=>setCart(clearCart());
+ const selectSavedAddress=a=>{
+   if(!a)return;
+   const nextCity=String(a.city||"").trim();
+   const nextDistrict=String(a.district||"").trim();
+   const nextProvince=canonicalProvince(a.province)||"";
+   setSelectedAddressId(a.id||"");
+   setName(a.full_name||"");
+   setPhone(a.phone||"");
+   setAddress(a.address||"");
+   setCity(nextCity);
+   setDistrict(nextDistrict);
+   setProvince(nextProvince);
+   setPostalCode(a.postal_code||"");
+   const branches=NCM_BRANCH_CACHE.items||ncmBranches;
+   const matched=branches.length?matchNcmBranch(branches,nextCity,nextDistrict,null,nextProvince):"";
+   setNcmBranch(matched||"");
+   setMsg("");
+ };
+ async function applyCoupon(){if(!couponCode.trim()){setAppliedCoupon(null);setMsg("Enter a coupon code.");return}setCouponBusy(true);setMsg("");try{const{data,error}=await supabase.rpc("validate_discount_coupon",{p_code:couponCode.trim(),p_subtotal:Math.round(total)});if(error)throw error;if(!data?.valid){setAppliedCoupon(null);setMsg(data?.message||"This coupon cannot be applied.");return}setAppliedCoupon(data);setMsg("Coupon "+data.code+" applied successfully.")}catch(e){setAppliedCoupon(null);setMsg("Coupon: "+(e?.message||"Unable to validate coupon."))}finally{setCouponBusy(false)}}
+ async function place(){
+   if(fonepayPayment){setMsg("A Fonepay payment is already in progress. Complete it or wait for the status check to finish.");return}
+   if(fonepaySetupOrderId){setMsg("Your order was already created, but Fonepay setup needs to be retried. Use the payment setup button below instead of creating another order.");return}
+   if(!cart.length){setMsg("Your cart is empty.");return}
+   if(!session){location.href="login.html?return="+encodeURIComponent("/order.html?checkout=1");return}
+   if(!name.trim()||!phone.trim()||!address.trim()||!city.trim()||!district.trim()||!province.trim()){setMsg("Please fill in your full delivery address, province, district and city.");return}
+   if(payment==="Cash on Delivery"&&(!ncmBranch||!ncmRate?.advanceDeliveryCharge)){setMsg(ncmRateError||"Please select a valid NCM delivery branch and wait for the delivery charge to load.");return}
+   setBusy(true);setMsg("");
+   const checkoutKey=checkoutIdempotencyRef.current||(crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join(""));checkoutIdempotencyRef.current=checkoutKey;
+   try{
+     const{data:userData}=await supabase.auth.getUser();const email=userData?.user?.email||"";
+     const items=cart.map(x=>({code:String(x.code||x.product_code||"").trim(),size:x.size||null,color:x.color||x.colour||null,qty:Math.max(1,Number(x.quantity??x.qty??1))})).filter(x=>x.code);
+     if(!items.length)throw Error("Your cart contains an invalid product. Please remove it and add the product again.");
+     const paymentMethod=payment==="Pay with Fonepay"||payment==="Other Online Payment"?"fonepay":payment==="Card / Payment Gateway"?"online":"cod";
+     const fonepayPurpose=paymentMethod==="cod"?"cod_advance":"full";
+     if(paymentMethod==="cod"&&advanceMethod!=="Fonepay"){throw Error("Please select Fonepay for the COD advance. Other online payment is coming soon.");}
+     const{data,error}=await supabase.rpc("place_order",{p_customer:{name:name.trim(),phone:phone.trim(),email,address:address.trim(),city:city.trim(),district:district.trim(),province:canonicalProvince(province),postal_code:postalCode.trim()||null,ncm_destination_branch:ncmBranch||null},p_items:items,p_payment_method:paymentMethod,p_customer_note:paymentRef.trim()?("Payment reference: "+paymentRef.trim()):null,p_coupon_code:appliedCoupon?.code||null,p_checkout_idempotency_key:checkoutKey});
+     if(error)throw error;
+     const orderId=data?.order_id||data?.order?.id||null;const orderNumber=data?.order_number||"";if(data?.duplicate)setMsg("This checkout request was already submitted. Resuming your existing order.");
+     if(paymentMethod==="fonepay"||paymentMethod==="cod"){
+       if(!orderId)throw Error("Order was created but its payment ID was not returned. Please contact Suru Collection.");
+       const expectedAmount=fonepayPurpose==="cod_advance"?Number(data?.cod_advance_required):Number(data?.total);
+       if(!Number.isFinite(expectedAmount)||expectedAmount<=0)throw Error("The order did not return a valid payment amount.");
+       setFonepaySetupPurpose(fonepayPurpose);setFonepaySetupOrderId(orderId);
+       const{data:paymentData,error:paymentError}=await supabase.functions.invoke("fonepay-payment",{body:{action:"create",orderId,purpose:fonepayPurpose}});
+       if(paymentError)throw paymentError;
+       if(paymentData?.error)throw Error(paymentData.error);
+       if(paymentData?.alreadyPaid){setFonepaySetupOrderId("");setSuccess(fonepayPurpose==="cod_advance"?(orderNumber?"COD order "+orderNumber+" was already confirmed.":"Your COD order was already confirmed."):(orderNumber?"Order "+orderNumber+" was already paid.":"Your order was already paid."));clear();setAppliedCoupon(null);setCouponCode("");setMsg("");return}
+       const returnedAmount=Number(paymentData?.amount);
+       if(!Number.isFinite(returnedAmount)||Math.abs(returnedAmount-expectedAmount)>0.01)throw Error(fonepayPurpose==="cod_advance"?"The COD advance amount returned by Fonepay does not match the required advance. No payment screen was opened; please contact Suru Collection.":"The payment amount returned by Fonepay does not match your order total. No payment screen was opened; please contact Suru Collection before retrying.");
+       setFonepaySetupOrderId("");
+       setFonepayPayment({...paymentData,orderId,amount:returnedAmount,createdAt:Date.now(),purpose:fonepayPurpose});setMsg("");
+     }else{
+       setSuccess(orderNumber?"Order "+orderNumber+" was placed successfully.":"Your order was placed successfully.");checkoutIdempotencyRef.current="";clear();setAppliedCoupon(null);setCouponCode("");setMsg("");
+     }
+   }catch(e){setMsg("Unable to place the order. "+(e?.message||"Please try again."))}finally{setBusy(false)}
+ }
+ if(success)return <><Header/><main className="checkout-page"><div className="order-success-card"><div className="order-success-icon">✓</div><p className="eyebrow">ORDER CONFIRMED</p><h1>Thank You!</h1><p>{success}</p><p className="small-note">Your order has been received and saved successfully. We will confirm your order and delivery details.</p><div className="order-success-actions"><a className="hero-btn" href="account/">View My Orders</a><a className="text-button" href="products.html">Continue Shopping</a></div></div></main><Footer/></>;
+ if(!cart.length)return <><Header/><main className="checkout-page"><div className="section-title"><p className="eyebrow">YOUR SHOPPING BAG</p><h1>Your Cart</h1><div className="ornament">⌁◇⌁</div><p>Your cart is empty.</p><a className="hero-btn" href="products.html">Browse Products →</a></div></main><Footer/></>;
+ return <><Header/><main className="checkout-page"><div className="section-title"><p className="eyebrow">YOUR SHOPPING BAG</p><h1>Your Cart</h1><div className="ornament">⌁◇⌁</div><p>{checkout?"Review your items and send your order to Suru Collection.":"Review your items before checkout."}</p></div>
+ {!checkout?<div className="checkout-grid"><section><div className="cart-items">{cart.map((x,i)=>{const q=Number(x.quantity??x.qty??0);return <article className="cart-item" key={i}>{x.image&&<img src={imageUrl(x.image,320)} alt={x.name||"Product"} loading="lazy" decoding="async" width="320" height="400"/>}<div><small>{x.code||""}</small><h3>{x.name||""}</h3><p>{x.color?"Colour: "+x.color+" · ":""}{x.size?"Size: "+x.size+" · ":""}Qty: {q}</p><strong>{money(Number(x.price||0)*q)}</strong><button className="remove-item" type="button" onClick={()=>remove(x)}>Remove</button></div></article>})}</div><div className="order-total"><span>Total</span><strong>{money(total)}</strong></div></section><aside className="order-form"><h2>Checkout</h2><p className="form-note">Delivery details will be requested only after you continue to checkout.</p><a className="hero-btn" href="products.html">Add More Products</a>{session?<button className="place-order" type="button" onClick={()=>setCheckout(true)}>Proceed to Checkout</button>:<a className="place-order" href={"login.html?return="+encodeURIComponent("/order.html?checkout=1")}>Login to Checkout</a>}</aside></div>:<div className="checkout-grid"><section><div className="cart-items">{cart.map((x,i)=>{const q=Number(x.quantity??x.qty??0);return <article className="cart-item" key={i}>{x.image&&<img src={imageUrl(x.image,320)} alt={x.name||"Product"} loading="lazy" decoding="async" width="320" height="400"/>}<div><small>{x.code||""}</small><h3>{x.name||""}</h3><p>{x.color?"Colour: "+x.color+" · ":""}{x.size?"Size: "+x.size+" · ":""}Qty: {q}</p><strong>{money(Number(x.price||0)*q)}</strong><button className="remove-item" type="button" onClick={()=>remove(x)}>Remove</button></div></article>})}</div><button className="text-button" type="button" onClick={clear}>Clear Cart</button></section><aside className="order-form"><h2>Delivery Details</h2><p className="form-note">Orders are saved securely and confirmed by Suru Collection before dispatch.</p>{customerId&&<CustomerAddressesPanel customerId={customerId} profile={{name,phone,address,city,district,province,postal_code:postalCode}} provinces={NEPAL_PROVINCES} provinceDistricts={provinceDistricts} canonicalProvince={canonicalProvince} mode="select" selectedAddressId={selectedAddressId} onSelect={selectSavedAddress}/>} {!customerId&&<><p className="form-note">Add or select a saved delivery address to continue. You can edit saved addresses from the address selector above.</p><label>Full Name<input value={name} onChange={e=>setName(e.target.value)} required placeholder="Your name"/></label><label>Phone Number<input value={phone} onChange={e=>setPhone(e.target.value)} required inputMode="tel" placeholder="98XXXXXXXX"/></label><label>Delivery Address<textarea value={address} onChange={e=>setAddress(e.target.value)} required rows="4" placeholder="House/street, area"/></label><label>Province <span className="required-star">*</span><select value={province} onChange={e=>{setProvince(e.target.value);setDistrict("");setNcmBranch("")}} required><option value="">Select Province</option>{NEPAL_PROVINCES.map(x=><option key={x.name} value={x.name}>{x.name}</option>)}</select></label><label>District <span className="required-star">*</span><select value={district} onChange={e=>{setDistrict(e.target.value);setNcmBranch("")}} required disabled={!province}><option value="">{province?"Select District":"Select Province First"}</option>{provinceDistricts(province).map(x=><option key={x} value={x}>{x}</option>)}</select></label><label>City / Municipality <span className="required-star">*</span><input value={city} onChange={e=>{setCity(e.target.value);setNcmBranch("")}} required placeholder="e.g. Gaur"/></label><label>Postal Code <span className="optional-label">(Optional)</span><input value={postalCode} onChange={e=>setPostalCode(e.target.value)} inputMode="numeric" autoComplete="postal-code" placeholder="Postal code"/></label></>}<label>NCM Destination Branch <span className="optional-label">(Auto-selected; editable)</span><select value={ncmBranch} onChange={e=>setNcmBranch(e.target.value)} disabled={ncmBranchBusy||!ncmBranches.length} required><option value="">{ncmBranchBusy?"Finding NCM branches…":ncmBranches.length?"Select NCM branch":"NCM branches unavailable"}</option>{ncmBranches.map(b=><option key={b.code||b.name} value={b.name}>{b.name}{b.district_name?" — "+b.district_name:""}</option>)}</select><small className="form-note">We preselect a branch from your delivery city/district. You can change it here when another NCM branch is more suitable.</small></label><label>Payment Method<select value={payment} onChange={e=>setPayment(e.target.value)} disabled={!!fonepayPayment}><option>Cash on Delivery</option><option>Pay with Fonepay</option><option value="Other Online Payment" disabled>Other Online Payment — Coming Soon</option></select></label>{payment==="Cash on Delivery"&&<><div className="small-note" style={{marginTop:8,padding:"12px 14px",border:"1px solid #e6dfd4",borderRadius:12,background:"#fffaf7"}} role="status" aria-live="polite">{ncmRateBusy?<div style={{display:"flex",alignItems:"center",gap:9,fontWeight:600}}><span aria-hidden="true" style={{display:"inline-block",width:15,height:15,border:"2px solid #d9c9c4",borderTopColor:"#7d252d",borderRadius:"50%",}}/>Calculating your delivery advance…<span aria-hidden="true">Please wait.</span></div>:ncmRate?<><div style={{lineHeight:1.55}}><b>COD Advance</b><br/>The advance you pay will be deducted from your product price and covers the delivery cost for reaching your address. If the order is returned or remains undelivered, this delivery advance is non-refundable.</div>{Number(ncmRate.advanceDeliveryCharge)>checkoutTotal&&<div className="form-note">The advance is limited to the order total.</div>}</>:<span>{ncmRateError||"Select an NCM branch to calculate your delivery advance."}</span>}</div><label>Advance Payment Method<select value={advanceMethod} onChange={e=>setAdvanceMethod(e.target.value)} disabled={!!fonepayPayment}><option>Fonepay</option><option value="Other Online Payment" disabled>Other Online Payment — Coming Soon</option></select></label></>}{payment==="Card / Payment Gateway"&&<div className="online-payment-box"><div className="payment-divider"/><h3>Complete Your Payment</h3><p className="payment-instruction">Scan the QR code below to complete your payment. After payment, you may optionally enter the transaction ID.</p><div className="payment-qr-wrap"><img src="/assets/payment-qr.png" alt="Suru Collection Payment QR Code"/></div><label>Payment Reference / Transaction ID <span className="optional-label">Optional</span><input value={paymentRef} onChange={e=>setPaymentRef(e.target.value)} placeholder="Enter transaction ID if available" autoComplete="off"/></label></div>}{((payment==="Pay with Fonepay")||(payment==="Cash on Delivery"&&advanceMethod==="Fonepay")||fonepayPayment)&&<div className="fonepay-payment-card" style={{marginTop:16,padding:18,border:"1px solid #e6dfd4",borderRadius:14,textAlign:"center"}}><h3 style={{marginTop:0}}>{fonepayPayment?.purpose==="cod_advance"?"Pay "+money(fonepayPayment?.amount||0)+" COD Advance":"Complete payment with Checkout by Fonepay"}</h3><p className="small-note">{fonepayPayment?.purpose==="cod_advance"?"Pay the required advance to confirm your COD order. The remaining balance is collected at delivery.":"Scan the QR below with your mobile banking app. The payment status is verified automatically."}</p>{fonepayQrImage?<img src={fonepayQrImage} alt="Fonepay payment QR" style={{width:280,height:280,maxWidth:"100%",margin:"10px auto",display:"block"}}/>:<div className="fonepay-qr-placeholder" role="status">{fonepayPayment?.qrString?"Preparing secure Fonepay QR…":"Waiting for Fonepay payment details…"}</div>}<p><b>Amount: {money(fonepayPayment?.amount||checkoutTotal)}</b></p>{fonepayPayment?.purpose==="cod_advance"&&<p className="small-note"><b>Remaining on delivery: {money(fonepayPayment?.balanceDue||0)}</b></p>}<p className="small-note">Reference: {fonepayPayment?.reference||"—"}</p><button className="secondary" type="button" onClick={async()=>{if(!fonepayPayment?.orderId)return;setFonepayBusy(true);const{data,error}=await supabase.functions.invoke("fonepay-payment",{body:{action:"status",orderId:fonepayPayment.orderId,purpose:fonepayPayment.purpose||"full"}});setFonepayBusy(false);if(error){setMsg(error.message||"Could not check payment status.");return}if(data?.verified){setFonepayPayment(null);setFonepaySetupOrderId("");setSuccess((fonepayPayment.purpose==="cod_advance"?"COD order ":"Order ")+(data.orderNumber||"")+" was confirmed successfully."+(fonepayPayment.purpose==="cod_advance"?" NPR "+money(data.balanceDue||fonepayPayment.balanceDue||0)+" remains payable on delivery.":""));clear();setAppliedCoupon(null);setCouponCode("");setMsg("")}else setMsg("Payment is not confirmed yet. Complete the payment and try again.")}} disabled={fonepayBusy}>{fonepayBusy?"Checking payment…":"I completed payment — Check status"}</button></div>}<div className="coupon-box" style={{marginTop:16,padding:14,border:"1px solid #e6dfd4",borderRadius:12}}><h3 style={{marginTop:0}}>Discount Coupon</h3><div style={{display:"flex",gap:8}}><input value={couponCode} onChange={e=>{setCouponCode(e.target.value.toUpperCase());setAppliedCoupon(null)}} placeholder="Enter coupon code" autoComplete="off"/><button className="secondary" type="button" onClick={applyCoupon} disabled={couponBusy}>{couponBusy?"Checking…":"Apply"}</button></div>{appliedCoupon&&<p className="small-note">Applied: <b>{appliedCoupon.code}</b> · {appliedCoupon.discount_percent}% off</p>}</div><div className="order-total"><span>Subtotal</span><strong>{money(total)}</strong></div>{checkoutDiscount>0&&<div className="order-total"><span>Discount</span><strong>-{money(checkoutDiscount)}</strong></div>}<div className="order-total"><span>Order Total</span><strong>{money(checkoutTotal)}</strong></div><button className="place-order" type="button" onClick={place} disabled={busy||!!fonepayPayment||!!fonepaySetupOrderId}>{busy?"Creating order…":fonepayPayment?(fonepayPayment.purpose==="cod_advance"?"COD advance payment in progress…":"Payment in progress…"):fonepaySetupOrderId?(fonepaySetupPurpose==="cod_advance"?"COD advance setup needs attention":"Fonepay setup needs attention"):(payment==="Cash on Delivery"?(ncmRateBusy?"Calculating NCM charge…":ncmRate?"Pay "+money(codAdvanceDue)+" & Confirm Order":"Select NCM branch"):"Place Order")}</button>{fonepaySetupOrderId&&<button className="secondary" type="button" disabled={busy} onClick={async()=>{setBusy(true);setMsg("");try{const{data,error}=await supabase.functions.invoke("fonepay-payment",{body:{action:"create",orderId:fonepaySetupOrderId,purpose:fonepaySetupPurpose||"full"}});if(error)throw error;if(data?.error)throw Error(data.error);const amount=Number(data?.amount);const expected=fonepaySetupPurpose==="cod_advance"?Number(data?.cod_advance_required||amount):Number(data?.total||checkoutTotal);if(!Number.isFinite(amount)||!Number.isFinite(expected)||Math.abs(amount-expected)>0.01)throw Error(fonepaySetupPurpose==="cod_advance"?"The COD advance amount returned by Fonepay does not match the required advance.":"The payment amount returned by Fonepay does not match your order total.");setFonepaySetupOrderId("");setFonepayPayment({...data,orderId:fonepaySetupOrderId,amount,createdAt:Date.now(),purpose:fonepaySetupPurpose||"full"})}catch(e){setMsg("Fonepay setup could not be resumed. "+(e?.message||"Please try again or contact Suru Collection."))}finally{setBusy(false)}}}>{fonepaySetupPurpose==="cod_advance"?"Retry COD Advance Payment":"Retry Fonepay Payment Setup"}</button>}{msg&&<p className="small-note">{msg}</p>}<p className="small-note">{payment==="Cash on Delivery"?"Your COD order is not confirmed until the configured advance is successfully verified.":"Your order is saved directly to our system and will be confirmed after successful payment."}</p></aside></div>}</main><Footer/></>
+}
