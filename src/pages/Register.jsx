@@ -86,3 +86,5 @@ function Register(){
  </div>
  <button className="btn" disabled={busy}>{busy?"Sending OTP…":verifyMethod==="mobile"?"Continue & Verify Mobile":"Continue & Verify Email"}</button>{msg&&<div className="message error">{msg}</div>}</form><div className="auth-google"><button type="button" className="google-auth-button" onClick={googleSignIn} disabled={busy}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button></div><div className="auth-links">Already have an account? <a href="login.html">Sign in</a></div></AuthLayout>
 }
+
+export default Register;
