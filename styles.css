@@ -5219,3 +5219,77 @@ a {
   .admin-product-category-description>label{font-size:10px}
   .admin-product-category-description select,.admin-product-category-description textarea{padding:7px 6px;font-size:10px}
 }
+
+/* Final product-editor layout corrections */
+.admin-product-checks{
+  display:grid!important;
+  grid-template-columns:max-content max-content max-content minmax(150px,1fr)!important;
+  align-items:end;
+  gap:10px!important;
+  width:100%;
+}
+.admin-product-checks .admin-product-category-inline{
+  display:grid!important;
+  grid-template-columns:max-content minmax(110px,1fr);
+  align-items:center;
+  gap:6px;
+  margin:0!important;
+  min-width:0;
+}
+.admin-product-checks .admin-product-category-inline select{
+  width:100%;
+  min-width:0;
+  min-height:36px;
+  box-sizing:border-box;
+  margin:0;
+  padding:7px 9px;
+  border:1px solid #ded3cd;
+  border-radius:8px;
+  background:#fff;
+  color:#302525;
+  font:inherit;
+  font-size:12px;
+}
+.admin-product-modal-body .compact-drive-row{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  width:100%;
+}
+.admin-product-modal-body .compact-drive-row input{
+  flex:1 1 auto!important;
+  min-width:0!important;
+}
+.admin-product-modal-body .compact-drive-row button{
+  flex:0 0 auto!important;
+  white-space:nowrap;
+}
+@media(max-width:640px){
+  .admin-product-checks{
+    grid-template-columns:max-content max-content max-content minmax(112px,1fr)!important;
+    gap:7px!important;
+  }
+  .admin-product-checks label{
+    font-size:10px!important;
+    white-space:nowrap;
+  }
+  .admin-product-checks .admin-product-category-inline{
+    grid-template-columns:max-content minmax(0,1fr);
+    gap:4px;
+  }
+  .admin-product-checks .admin-product-category-inline select{
+    min-height:34px;
+    padding:6px 5px;
+    font-size:10px;
+  }
+  .admin-product-modal-body .compact-drive-row{
+    flex-direction:row!important;
+  }
+  .admin-product-modal-body .compact-drive-row input{
+    font-size:10px!important;
+  }
+  .admin-product-modal-body .compact-drive-row button{
+    font-size:10px!important;
+    padding:7px 8px!important;
+  }
+}
