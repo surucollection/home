@@ -96,7 +96,7 @@ function Order(){
    setDistrict(nextDistrict);
    setProvince(nextProvince);
    setPostalCode(a.postal_code||"");
-   const branches=NCM_BRANCH_CACHE.items||ncmBranches;
+   const branches=ncmBranches;
    const matched=branches.length?matchNcmBranch(branches,nextCity,nextDistrict,null,nextProvince):"";
    setNcmBranch(matched||"");
    setMsg("");
