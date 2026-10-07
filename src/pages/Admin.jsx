@@ -11,6 +11,7 @@ import AdminInventoryTab from "../components/admin/AdminInventoryTab.jsx";
 import AdminCustomersTab from "../components/admin/AdminCustomersTab.jsx";
 import AdminSettingsTab from "../components/admin/AdminSettingsTab.jsx";
 import AdminReportsTab from "../components/admin/AdminReportsTab.jsx";
+import AdminReportModal from "../components/admin/AdminReportModal.jsx";
 import AdminCouponManagerModal from "../components/admin/AdminCouponManagerModal.jsx";
 import { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone } from "../lib/appShared.js";
 
@@ -116,11 +117,12 @@ function Admin(){
       {tab==="settings"&&<AdminSettingsTab products={products} preorderBulkBusy={preorderBulkBusy} enablePreordersForAll={enablePreordersForAll} disablePreordersForAll={disablePreordersForAll} setCouponManagerOpen={setCouponManagerOpen} loadCoupons={loadCoupons}/>}
       {tab==="products"&&<AdminProductsTab showAdd={showAdd} setShowAdd={setShowAdd} addProduct={addProduct} products={products} editing={editing} setEditing={setEditing} saveProduct={saveProduct}/>}
       {tab==="inventory"&&<AdminInventoryTab inventory={inventory} inventoryEditing={inventoryEditing} setInventoryEditing={setInventoryEditing} inventoryDrafts={inventoryDrafts} setInventoryDrafts={setInventoryDrafts} saveInventoryProduct={saveInventoryProduct} addVariant={addVariant} deleteVariant={deleteVariant}/>}
-      {tab==="others"&&<AdminReportsTab openReport={openReport} reportsOpen={reportsOpen} reportModal={reportModal} setReportsOpen={setReportsOpen} setReportModal={setReportModal} reportBusy={reportBusy} reportInvoices={reportInvoices} printInvoiceRegister={printInvoiceRegister} openInvoice={openInvoice} reportInvoiceTotals={reportInvoiceTotals} reportOrders={reportOrders} reportData={reportData}/>}
+      {tab==="others"&&<AdminReportsTab openReport={openReport}/>}
       {tab==="customers"&&<AdminCustomersTab customerSearch={customerSearch} setCustomerSearch={setCustomerSearch} customerStatus={customerStatus} setCustomerStatus={setCustomerStatus} filteredCustomers={filteredCustomers} customerDetails={customerDetails} toggleCustomer={toggleCustomer} selectedCustomer={selectedCustomer} customerEditing={customerEditing} setCustomerEditing={setCustomerEditing} resetCustomerPassword={resetCustomerPassword} customerSaving={customerSaving} saveCustomer={saveCustomer} setSelectedCustomer={setSelectedCustomer}/>}
     </main>
   </div>
   <AdminCouponManagerModal couponManagerOpen={couponManagerOpen} setCouponManagerOpen={setCouponManagerOpen} couponDraft={couponDraft} setCouponDraft={setCouponDraft} couponSaving={couponSaving} couponEditing={couponEditing} saveCoupon={saveCoupon} resetCouponDraft={resetCouponDraft} coupons={coupons} editCoupon={editCoupon} deleteCoupon={deleteCoupon}/>
+  <AdminReportModal reportsOpen={reportsOpen} reportModal={reportModal} setReportsOpen={setReportsOpen} setReportModal={setReportModal} reportBusy={reportBusy} reportInvoices={reportInvoices} printInvoiceRegister={printInvoiceRegister} openInvoice={openInvoice} reportInvoiceTotals={reportInvoiceTotals} reportOrders={reportOrders} reportData={reportData}/>
 </div>;
 }
 
