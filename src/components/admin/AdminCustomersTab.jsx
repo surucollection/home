@@ -36,10 +36,10 @@ export default function AdminCustomersTab({
        {customerEditing
          ? <div className="admin-form customer-edit-form admin-customer-compact-form">
              <div className="admin-customer-compact-grid">
-               <label>Name *<input value={(selectedCustomer.first_name||"")+" "+(selectedCustomer.last_name||"")} readOnly aria-label="Customer name"/></label>
+               <label>First Name *<input value={selectedCustomer.first_name||""} onChange={e=>setSelectedCustomer({...selectedCustomer,first_name:e.target.value})}/></label>
+               <label>Last Name *<input value={selectedCustomer.last_name||""} onChange={e=>setSelectedCustomer({...selectedCustomer,last_name:e.target.value})}/></label>
                <label>Email *<input type="email" value={selectedCustomer.email||""} onChange={e=>setSelectedCustomer({...selectedCustomer,email:e.target.value})}/></label>
                <label>Phone *<input value={selectedCustomer.phone||""} onChange={e=>setSelectedCustomer({...selectedCustomer,phone:e.target.value})}/></label>
-               <label>Status<select value={selectedCustomer.is_active?"active":"inactive"} onChange={e=>setSelectedCustomer({...selectedCustomer,is_active:e.target.value==="active"})}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
              </div>
              <label>Delivery Address *<textarea rows="2" value={selectedCustomer.address||""} onChange={e=>setSelectedCustomer({...selectedCustomer,address:e.target.value})}/></label>
              <div className="admin-customer-compact-grid admin-customer-location-grid">
