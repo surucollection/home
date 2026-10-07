@@ -299,3 +299,9 @@
 .admin-customer-address-heading-actions button{padding:4px 8px;font-size:9px}
 .admin-customer-address-default{display:flex!important;align-items:center;gap:5px;font-size:9px!important}
 .admin-customer-address-default input{width:auto!important;min-height:0!important;margin:0!important;padding:0!important}
+
+/* Customer add-address modal layers above the customer details modal */
+.admin-modal-layer-backdrop{z-index:1200!important}
+.admin-modal-layer-shell{z-index:1201}
+.admin-customer-address-add-form{padding:2px}
+.admin-customer-address-add-form .admin-customer-address-edit-grid{margin-bottom:2px}
