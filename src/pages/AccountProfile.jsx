@@ -33,16 +33,17 @@ function AccountProfile(){
      if(!data.session){location.href="/login.html?return="+encodeURIComponent(location.pathname+location.search);return}
      if(!active)return;
      setSession(data.session);
-     const[{data:p,error:profileError},{data:keys,error:keyError}]=await Promise.all([
+     const[{data:p,error:profileError},keyResult]=await Promise.all([
        supabase.from("customers").select("id,name,email,phone").eq("auth_user_id",data.session.user.id).maybeSingle(),
-       supabase.auth.passkey.list()
+       supabase.auth.passkey.list().catch(error=>({data:null,error}))
      ]);
      if(profileError)throw profileError;
-     if(keyError)console.warn("Unable to check registered passkeys",keyError);
+     if(keyResult?.error)console.warn("Unable to check registered passkeys",keyResult.error);
+     const keys=Array.isArray(keyResult?.data)?keyResult.data:[];
      const next={name:p?.name||"",email:p?.email||data.session.user.email||"",phone:p?.phone||""};
      setProfile(p||{});
      setValues(next);
-     setPasskeys(Array.isArray(keys)?keys:[]);
+     setPasskeys(keys);
      setPasskeyChecking(false);
      if(new URLSearchParams(location.search).get("google_link")==="1"){
        setMsg("Google Sign-In is now linked to your account.");
