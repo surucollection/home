@@ -222,3 +222,30 @@
 .admin-image-preview{margin-top:10px}.admin-image-preview small{display:block;margin-bottom:6px}.admin-image-preview img{width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #ddd}
 .admin-product-modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #eadfd9;flex-shrink:0}
 @media(max-width:640px){.product-admin-summary{grid-template-columns:48px minmax(0,1fr) auto;gap:8px;padding:8px 6px;min-width:0}.product-admin-thumb{width:48px;height:48px}.product-admin-info{min-width:0;width:100%;overflow:hidden}.product-admin-title{display:block;min-width:0;max-width:100%;overflow:hidden}.product-admin-title b{display:block;font-size:13px;line-height:1.22;white-space:normal;overflow-wrap:anywhere;word-break:break-word;max-width:100%}.product-admin-title small{display:block;margin-top:2px;white-space:normal;overflow-wrap:anywhere;word-break:break-word}.product-admin-meta{margin-top:3px}.product-admin-edit{font-size:11px;padding:6px 8px}.admin-product-modal{padding:8px}.admin-product-modal-card{max-height:96vh;border-radius:10px}.admin-product-modal-body{padding:12px}.admin-product-modal-header{padding:12px}.admin-product-modal-footer{padding:10px 12px}}}
+
+
+/* Compact admin inventory list + edit modal */
+.inventory-admin-card{margin:0;border-bottom:1px solid #eadfd9;background:#fff}
+.inventory-admin-summary{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:9px 10px;min-width:0}
+.inventory-admin-thumb{width:56px;height:56px;border-radius:8px;overflow:hidden;background:#f4f0ed;border:1px solid #e5ddd8;display:flex;align-items:center;justify-content:center;font-size:9px;color:#8a7b73;text-align:center}
+.inventory-admin-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.inventory-admin-info{min-width:0;width:100%;overflow:hidden}
+.inventory-admin-title{min-width:0;overflow:hidden}
+.inventory-admin-title b{display:block;font-size:14px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.inventory-admin-title small{display:block;font-size:11px;opacity:.65;margin-top:3px;white-space:normal;overflow-wrap:anywhere}
+.inventory-admin-meta{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11px;flex-wrap:wrap}
+.inventory-admin-meta span{white-space:nowrap}
+.inventory-admin-edit{padding:7px 10px;white-space:nowrap;font-size:12px}
+.admin-inventory-modal{position:fixed;inset:0;z-index:10000;background:rgba(25,18,14,.58);display:flex;align-items:center;justify-content:center;padding:14px}
+.admin-inventory-modal-card{width:min(700px,100%);max-height:94vh;background:var(--surface,#fff);color:inherit;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.32);display:flex;flex-direction:column;overflow:hidden}
+.admin-inventory-modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid #eadfd9;flex-shrink:0}
+.admin-inventory-modal-header h3{margin:0 0 3px}.admin-inventory-modal-header p{margin:0;font-size:12px;opacity:.65}
+.admin-inventory-modal-body{overflow:auto;padding:18px}
+.inventory-modal-product{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #eadfd9}
+.inventory-modal-product img{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #ddd}
+.inventory-modal-product b{display:block}.inventory-modal-product small{display:block;margin-top:3px;opacity:.65}
+.inventory-variant-item{display:flex;align-items:center;gap:12px;width:100%;padding:9px 0;border-bottom:1px solid #eee}
+.inventory-variant-item .stock-row{flex:1;min-width:0}
+.inventory-variant-item .danger{margin-left:auto;flex-shrink:0}
+.admin-inventory-modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #eadfd9;flex-shrink:0}
+@media(max-width:640px){.inventory-admin-summary{grid-template-columns:48px minmax(0,1fr) auto;gap:8px;padding:8px 6px;min-width:0}.inventory-admin-thumb{width:48px;height:48px}.inventory-admin-info{min-width:0;width:100%;overflow:hidden}.inventory-admin-title b{font-size:13px;line-height:1.22}.inventory-admin-edit{font-size:11px;padding:6px 8px}.inventory-admin-meta{gap:5px;margin-top:3px}.admin-inventory-modal{padding:8px}.admin-inventory-modal-card{max-height:96vh;border-radius:10px}.admin-inventory-modal-body{padding:12px}.admin-inventory-modal-header{padding:12px}.admin-inventory-modal-footer{padding:10px 12px}.inventory-variant-item{align-items:center;gap:8px}.inventory-variant-item .danger{font-size:11px;padding:6px 8px}}
