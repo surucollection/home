@@ -5210,3 +5210,12 @@ a {
   .admin-universal-preorder-form{align-items:stretch}
   .admin-universal-preorder-percent{width:145px}
 }
+
+.admin-product-category-description{display:grid;grid-template-columns:180px minmax(0,1fr);gap:10px;align-items:end}
+.admin-product-category-description>label{min-width:0;margin:0;color:#554344;font-size:12px;font-weight:700}
+.admin-product-category-description select,.admin-product-category-description textarea{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 10px;border:1px solid #ded3cd;border-radius:8px;background:#fff;color:#302525;font:inherit;font-size:13px}
+@media(max-width:640px){
+  .admin-product-category-description{grid-template-columns:110px minmax(0,1fr);gap:6px}
+  .admin-product-category-description>label{font-size:10px}
+  .admin-product-category-description select,.admin-product-category-description textarea{padding:7px 6px;font-size:10px}
+}
