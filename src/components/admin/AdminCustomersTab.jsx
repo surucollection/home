@@ -36,8 +36,8 @@ export default function AdminCustomersTab({
        <input placeholder="Search name or phone" value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)}/>
        <select value={customerStatus} onChange={e=>setCustomerStatus(e.target.value)}><option value="all">All customers</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
      </div>
-     <div className="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>District</th><th>Status</th><th>Joined</th></tr></thead><tbody>
-       {filteredCustomers.map(c=><tr key={c.id}><td><button type="button" className="admin-customer-name-link" onClick={()=>customerDetails(c)}>{c.name||"—"}</button></td><td>{c.phone||"—"}</td><td>{c.district||"—"}</td><td><span className={c.is_active?"badge active":"badge inactive"}>{c.is_active?"Active":"Inactive"}</span></td><td>{c.created_at?new Date(c.created_at).toLocaleDateString():"—"}</td></tr>)}
+     <div className="table-wrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Status</th><th>Joined</th></tr></thead><tbody>
+       {filteredCustomers.map(c=><tr key={c.id}><td><button type="button" className="admin-customer-name-link" onClick={()=>customerDetails(c)}>{c.name||"—"}{c.district&&<span className="admin-customer-district">, {c.district}</span>}</button></td><td>{c.phone||"—"}</td><td><span className={c.is_active?"badge active":"badge inactive"}>{c.is_active?"Active":"Inactive"}</span></td><td>{c.created_at?new Date(c.created_at).toLocaleDateString():"—"}</td></tr>)}
      </tbody></table></div>
    </div>
 
