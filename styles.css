@@ -4960,3 +4960,128 @@ a {
  .auth-card .auth-google{margin-top:14px!important;}
  .auth-card .google-auth-button{min-height:52px;padding:12px 14px;font-size:15px;}
 }
+
+
+/* =========================================================
+   Reusable admin modal shell — Product / Inventory / Customer
+   The shell owns viewport sizing, scrolling, header and footer
+   so mobile actions never disappear below a long form.
+========================================================= */
+.admin-modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  background:rgba(25,18,14,.58);
+  overscroll-behavior:contain;
+}
+.admin-modal-shell{
+  width:100%;
+  height:min(900px,calc(100dvh - 24px));
+  max-height:calc(100dvh - 24px);
+  min-height:0;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--surface,#fff);
+  color:inherit;
+  border-radius:14px;
+  box-shadow:0 24px 70px rgba(0,0,0,.32);
+}
+.admin-modal-header{
+  position:relative;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:15px 18px;
+  border-bottom:1px solid #eadfd9;
+  background:#fff;
+}
+.admin-modal-heading{min-width:0;flex:1}
+.admin-modal-heading h3{margin:0 0 3px;color:#4a292b;font:500 21px/1.2 Georgia,"Times New Roman",serif;overflow-wrap:anywhere}
+.admin-modal-heading p{margin:0;color:#7b6c68;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.admin-modal-header-actions{display:flex;align-items:center;gap:8px;flex:none}
+.admin-modal-close{
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  padding:0!important;
+  flex:none;
+  display:grid!important;
+  place-items:center;
+  font-size:24px!important;
+  line-height:1!important;
+  border-radius:10px!important;
+}
+.admin-modal-body{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:18px;
+}
+.admin-modal-body>.admin-form{margin-top:0}
+.admin-modal-footer{
+  flex:0 0 auto;
+  padding:12px 18px max(12px,env(safe-area-inset-bottom));
+  border-top:1px solid #eadfd9;
+  background:#fff;
+  box-shadow:0 -8px 18px rgba(35,20,25,.035);
+}
+.admin-modal-footer-content{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.admin-modal-footer-content button{min-height:42px}
+.admin-product-modal-body .admin-product-section{margin:12px 0}
+.admin-product-modal-body .admin-form{padding:0}
+.admin-inventory-modal-body{padding:18px}
+.admin-inventory-modal-body .inventory-modal-product{margin-bottom:14px}
+.admin-customer-modal-body{padding:18px}
+.admin-customer-modal-body .customer-edit-form{margin:0}
+.admin-customer-orders{margin-top:24px;padding-top:18px;border-top:1px solid #eadfd9}
+.admin-customer-orders-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.admin-customer-orders-heading h3{margin:0;color:#4a292b;font:500 20px/1.25 Georgia,"Times New Roman",serif}
+.admin-customer-orders-heading span{font-size:12px;color:#7b6c68}
+.admin-customer-orders-table{width:100%;min-width:650px}
+@media(max-width:640px){
+  .admin-modal-backdrop{
+    align-items:flex-start;
+    padding:8px max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+  }
+  .admin-modal-shell{
+    height:calc(100dvh - 16px);
+    max-height:calc(100dvh - 16px);
+    border-radius:12px;
+  }
+  .admin-modal-header{padding:11px 12px;gap:8px}
+  .admin-modal-heading h3{font-size:18px}
+  .admin-modal-heading p{font-size:11px}
+  .admin-modal-close{width:42px!important;height:42px!important;min-width:42px!important;font-size:25px!important}
+  .admin-modal-body{padding:12px}
+  .admin-modal-footer{padding:10px 12px max(10px,env(safe-area-inset-bottom))}
+  .admin-modal-footer-content{justify-content:stretch}
+  .admin-modal-footer-content button{flex:1 1 0;min-width:0}
+  .admin-product-modal-body .form-grid{grid-template-columns:1fr}
+  .admin-product-modal-body .admin-product-drive{flex-direction:column}
+  .admin-product-modal-body .product-image-row{grid-template-columns:1fr!important}
+  .admin-product-modal-body .product-image-row button{grid-column:auto!important}
+  .admin-inventory-modal-body{padding:12px}
+  .inventory-variant-item{align-items:flex-start;flex-direction:column}
+  .inventory-variant-item .stock-row{width:100%}
+  .inventory-variant-item .danger{margin-left:0}
+  .admin-customer-modal-body{padding:12px}
+  .admin-customer-modal-body .form-grid{grid-template-columns:1fr}
+  .admin-customer-orders{margin-top:18px}
+  .admin-customer-orders-table{min-width:600px}
+}
