@@ -249,3 +249,19 @@
 .inventory-variant-item .danger{margin-left:auto;flex-shrink:0}
 .admin-inventory-modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #eadfd9;flex-shrink:0}
 @media(max-width:640px){.inventory-admin-summary{grid-template-columns:48px minmax(0,1fr) auto;gap:8px;padding:8px 6px;min-width:0}.inventory-admin-thumb{width:48px;height:48px}.inventory-admin-info{min-width:0;width:100%;overflow:hidden}.inventory-admin-title b{font-size:13px;line-height:1.22}.inventory-admin-edit{font-size:11px;padding:6px 8px}.inventory-admin-meta{gap:5px;margin-top:3px}.admin-inventory-modal{padding:8px}.admin-inventory-modal-card{max-height:96vh;border-radius:10px}.admin-inventory-modal-body{padding:12px}.admin-inventory-modal-header{padding:12px}.admin-inventory-modal-footer{padding:10px 12px}.inventory-variant-item{align-items:center;gap:8px}.inventory-variant-item .danger{font-size:11px;padding:6px 8px}}
+
+
+/* Final mobile containment for admin product and inventory rows */
+#productsGrid,.admin-inventory-list{width:100%;max-width:100%;min-width:0;overflow:hidden;box-sizing:border-box}
+.product-admin-card,.inventory-admin-card{width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden}
+.product-admin-summary,.inventory-admin-summary{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.product-admin-info,.inventory-admin-info{min-width:0!important;max-width:100%!important;width:100%!important;overflow:hidden!important}
+.product-admin-title,.inventory-admin-title{min-width:0!important;max-width:100%!important;width:100%!important;overflow:hidden!important}
+.product-admin-title b,.inventory-admin-title b{display:block!important;max-width:100%!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important;line-height:1.25!important}
+@media(max-width:640px){
+  .product-admin-summary,.inventory-admin-summary{grid-template-columns:48px minmax(0,1fr);align-items:start}
+  .product-admin-edit,.inventory-admin-edit{grid-column:2;justify-self:start;margin-top:2px}
+  .product-admin-info,.inventory-admin-info{grid-column:2;grid-row:1;overflow:hidden!important}
+  .product-admin-title b,.inventory-admin-title b{font-size:13px!important;line-height:1.22!important}
+  .product-admin-meta,.inventory-admin-meta{max-width:100%;overflow:hidden}
+}
