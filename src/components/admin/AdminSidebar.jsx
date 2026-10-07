@@ -1,0 +1,2 @@
+import React from "react";
+export default function AdminSidebar({tab,changeAdminTab}){return <aside className="sidebar">{[["dashboard","Dashboard"],["orders","Orders"],["preorders","Preorders"],["products","Products"],["inventory","Inventory"],["customers","Customers"],["settings","Settings"],["others","Reports"]].map(([v,l])=><button key={v} className={tab===v?"active":""} onClick={()=>changeAdminTab(v)}>{l}</button>)}</aside>}
