@@ -102,9 +102,9 @@ export default function AdminCustomersTab({
                      </div>
                      <label>Address *<textarea rows="2" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
                      <div className="admin-customer-address-edit-grid">
-                       <label>City *<input value={addressDraft.city||""} onChange={e=>setAddressDraft({...addressDraft,city:e.target.value})}/></label>
-                       <label>District *<select value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}><option value="">Select district</option>{districtOptions(addressDraft.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
                        <label>Province *<select value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value,district:""})}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p} value={p}>{p}</option>)}</select></label>
+                       <label>District *<select value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})} disabled={!addressDraft.province}><option value="">Select district</option>{districtOptions(addressDraft.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+                       <label>City *<input value={addressDraft.city||""} onChange={e=>setAddressDraft({...addressDraft,city:e.target.value})}/></label>
                      </div>
                      <label className="admin-customer-address-default"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>setAddressDraft({...addressDraft,is_default:e.target.checked})}/> Default address</label><div className="admin-customer-address-actions"><button type="button" className="secondary" onClick={cancelAddressEdit} disabled={addressSaving}>Cancel</button><button type="button" className="primary" onClick={saveAddress} disabled={addressSaving}>{addressSaving?"Saving…":"Save Address"}</button></div>
                    </div>
@@ -137,9 +137,9 @@ export default function AdminCustomersTab({
        </div>
        <label>Address *<textarea rows="3" value={addressDraft.address||""} onChange={e=>setAddressDraft({...addressDraft,address:e.target.value})}/></label>
        <div className="admin-customer-address-edit-grid">
-         <label>City *<input value={addressDraft.city||""} onChange={e=>setAddressDraft({...addressDraft,city:e.target.value})}/></label>
-         <label>District *<select value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})}><option value="">Select district</option>{districtOptions(addressDraft.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
          <label>Province *<select value={addressDraft.province||""} onChange={e=>setAddressDraft({...addressDraft,province:e.target.value,district:""})}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p} value={p}>{p}</option>)}</select></label>
+         <label>District *<select value={addressDraft.district||""} onChange={e=>setAddressDraft({...addressDraft,district:e.target.value})} disabled={!addressDraft.province}><option value="">Select district</option>{districtOptions(addressDraft.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+         <label>City *<input value={addressDraft.city||""} onChange={e=>setAddressDraft({...addressDraft,city:e.target.value})}/></label>
        </div>
        <label className="admin-customer-address-default"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>setAddressDraft({...addressDraft,is_default:e.target.checked})}/> Default address</label>
      </div>
