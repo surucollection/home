@@ -17,7 +17,7 @@ export default function AdminCustomersTab({
        <select value={customerStatus} onChange={e=>setCustomerStatus(e.target.value)}><option value="all">All customers</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
      </div>
      <div className="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>
-       {filteredCustomers.map(c=><tr key={c.id}><td>{c.name||"—"}</td><td>{c.phone||"—"}</td><td>{[c.city,c.district].filter(Boolean).join(", ")||c.address||"—"}</td><td><span className={c.is_active?"badge active":"badge inactive"}>{c.is_active?"Active":"Inactive"}</span></td><td>{c.created_at?new Date(c.created_at).toLocaleDateString():"—"}</td><td><button type="button" className="secondary" onClick={()=>customerDetails(c)}>View</button>{" "}<button type="button" className="danger" onClick={()=>toggleCustomer(c)}>{c.is_active?"Deactivate":"Activate"}</button></td></tr>)}
+       {filteredCustomers.map(c=><tr key={c.id}><td>{c.name||"—"}</td><td>{c.phone||"—"}</td><td>{[c.city,c.district].filter(Boolean).join(", ")||c.address||"—"}</td><td><span className={c.is_active?"badge active":"badge inactive"}>{c.is_active?"Active":"Inactive"}</span></td><td>{c.created_at?new Date(c.created_at).toLocaleDateString():"—"}</td><td><button type="button" className="secondary" onClick={()=>customerDetails(c)}>View</button></td></tr>)}
      </tbody></table></div>
    </div>
 
@@ -29,8 +29,8 @@ export default function AdminCustomersTab({
      bodyClassName="admin-customer-modal-body"
      maxWidth="980px"
      footer={customerEditing
-       ? <div className="admin-customer-modal-footer-content"><button type="button" className="secondary" onClick={()=>setCustomerEditing(false)} disabled={customerSaving}>Cancel</button><button type="button" className="primary" onClick={saveCustomer} disabled={customerSaving}>{customerSaving?"Saving…":"Save Customer Details"}</button></div>
-       : <div className="admin-customer-modal-footer-content"><button type="button" className="secondary" onClick={()=>setCustomerEditing(true)}>Edit Details</button><button type="button" className="secondary" onClick={resetCustomerPassword} disabled={customerSaving||!selectedCustomer?.auth_user_id}>Send Magic Link</button><button type="button" className="primary" onClick={close}>Close</button></div>}
+       ? <div className="admin-customer-modal-footer-content"><button type="button" className="secondary" onClick={()=>setCustomerEditing(false)} disabled={customerSaving}>Cancel</button><button type="button" className={selectedCustomer?.is_active?"danger":"primary"} onClick={()=>toggleCustomer(selectedCustomer)} disabled={customerSaving}>{selectedCustomer?.is_active?"Deactivate Customer":"Activate Customer"}</button><button type="button" className="primary" onClick={saveCustomer} disabled={customerSaving}>{customerSaving?"Saving…":"Save Customer Details"}</button></div>
+       : <div className="admin-customer-modal-footer-content"><button type="button" className="secondary" onClick={()=>setCustomerEditing(true)}>Edit Details</button><button type="button" className={selectedCustomer?.is_active?"danger":"primary"} onClick={()=>toggleCustomer(selectedCustomer)} disabled={customerSaving}>{selectedCustomer?.is_active?"Deactivate Customer":"Activate Customer"}</button><button type="button" className="secondary" onClick={resetCustomerPassword} disabled={customerSaving||!selectedCustomer?.auth_user_id}>Send Magic Link</button><button type="button" className="primary" onClick={close}>Close</button></div>}
    >
      {selectedCustomer&&<div>
        {customerEditing
@@ -53,8 +53,7 @@ export default function AdminCustomersTab({
              ["Name",selectedCustomer.name],["Email",selectedCustomer.email],["Phone",selectedCustomer.phone],["Status",selectedCustomer.is_active?"Active":"Inactive"],
              ["City",selectedCustomer.city],["District",selectedCustomer.district],["Province",selectedCustomer.province],["Postal Code",selectedCustomer.postal_code],
              ["Address",selectedCustomer.address]
-           ].map(([l,v],i)=><div key={l} className={i===8?"customer-profile-wide":""}><b>{l}</b><span>{v||"—"}</span></div>)}</div>
-       }
+           ].map(([l,v],i)=><div key={l} className={i===8?"customer-profile-wide":""}><b>{l}</b><span>{v||"—"}</span></div>)}</div>}
 
        <div className="admin-customer-orders">
          <div className="admin-customer-orders-heading"><h3>Order History</h3><span>{selectedCustomer.orders.length} order{selectedCustomer.orders.length===1?"":"s"}</span></div>
