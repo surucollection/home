@@ -197,6 +197,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
         setAddressId("");
         setAddressDraft({
           ...emptyAddress,
+          is_default:true,
           full_name:customer.name||"",
           phone:customer.phone||"",
           ncm_destination_branch:customer.ncm_destination_branch||""
@@ -226,7 +227,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     setAddressMode("new");
     setAddressId("");
     setCustomerDraft({name:"",phone:"",email:"",first_name:"",last_name:""});
-    setAddressDraft({...emptyAddress});
+    setAddressDraft({...emptyAddress,is_default:true});
     setBranchManual(false);
     setError("");
   };
