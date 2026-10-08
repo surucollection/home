@@ -3403,6 +3403,14 @@ a {
 .order-summary-grid b{font-size:.78rem;color:#777;margin-bottom:5px;line-height:1.2}
 .order-summary-grid span{overflow-wrap:anywhere;word-break:break-word;line-height:1.35}
 .order-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.payment-hold-notice{width:100%;margin-top:2px;padding:10px 12px;border:1px solid #eadfd9;border-radius:10px;background:#fffaf7;color:#67504b;font-size:.88rem;line-height:1.4}
+.payment-hold-notice strong{color:var(--maroon)}
+.payment-hold-box,.payment-expired-box{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:16px;padding:14px 16px;border-radius:12px}
+.payment-hold-box{border:1px solid #e5d8d0;background:#fffaf7}
+.payment-expired-box{border:1px solid #ead4d4;background:#fff6f6;display:block}
+.payment-hold-box strong,.payment-expired-box strong{color:var(--maroon)}
+.payment-hold-box p,.payment-expired-box p{margin:5px 0 0;color:#6d5a54;line-height:1.45}
+.payment-hold-box .btn{flex:0 0 auto;white-space:nowrap}
 .order-details-overlay{position:fixed;inset:0;background:rgba(25,18,14,.58);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
 .order-details-modal{background:#fff;border-radius:18px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .order-details-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;border-bottom:1px solid #eee5dc;padding-bottom:14px}
@@ -3459,6 +3467,8 @@ a {
  .order-detail-item>div:last-child{text-align:left}
  .tracking-box{align-items:stretch;flex-direction:column}
  .tracking-box .btn{width:100%}
+ .payment-hold-box{flex-direction:column;align-items:stretch}
+ .payment-hold-box .btn{width:100%}
 }
 
 /* Selector coverage fixes */
