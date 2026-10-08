@@ -68,8 +68,8 @@
 }
 
 /* Pre-order mini checkout modal. Business and payment logic remains in Product.jsx. */
-.preorder-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(20,14,17,.58)}
-.preorder-modal{width:min(720px,100%);max-height:min(90vh,840px);overflow:auto;box-sizing:border-box;background:#fff;border:1px solid #e5d9d4;border-radius:18px;box-shadow:0 24px 70px rgba(35,20,25,.28)}
+.preorder-modal-backdrop{position:fixed;inset:0;width:100%;height:100dvh;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(20,14,17,.58);overflow:hidden}
+.preorder-modal{width:min(720px,100%);max-height:min(calc(100dvh - 32px),840px);overflow:auto;box-sizing:border-box;background:#fff;border:1px solid #e5d9d4;border-radius:18px;box-shadow:0 24px 70px rgba(35,20,25,.28)}
 .preorder-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 24px 14px;border-bottom:1px solid #eee5e0}
 .preorder-modal-header .product-code{margin:0 0 4px}
 .preorder-modal-header h3{margin:0;font-size:24px;line-height:1.2}
@@ -92,4 +92,136 @@
  .preorder-mini-summary{padding:11px 18px}
  .preorder-modal .order-form{padding:18px}
  .preorder-modal .product-action-buttons{bottom:-18px;margin:12px -18px -18px;padding:12px 18px 18px}
+}
+/* Standard compact Fonepay panel inside the pre-order modal */
+.preorder-payment-box{
+  margin-top:16px;
+  padding:14px;
+  border:1px solid #2a2f36;
+  border-radius:16px;
+  background:#0b0d10;
+  color:#f7f8fa;
+  box-shadow:0 14px 34px rgba(0,0,0,.16);
+  overflow:hidden;
+}
+.preorder-fonepay-brand{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:0 0 9px;
+  border-bottom:1px solid #292e35;
+}
+.preorder-fonepay-brand img{
+  display:block;
+  width:86px;
+  height:auto;
+  object-fit:contain;
+}
+.preorder-fonepay-amount{
+  margin:9px 0 10px;
+  text-align:center;
+  color:#fff;
+  font-size:13px;
+  font-weight:750;
+  line-height:1.25;
+  white-space:nowrap;
+}
+.preorder-fonepay-qr{
+  width:min(190px,56vw);
+  aspect-ratio:1;
+  margin:0 auto 10px;
+  padding:8px;
+  box-sizing:border-box;
+  border:1px solid #3b424b;
+  border-radius:14px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.preorder-fonepay-qr img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  border-radius:6px;
+}
+.preorder-fonepay-qr-placeholder{
+  width:min(190px,56vw);
+  aspect-ratio:1;
+  margin:0 auto 10px;
+  display:grid;
+  place-items:center;
+  box-sizing:border-box;
+  border:1px dashed #47505a;
+  border-radius:14px;
+  background:#14181d;
+  color:#a7b0ba;
+  padding:14px;
+  text-align:center;
+  font-size:12px;
+}
+.preorder-fonepay-meta{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-bottom:8px;
+}
+.preorder-fonepay-meta>div{
+  min-width:0;
+  padding:8px 9px;
+  border:1px solid #2d343c;
+  border-radius:10px;
+  background:#151a20;
+}
+.preorder-fonepay-meta span{
+  display:block;
+  margin-bottom:2px;
+  color:#9ca6b0;
+  font-size:10px;
+}
+.preorder-fonepay-meta strong{
+  display:block;
+  color:#f4f6f8;
+  font-size:12px;
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
+.preorder-fonepay-status{
+  display:flex;
+  align-items:flex-start;
+  gap:7px;
+  margin:0;
+  padding:8px 9px;
+  border-radius:9px;
+  background:#0f1812;
+  border:1px solid #26422e;
+  color:#b4c5b8;
+  font-size:11px;
+  line-height:1.38;
+}
+.preorder-fonepay-status span{
+  flex:0 0 auto;
+  width:7px;
+  height:7px;
+  margin-top:4px;
+  border-radius:50%;
+  background:#54a967;
+  box-shadow:0 0 0 3px rgba(84,169,103,.13);
+}
+@media(max-width:600px){
+  .preorder-modal-backdrop{
+    align-items:center;
+    padding:8px;
+  }
+  .preorder-modal{
+    max-height:calc(100dvh - 16px);
+  }
+  .preorder-payment-box{
+    margin-top:12px;
+    padding:12px;
+    border-radius:14px;
+  }
+  .preorder-fonepay-brand img{width:86px}
+  .preorder-fonepay-amount{font-size:12px;margin:8px 0}
+  .preorder-fonepay-qr,.preorder-fonepay-qr-placeholder{width:min(180px,52vw)}
 }
