@@ -44,7 +44,7 @@ function Header(){
     <a className="brand" href="/"><img src="/assets/suru-logo-official.png" alt="Suru Collection"/></a>
     <button className="menu-toggle" onClick={()=>setOpen(!open)} aria-expanded={open}>☰</button>
     <nav className={open?"open":""}>
-      <a href="/">Home</a><a href="/about.html">About Us</a><a href="/products.html">Products</a><a href="/contact.html">Contact</a>
+      <a href="/">Home</a><a href="/about.html">About Us</a><a href="/products.html">Products</a><a href="/contact.html">Contact</a>{loggedIn&&<a href="/orders/">My Orders</a>}
       {!loggedIn?<a href={"/login.html?return="+encodeURIComponent(location.pathname+location.search+location.hash)}>Login</a>:<div className="account-menu">
         <button type="button" className="account-menu-toggle" onClick={e=>{e.stopPropagation();setAccountOpen(!accountOpen)}} aria-expanded={accountOpen}>
           <span className="account-avatar">{initial}</span><span className="account-menu-name">{firstName}</span><span className="account-menu-arrow">⌄</span>
@@ -54,8 +54,7 @@ function Header(){
           <a href="/account/" onClick={()=>setAccountOpen(false)}>My Account</a>
           <div className="account-dropdown-divider"/>
           <a href="/addresses/" onClick={()=>setAccountOpen(false)}>Addresses</a>
-          <div className="account-dropdown-divider"/>
-          <a href="/orders/" onClick={()=>setAccountOpen(false)}>My Orders</a>
+          
           <div className="account-dropdown-divider"/>
           <button type="button" className="account-logout" onClick={logout}><i className="fa fa-sign-out logout-icon" aria-hidden="true"></i>Logout</button>
         </div>}
