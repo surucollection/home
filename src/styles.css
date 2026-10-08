@@ -570,20 +570,23 @@
 }
 .payment-method-options{
   display:grid;
-  gap:9px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
 }
 .payment-method-option{
   width:100%;
+  min-width:0;
   min-height:58px;
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:12px 14px;
+  justify-content:center;
+  gap:7px;
+  padding:9px 8px;
   border:1.5px solid #ded3cd;
   border-radius:13px;
   background:#fffdfa;
   color:#302525;
-  text-align:left;
+  text-align:center;
   cursor:pointer;
   transition:border-color .18s ease,box-shadow .18s ease,background .18s ease,transform .12s ease;
 }
@@ -591,29 +594,24 @@
   border-color:#a97962;
   background:#fff;
 }
-.payment-method-option:active:not(:disabled){
-  transform:translateY(1px);
-}
+.payment-method-option:active:not(:disabled){transform:translateY(1px)}
 .payment-method-option.selected{
   border-color:#76292d;
   background:#fff8f5;
   box-shadow:0 0 0 2px rgba(118,41,45,.08);
 }
-.payment-method-option:disabled{
-  opacity:.48;
-  cursor:not-allowed;
-}
+.payment-method-option:disabled{opacity:.48;cursor:not-allowed}
 .payment-method-option-check{
-  flex:0 0 22px;
-  width:22px;
-  height:22px;
+  flex:0 0 20px;
+  width:20px;
+  height:20px;
   display:grid;
   place-items:center;
   border:1.5px solid #cdbfba;
   border-radius:50%;
   color:#fff;
   background:transparent;
-  font-size:13px;
+  font-size:12px;
   font-weight:800;
 }
 .payment-method-option.selected .payment-method-option-check{
@@ -622,39 +620,59 @@
 }
 .payment-method-option-label{
   min-width:0;
-  flex:1;
+  flex:0 0 auto;
   font-size:15px;
   font-weight:650;
-  line-height:1.35;
+  line-height:1.2;
+}
+.payment-method-cod-logo{
+  display:block;
+  width:64px;
+  height:32px;
+  object-fit:contain;
+  object-position:center;
 }
 .payment-method-fonepay-logo-wrap{
-  width:56px;
-  height:21px;
-  flex:0 0 56px;
+  width:58px;
+  height:24px;
+  flex:0 0 58px;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 .payment-method-fonepay-logo{
   display:block;
-  width:56px;
-  height:21px;
+  width:58px;
+  height:24px;
   object-fit:contain;
   object-position:center;
 }
-
 @media(max-width:480px){
+  .payment-method-options{gap:6px}
   .payment-method-option{
-    min-height:56px;
-    padding:11px 12px;
+    min-height:52px;
+    padding:8px 5px;
+    gap:5px;
+    border-radius:11px;
+  }
+  .payment-method-option-check{
+    flex-basis:18px;
+    width:18px;
+    height:18px;
+    font-size:11px;
+  }
+  .payment-method-cod-logo{
+    width:54px;
+    height:28px;
   }
   .payment-method-fonepay-logo-wrap{
-    width:52px;
-    height:20px;
-    flex-basis:52px;
+    width:50px;
+    height:21px;
+    flex-basis:50px;
   }
   .payment-method-fonepay-logo{
-    width:52px;
-    height:20px;
+    width:50px;
+    height:21px;
   }
+  .payment-method-option-label{font-size:14px}
 }
