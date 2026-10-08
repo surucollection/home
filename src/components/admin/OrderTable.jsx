@@ -161,7 +161,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
           <tbody>
             {rows.map(o=>(
               <tr key={o.id}>
-                <td><b>{o.order_number}</b></td>
+                <td><b>{o.order_number}</b>{o.order_source&&o.order_source!=="website"&&<small style={{display:"block",marginTop:3,fontWeight:700}}>Source: {prettyLabel(o.order_source)}</small>}</td>
                 <td>{o.customer_name}<br/><small>{o.customer_phone}</small></td>
                 <td>{money(o.total)}{o.payment_method==="cod"&&<small style={{display:"block",marginTop:4}}>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(o.cod_balance_due||o.total||0)}</small>}</td>
                 <td>
