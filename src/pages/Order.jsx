@@ -72,7 +72,7 @@ function Order(){
   }
   const matched=matchNcmBranch(ncmBranches,c,d,null,p);
   setNcmBranch(matched||"");
- },[checkout,province,district,city,ncmBranches.length]);
+ },[checkout,customerId,selectedAddressId,province,district,city,ncmBranches.length]);
  useEffect(()=>{let active=true;
   if(!ncmBranch){setNcmRate(null);setNcmRateError("");setNcmRateBusy(false);return()=>{active=false}};
   setNcmRateBusy(true);setNcmRateError("");
