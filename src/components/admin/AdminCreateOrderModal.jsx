@@ -59,6 +59,8 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [branchManual,setBranchManual]=useState(false);
   const [loading,setLoading]=useState(false);
   const [saving,setSaving]=useState(false);
+  const [ncmRateLoading,setNcmRateLoading]=useState(false);
+  const [ncmAdvance,setNcmAdvance]=useState(null);
   const [error,setError]=useState("");
   const [created,setCreated]=useState(null);
   const [copied,setCopied]=useState(false);
@@ -134,6 +136,8 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     setAmountPaid("0");
     setPaymentReference("");
     setBalanceMethod("cod");
+    setNcmAdvance(null);
+    setNcmRateLoading(false);
     setCouponCode("");
     setCustomerNote("");
     setBranchManual(false);
@@ -396,6 +400,19 @@ Thank you for ordering from Suru Collection.`;
     }
     setSaving(true);
     try{
+      if(paymentMethod==="cod"){
+        if(!cleanText(addressDraft.ncm_destination_branch)){
+          throw Error("Select an NCM destination branch for COD orders.");
+        }
+        setNcmRateLoading(true);
+        const {data:ncmRate,error:ncmRateError}=await supabase.functions.invoke("ncm-rate",{
+          body:{destinationBranch:addressDraft.ncm_destination_branch}
+        });
+        if(ncmRateError)throw ncmRateError;
+        if(!ncmRate?.ok)throw Error(ncmRate?.error||"Unable to refresh the NCM delivery charge.");
+        setNcmAdvance(Number(ncmRate.advanceDeliveryCharge||0));
+        setNcmRateLoading(false);
+      }
       const payload={
         name,
         first_name:cleanText(customerDraft.first_name)||null,
@@ -439,6 +456,7 @@ Thank you for ordering from Suru Collection.`;
     }catch(e){
       setError(e?.message||"Unable to create order.");
     }finally{
+      setNcmRateLoading(false);
       setSaving(false);
     }
   };
@@ -456,7 +474,7 @@ Thank you for ordering from Suru Collection.`;
 
   const modalFooter=created
     ? <div className="admin-create-order-footer"><button type="button" className="secondary" onClick={copyConfirmation}>{copied?"Copied":"Copy Customer Message"}</button><button type="button" className="primary" onClick={onClose}>Done</button></div>
-    : <div className="admin-create-order-footer"><button type="button" className="secondary" onClick={onClose} disabled={saving}>Cancel</button><button type="button" className="primary" onClick={submit} disabled={saving||loading}>{saving?"Creating Order…":"Create Order"}</button></div>;
+    : <div className="admin-create-order-footer"><button type="button" className="secondary" onClick={onClose} disabled={saving}>Cancel</button><button type="button" className="primary" onClick={submit} disabled={saving||loading}>{saving?(ncmRateLoading?"Refreshing NCM rate…":"Creating Order…"):"Create Order"}</button></div>;
 
   return <AdminModal
     open={open}
@@ -562,7 +580,7 @@ Thank you for ordering from Suru Collection.`;
                   <div><span>Subtotal</span><b>{money(subtotal)}</b></div>
                   <div><span>Pre-order discount</span><b>− {money(estimatedPreorderDiscount)}</b></div>
                   <div className="grand"><span>Estimated total</span><b>{money(estimatedTotal)}</b></div>
-                  {paymentMethod==="cod"&&<small>COD advance is calculated from the selected NCM delivery destination on the server.</small>}
+                  {paymentMethod==="cod"&&<small>{ncmAdvance!==null?`Current NCM advance delivery charge: ${money(ncmAdvance)}. This rate is refreshed automatically when the order is created.`:"NCM advance delivery charge will be refreshed automatically when the order is created."}</small>}
                 </div>
               </section>
 
