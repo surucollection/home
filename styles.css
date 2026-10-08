@@ -5897,14 +5897,6 @@ a {
   object-fit:contain;
   object-position:left center;
 }
-.fonepay-checkout-label{
-  color:#5f5652;
-  font-size:.72rem;
-  font-weight:600;
-  letter-spacing:-.01em;
-  white-space:nowrap;
-  text-align:right;
-}
 .fonepay-modal-header{
   display:flex;
   align-items:center;
