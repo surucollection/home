@@ -18,18 +18,19 @@ async function fonepayFetch(url:string,init:RequestInit){const controller=new Ab
 async function getToken(){if(!FONEPAY_API_BASE||!/^https:\/\//i.test(FONEPAY_API_BASE))throw new Error("Fonepay production API base is not configured.");if(!FONEPAY_USERNAME||!FONEPAY_PASSWORD||!FONEPAY_TERMINAL_ID)throw new Error("Fonepay merchant service is not configured");const loginBody=JSON.stringify({username:FONEPAY_USERNAME,password:FONEPAY_PASSWORD});const signature=await signBody(loginBody);const basic=FONEPAY_BASIC_AUTH||`Basic ${btoa(`${FONEPAY_USERNAME}:${FONEPAY_PASSWORD}`)}`;const response=await fonepayFetch(`${FONEPAY_API_BASE}${FONEPAY_LOGIN_PATH}`,{method:"POST",headers:{"Authorization":basic,"signature":signature,"Content-Type":"application/json"},body:loginBody});const text=await response.text();let data:any=null;try{data=JSON.parse(text)}catch{}const token=data?.accessToken??data?.token??data?.jwt??data?.data?.accessToken??data?.data?.token??null;if(!response.ok||!token){console.error("Fonepay login failed",{httpStatus:response.status,responseKeys:data&&typeof data==="object"?Object.keys(data):[],message:data?.message||null});throw new Error(`Fonepay login failed (${response.status})${data?.message?": "+String(data.message):""}`)}return String(token).startsWith("Bearer ")?String(token):`Bearer ${token}`}
 async function fonepayRequest(path:string,body:Record<string,unknown>){const token=await getToken();const bodyText=JSON.stringify(body);const signature=await signBody(bodyText);const response=await fonepayFetch(`${FONEPAY_API_BASE}${path}`,{method:"POST",headers:{"Content-Type":"application/json","signature":signature,"Authorization":token},body:bodyText});const text=await response.text();let data:any=null;try{data=JSON.parse(text)}catch{data={}}if(!response.ok){console.error("Fonepay API request failed",{path,httpStatus:response.status,responseKeys:data&&typeof data==="object"?Object.keys(data):[],message:data?.message||null});throw new Error(`Fonepay API failed (${response.status})${data?.message?": "+String(data.message):""}`)}return data}
 async function currentUser(req:Request){const auth=req.headers.get("Authorization");if(!auth?.startsWith("Bearer "))throw new Error("Authentication required");const client=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{headers:{Authorization:auth}},auth:{persistSession:false,autoRefreshToken:false}});const{data,error}=await client.auth.getUser();if(error||!data.user)throw new Error("Authentication required");return data.user}
-async function getOwnedOrder(orderId:string,userId:string){const{data:customer,error:customerError}=await admin.from("customers").select("id").eq("auth_user_id",userId).maybeSingle();if(customerError)throw customerError;if(!customer?.id)throw new Error("Customer profile not found");const{data:order,error}=await admin.from("orders").select("id,order_number,total,payment_method,payment_status,order_status,customer_id,fonepay_reference,fonepay_status,fonepay_response,cod_advance_required,cod_advance_paid,cod_balance_due,cod_advance_payment_status,cod_advance_fonepay_reference,cod_advance_fonepay_trace_id,cod_advance_fonepay_response").eq("id",orderId).eq("customer_id",customer.id).maybeSingle();if(error)throw error;if(!order)throw new Error("Order not found or access denied");return order}
+async function getOwnedOrder(orderId:string,userId:string){const{data:customer,error:customerError}=await admin.from("customers").select("id").eq("auth_user_id",userId).maybeSingle();if(customerError)throw customerError;if(!customer?.id)throw new Error("Customer profile not found");const{data:order,error}=await admin.from("orders").select("id,order_number,total,payment_method,payment_status,order_status,customer_id,fonepay_reference,fonepay_status,fonepay_response,fonepay_initiated_at,payment_expires_at,payment_expired_at,inventory_released_at,cod_advance_required,cod_advance_paid,cod_balance_due,cod_advance_payment_status,cod_advance_fonepay_reference,cod_advance_fonepay_trace_id,cod_advance_fonepay_response,cod_advance_fonepay_initiated_at").eq("id",orderId).eq("customer_id",customer.id).maybeSingle();if(error)throw error;if(!order)throw new Error("Order not found or access denied");return order}
 function makeReference(){return `SC${crypto.randomUUID().replace(/-/g,"").slice(0,26)}`}
 async function createPayment(order:any,purpose:string){
   const{data:claim,error:claimError}=await admin.rpc("claim_fonepay_payment_setup",{p_order_id:order.id,p_purpose:purpose});
   if(claimError)throw claimError;
   if(!claim||typeof claim!=="object")throw new Error("Unable to reserve payment setup");
   const state=String(claim.state||"");
-  if(state==="already_paid")return{alreadyPaid:true,purpose,orderId:order.id,orderNumber:order.order_number,amount:Number(claim.amount||0),balanceDue:Number(claim.balance_due||0)};
+  if(state==="already_paid")return{alreadyPaid:true,purpose,orderId:order.id,orderNumber:order.order_number,amount:Number(claim.amount||0),balanceDue:Number(claim.balance_due||0),paymentExpiresAt:claim.payment_expires_at||order.payment_expires_at||null};
   if(state==="in_progress")throw new Error("Payment setup is already in progress for this order. Please wait a moment and retry.");
+  if(state==="expired")return{expired:true,purpose,orderId:order.id,orderNumber:order.order_number,paymentExpiresAt:claim.payment_expires_at||order.payment_expires_at||null,paymentExpiredAt:claim.payment_expired_at||null};
   if(state==="resume"){
     const response=claim.response||{};
-    return{orderId:order.id,orderNumber:order.order_number,amount:Number(claim.amount||0),balanceDue:Number(claim.balance_due||0),reference:String(claim.reference),qrString:response.qrString||null,qrMessage:response.qrMessage||null,websocketId:response.websocketId||null,status:response.status||"Success",purpose,resumed:true};
+    return{orderId:order.id,orderNumber:order.order_number,amount:Number(claim.amount||0),balanceDue:Number(claim.balance_due||0),reference:String(claim.reference),qrString:response.qrString||null,qrMessage:response.qrMessage||null,websocketId:response.websocketId||null,status:response.status||"Success",purpose,resumed:true,paymentExpiresAt:claim.payment_expires_at||order.payment_expires_at||null};
   }
   if(state!=="claimed")throw new Error("Unable to reserve payment setup");
   const reference=String(claim.reference||"");
@@ -49,7 +50,7 @@ async function createPayment(order:any,purpose:string){
       :{fonepay_reference:reference,fonepay_status:"initiated",fonepay_response:result,fonepay_initiated_at:new Date().toISOString(),payment_status:"pending",updated_at:new Date().toISOString()};
     const{error}=await admin.from("orders").update(update).eq("id",order.id);
     if(error)throw error;
-    return{orderId:order.id,orderNumber:order.order_number,amount,balanceDue:Number(claim.balance_due||0),reference,qrString,qrMessage:result?.qrMessage||qrString,websocketId,status:result?.status||null,purpose};
+    return{orderId:order.id,orderNumber:order.order_number,amount,balanceDue:Number(claim.balance_due||0),reference,qrString,qrMessage:result?.qrMessage||qrString,websocketId,status:result?.status||null,purpose,paymentExpiresAt:claim.payment_expires_at||order.payment_expires_at||null};
   }catch(e){
     const failedUpdate=purpose==="cod_advance"
       ?{cod_advance_payment_status:"failed",updated_at:new Date().toISOString()}
@@ -60,11 +61,18 @@ async function createPayment(order:any,purpose:string){
 }
 async function checkPayment(order:any,purpose:string){
   const isCodAdvance=purpose==="cod_advance";
+  if(order.payment_expired_at || (order.payment_expires_at && new Date(order.payment_expires_at).getTime()<=Date.now())){
+    const{data:expiryData,error:expiryError}=await admin.rpc("expire_fonepay_payment_order",{p_order_id:order.id});
+    if(expiryError)throw expiryError;
+    if(["expired","already_expired"].includes(String(expiryData?.state||""))){
+      return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"expired",verified:false,expired:true,purpose,paymentExpiresAt:order.payment_expires_at||null,paymentExpiredAt:expiryData?.payment_expired_at||order.payment_expired_at||null,balanceDue:Number(order.cod_balance_due||0)};
+    }
+  }
   if(isCodAdvance){
     if(String(order.payment_method)!=="cod")throw new Error("This order is not configured for COD");
     const reference=String(order.cod_advance_fonepay_reference||"");if(!reference)throw new Error("COD advance payment has not been initiated");
     const expected=Number(order.cod_advance_required);
-    if(String(order.cod_advance_payment_status)==="paid")return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"success",verified:true,purpose,balanceDue:Number(order.cod_balance_due||0),alreadyPaid:true};
+    if(String(order.cod_advance_payment_status)==="paid")return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"success",verified:true,purpose,balanceDue:Number(order.cod_balance_due||0),alreadyPaid:true,paymentExpiresAt:order.payment_expires_at||null};
     const rawResult=await fonepayRequest(FONEPAY_STATUS_PATH,{terminalId:FONEPAY_TERMINAL_ID,referenceLabel:reference});
     const result=rawResult?.data&&typeof rawResult.data==="object"&&!rawResult.paymentStatus?rawResult.data:rawResult;
     const upstreamStatus=String(result?.paymentStatus||"pending").toLowerCase(),requested=Number(result?.requestedAmount),paid=Number(result?.totalTransactionAmount),amountOk=Number.isFinite(paid)&&Math.abs(paid-expected)<0.01;
@@ -79,7 +87,7 @@ async function checkPayment(order:any,purpose:string){
     return{orderId:order.id,orderNumber:order.order_number,paymentStatus:upstreamStatus,requestedAmount:requested,totalTransactionAmount:paid,traceId:result?.fonepayTraceId??null,paymentMessage:result?.paymentMessage||null,verified:nextStatus==="paid",purpose,balanceDue:nextStatus==="paid"?Math.max(0,Number(order.total)-expected):Number(order.cod_balance_due||0)};
   }
   if(String(order.payment_method)!=="fonepay")throw new Error("This order is not configured for Fonepay");
-  if(String(order.payment_status)==="paid")return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"success",verified:true,purpose,alreadyPaid:true};
+  if(String(order.payment_status)==="paid")return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"success",verified:true,purpose,alreadyPaid:true,paymentExpiresAt:order.payment_expires_at||null};
   if(!order.fonepay_reference)throw new Error("Fonepay payment has not been initiated");
   const result=await fonepayRequest("/api/merchant/third-party/v2/thirdPartyDynamicQrGetStatus",{terminalId:FONEPAY_TERMINAL_ID,referenceLabel:order.fonepay_reference});
   const upstreamStatus=String(result?.paymentStatus||"pending").toLowerCase(),requested=Number(result?.requestedAmount),paid=Number(result?.totalTransactionAmount),expected=Number(order.total),amountOk=Number.isFinite(paid)&&Math.abs(paid-expected)<0.01;
