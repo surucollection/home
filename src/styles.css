@@ -351,10 +351,13 @@
   border-bottom:1px solid #292e35;
 }
 .fonepay-logo-picture{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
   display:block;
   line-height:0;
   max-width:100%;
-  margin:0 auto;
+  margin:0;
   text-align:center;
 }
 .fonepay-real-logo{
