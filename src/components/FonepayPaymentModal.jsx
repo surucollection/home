@@ -25,9 +25,10 @@ function FonepayPaymentModal({
       <div className="fonepay-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby={ariaLabelledBy}>
         <div className="fonepay-modal-card">
           <div className="fonepay-brand-row">
-            <div className="fonepay-logo-picture">
+            <picture className="fonepay-logo-picture">
+              <source media="(prefers-color-scheme: dark)" srcSet="/assets/fonepay-logo.webp" />
               <img className="fonepay-real-logo" src="/assets/fonepay-logo-dark.webp" alt="Checkout by Fonepay" />
-            </div>
+            </picture>
             <button
               className="fonepay-modal-minimize"
               type="button"
