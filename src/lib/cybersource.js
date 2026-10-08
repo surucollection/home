@@ -25,7 +25,7 @@ export async function createCyberSourceSession(orderId) {
 
 export function loadCyberSourceLibrary(src, integrity) {
   const url = String(src || "").trim();
-  if (!/^https:\\/\\//i.test(url)) {
+  if (!String(url).toLowerCase().startsWith("https://")) {
     throw new Error("CyberSource payment library URL is invalid.");
   }
   const key = url + "|" + String(integrity || "");
