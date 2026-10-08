@@ -73,7 +73,7 @@ function FonepayPaymentModal({
           <div className="fonepay-app-picker">
             <div className="fonepay-app-picker-title">
               <button type="button" className="fonepay-app-picker-back" onClick={()=>{setAppPickerOpen(false);setBanksError("")}} aria-label="Back to QR">‹</button>
-              <div><strong>Pay with any app</strong><span>Select your bank or wallet</span></div>
+              <div><strong>Pay with your Bank</strong><span>Select your bank or wallet</span></div>
             </div>
             <div className="fonepay-bank-list">
               {banks.map((bank,i)=><button type="button" className="fonepay-bank-option" key={bank.bankCode||bank.bankName||i} onClick={()=>openBankApp(bank)}>
@@ -88,7 +88,7 @@ function FonepayPaymentModal({
             <div id={ariaLabelledBy} className="fonepay-pay-amount">{"Pay "+money(amount)+" to confirm your order."}</div>
             {qrImage?<div className="fonepay-qr-wrap"><img src={qrImage} alt="Fonepay payment QR" /></div>:<div className="fonepay-qr-placeholder" role="status">Preparing secure Fonepay QR…</div>}
             <div className="fonepay-or">or</div>
-            <button type="button" className="fonepay-app-pay-button" onClick={loadBanks} disabled={banksBusy}>{banksBusy?"Loading payment apps…":"Pay with any app"}</button>
+            <button type="button" className="fonepay-app-pay-button" onClick={loadBanks} disabled={banksBusy}>{banksBusy?"Loading payment apps…":"Pay with your Bank"}</button>
             {banksError&&<p className="fonepay-app-error">{banksError}</p>}
             <div className="fonepay-payment-meta">
               <div><span>Amount</span><strong>{money(amount)}</strong></div>
