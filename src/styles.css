@@ -382,12 +382,13 @@
   box-shadow:none!important;
 }
 .fonepay-pay-amount{
-  margin:0 0 14px;
+  margin:8px 0 13px;
   color:#fff;
-  font-size:20px;
+  font-size:clamp(14px,4vw,17px);
   font-weight:800;
-  line-height:1.35;
-  text-align:left;
+  line-height:1.25;
+  text-align:center;
+  white-space:nowrap;
 }
 .fonepay-qr-wrap{
   width:min(228px,64vw);
@@ -509,7 +510,7 @@
     padding:2px 48px 9px;
   }
   .fonepay-real-logo{width:min(278px,100%)}
-  .fonepay-pay-amount{font-size:18px;margin-bottom:12px}
+  .fonepay-pay-amount{font-size:14px;margin:8px 0 11px}
   .fonepay-qr-wrap,.fonepay-modal-card .fonepay-qr-placeholder{width:min(212px,62vw)}
   .fonepay-payment-meta{gap:6px}
   .fonepay-payment-meta>div{padding:8px 9px}
