@@ -159,7 +159,7 @@ Deno.serve(async(req)=>{
     const clientLibrary=String(decoded.payload?.clientLibrary||"").trim();
     const clientLibraryIntegrity=String(decoded.payload?.clientLibraryIntegrity||"").trim();
     if(!clientLibrary||!clientLibraryIntegrity)throw new Error("CyberSource payment library details were not returned.");
-    if(!/^https:\\/\\//i.test(clientLibrary))throw new Error("CyberSource payment library URL is invalid.");
+    if(!String(clientLibrary).toLowerCase().startsWith("https://"))throw new Error("CyberSource payment library URL is invalid.");
 
     return json({sessionJwt,clientLibrary,clientLibraryIntegrity,environment:ENV});
   }catch(e){
