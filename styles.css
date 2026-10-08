@@ -6267,3 +6267,140 @@ a {
     font-size:.8rem;
   }
 }
+
+/* =========================================================
+   COMPACT ORDER DETAILS POPUP — STYLE ONLY
+   Keeps existing order details, payment, tracking, cancellation,
+   invoice and close/continue actions unchanged.
+   ========================================================= */
+.order-details-modal{
+  width:min(620px,100%);
+  max-height:84vh;
+  padding:18px;
+  border-radius:16px;
+}
+.order-details-header{
+  gap:10px;
+  padding-bottom:10px;
+}
+.order-details-header h2{
+  font-size:1.2rem;
+}
+.order-details-header p{
+  font-size:.82rem;
+}
+.order-detail-status{
+  gap:8px;
+  margin:12px 0 14px;
+}
+.order-detail-status-item{
+  gap:3px;
+}
+.order-detail-status-item small{
+  font-size:.66rem;
+}
+.order-detail-items{
+  border-radius:10px;
+}
+.order-detail-item{
+  gap:10px;
+  padding:10px 11px;
+}
+.order-detail-item>div{
+  gap:2px;
+}
+.order-detail-item small{
+  font-size:.78rem;
+}
+.order-detail-item>div:last-child{
+  font-size:.84rem;
+}
+.order-detail-total{
+  padding:12px 3px;
+  font-size:.98rem;
+}
+.order-detail-address{
+  gap:2px;
+  padding:10px 11px;
+  border-radius:9px;
+  font-size:.86rem;
+}
+.order-detail-payment{
+  gap:7px 10px;
+  margin-top:10px;
+  font-size:.82rem;
+}
+@media(max-width:700px){
+  .order-details-overlay{
+    padding:10px;
+    align-items:center;
+  }
+  .order-details-modal{
+    width:min(100%,560px);
+    max-height:86vh;
+    padding:14px 12px;
+    border-radius:14px;
+  }
+  .order-details-header{
+    gap:8px;
+    padding-bottom:9px;
+  }
+  .order-details-header h2{
+    font-size:1.08rem;
+    line-height:1.2;
+  }
+  .order-details-header p{
+    font-size:.74rem;
+  }
+  .order-details-header .secondary{
+    min-height:34px;
+    padding:7px 10px;
+    font-size:.8rem;
+  }
+  .order-detail-status{
+    gap:7px;
+    margin:10px 0 11px;
+  }
+  .order-detail-status-item small{
+    font-size:.62rem;
+  }
+  .order-status-badge,.tracking-status{
+    padding:4px 8px;
+    font-size:.68rem;
+  }
+  .order-detail-items{
+    border-radius:9px;
+  }
+  .order-detail-item{
+    gap:8px;
+    padding:9px 10px;
+  }
+  .order-detail-item strong{
+    font-size:.88rem;
+  }
+  .order-detail-item small{
+    font-size:.72rem;
+  }
+  .order-detail-item>div:last-child{
+    font-size:.78rem;
+  }
+  .order-detail-total{
+    padding:10px 2px;
+    font-size:.92rem;
+  }
+  .order-detail-address{
+    padding:9px 10px;
+    font-size:.8rem;
+  }
+  .order-detail-payment{
+    gap:6px 9px;
+    margin-top:9px;
+    font-size:.76rem;
+  }
+  .order-details-modal .payment-hold-box,
+  .order-details-modal .payment-expired-box,
+  .order-details-modal .tracking-box{
+    margin-top:10px;
+    padding:10px 11px;
+  }
+}
