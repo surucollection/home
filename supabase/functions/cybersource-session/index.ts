@@ -68,7 +68,7 @@ async function signedFetch(method:string,path:string,body?:string){
     "Content-Type":"application/json",
     "v-c-merchant-id":MERCHANT_ID,
     "Date":date,
-    "Signature":"keyid=\\""+KEY_ID+"\\", algorithm=\\"HmacSHA256\\", headers=\\""+headersList.join(" ")+"\\", signature=\\""+signature+"\\""
+    "Signature": 'keyid="' + KEY_ID + '", algorithm="HmacSHA256", headers="' + headersList.join(" ") + '", signature="' + signature + '"'
   };
   if(hasBody)headers.Digest=digest;
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
