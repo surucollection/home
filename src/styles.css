@@ -332,7 +332,8 @@
   position:relative;
   width:min(390px,100%);
   max-height:min(84vh,700px);
-  overflow:auto;
+  overflow-y:auto;
+  overflow-x:hidden;
   background:#0b0d10;
   color:#f7f8fa;
   border:1px solid #2a2f36;
@@ -351,7 +352,7 @@
 }
 .fonepay-real-logo{
   display:block;
-  width:min(290px,100%);
+  width:min(230px,100%);
   max-width:100%;
   height:auto;
   object-fit:contain;
@@ -388,7 +389,8 @@
   font-weight:800;
   line-height:1.25;
   text-align:center;
-  white-space:nowrap;
+  white-space:normal;
+  overflow-wrap:anywhere;
 }
 .fonepay-qr-wrap{
   width:min(228px,64vw);
@@ -506,10 +508,10 @@
     padding:10px 12px 13px;
   }
   .fonepay-brand-row{
-    min-height:72px;
-    padding:2px 48px 9px;
+    min-height:64px;
+    padding:2px 44px 8px;
   }
-  .fonepay-real-logo{width:min(278px,100%)}
+  .fonepay-real-logo{width:min(215px,100%)}
   .fonepay-pay-amount{font-size:14px;margin:8px 0 11px}
   .fonepay-qr-wrap,.fonepay-modal-card .fonepay-qr-placeholder{width:min(212px,62vw)}
   .fonepay-payment-meta{gap:6px}
@@ -594,8 +596,8 @@
   line-height:1.35;
 }
 .payment-method-fonepay-logo{
-  width:88px;
-  height:32px;
+  width:74px;
+  height:27px;
   flex:0 0 auto;
   object-fit:contain;
   object-position:center;
@@ -610,7 +612,7 @@
     padding:11px 12px;
   }
   .payment-method-fonepay-logo{
-    width:82px;
-    height:30px;
+    width:70px;
+    height:25px;
   }
 }
