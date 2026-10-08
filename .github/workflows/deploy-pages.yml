@@ -1,5 +1,5 @@
 name: Deploy Suru Collection
-# Live deployment trigger: 2026-10-06-checkout-address-fix
+# Live deployment trigger: 2026-10-08-fonepay-qr-fix
 
 on:
   push:
