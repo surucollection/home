@@ -162,10 +162,10 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
       province,
       postal_code:selectedAddress.postal_code||"",
       is_default:!!selectedAddress.is_default,
-      ncm_destination_branch:selectedCustomer?.ncm_destination_branch||""
+      ncm_destination_branch:selectedCustomer?.ncm_destination_branch||matchNcmBranch(branches,selectedAddress.city,selectedAddress.district,null,province)||""
     });
     setBranchManual(!!selectedCustomer?.ncm_destination_branch);
-  },[selectedAddress,selectedCustomer]);
+  },[selectedAddress,selectedCustomer,branches.length]);
 
   const selectExistingCustomer=async customer=>{
     setError("");
@@ -393,7 +393,6 @@ Thank you for ordering from Suru Collection.`;
       setError("Select an NCM destination branch for COD orders.");
       return;
     }
-    if(mode==="new"&&!cleanText(customerDraft.email)&&cleanText(addressDraft.email))customerDraft.email=addressDraft.email;
     setSaving(true);
     try{
       const payload={
