@@ -126,7 +126,7 @@ function isSuccess(data:any){
   const status=String(data?.status||"").toUpperCase();
   const decision=String(data?.decision||"").toUpperCase();
   const code=String(data?.processorInformation?.responseCode||"");
-  return ["AUTHORIZED","SETTLED","SUCCESS","SUCCEEDED"].includes(status) || decision==="ACCEPT" || (status==="PENDING"&&code==="00");
+  return ["AUTHORIZED","CAPTURED","SETTLED","SUCCESS","SUCCEEDED"].includes(status) || decision==="ACCEPT" || (status==="AUTHORIZED"&&code==="00");
 }
 Deno.serve(async(req)=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
