@@ -289,9 +289,10 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     }
     return variants.filter(v=>!selectedSize||cleanText(v.size).toUpperCase()===selectedSize);
   };
-  const variantAvailability=(variant,product)=>{
-    const stock=Math.max(0,Number(variant?.stock||0));
-    const preorderEnabled=!!(variant?.preorder_enabled??product?.preorder_enabled);
+  const variantAvailability=(variants,product)=>{
+    const rows=Array.isArray(variants)?variants:[];
+    const stock=Math.max(0,...rows.map(v=>Math.max(0,Number(v?.stock||0))));
+    const preorderEnabled=rows.some(v=>!!(v?.preorder_enabled??product?.preorder_enabled));
     if(stock>0)return stock+" available";
     return preorderEnabled?"Pre-order":"Out of stock";
   };
@@ -568,8 +569,8 @@ Thank you for ordering from Suru Collection.`;
                         <div className="admin-create-order-line-total"><span>Line total</span><b>{money(lineTotal(line))}</b></div>
                       </div>
                       {line.productId&&<div className="admin-create-order-grid admin-create-order-grid-4">
-                        {sizes.length>0&&<label>Size *<select value={line.size} onChange={e=>updateLine(i,{size:e.target.value})}><option value="">Select size</option>{sizes.map(v=>{const vv=optionVariantsFor(lineProduct(line),line,"size").filter(x=>cleanText(x.size).toUpperCase()===cleanText(v).toUpperCase());const best=vv.slice().sort((a,b)=>Number(b.stock||0)-Number(a.stock||0))[0];return <option key={v} value={v}>{v} — {variantAvailability(best,lineProduct(line))}</option>})}</select></label>}
-                        {colors.length>0&&<label>Color *<select value={line.color} onChange={e=>updateLine(i,{color:e.target.value})}><option value="">Select color</option>{colors.map(v=>{const vv=optionVariantsFor(lineProduct(line),line,"color").filter(x=>cleanText(x.color).toUpperCase()===cleanText(v).toUpperCase());const best=vv.slice().sort((a,b)=>Number(b.stock||0)-Number(a.stock||0))[0];return <option key={v} value={v}>{v} — {variantAvailability(best,lineProduct(line))}</option>})}</select></label>}
+                        {sizes.length>0&&<label>Size *<select value={line.size} onChange={e=>updateLine(i,{size:e.target.value})}><option value="">Select size</option>{sizes.map(v=>{const vv=optionVariantsFor(lineProduct(line),line,"size").filter(x=>cleanText(x.size).toUpperCase()===cleanText(v).toUpperCase());return <option key={v} value={v}>{v} — {variantAvailability(vv,lineProduct(line))}</option>})}</select></label>}
+                        {colors.length>0&&<label>Color *<select value={line.color} onChange={e=>updateLine(i,{color:e.target.value})}><option value="">Select color</option>{colors.map(v=>{const vv=optionVariantsFor(lineProduct(line),line,"color").filter(x=>cleanText(x.color).toUpperCase()===cleanText(v).toUpperCase());return <option key={v} value={v}>{v} — {variantAvailability(vv,lineProduct(line))}</option>})}</select></label>}
                         <div className="admin-create-order-stock-status"><span>Stock</span><b>{eligibility.stock===null?"Select option":eligibility.stock}</b><small>{eligibility.message}</small></div>
                         {eligibility.canPreorder&&<label className="admin-create-order-preorder-check"><input type="checkbox" checked={!!line.isPreorder} onChange={e=>updateLine(i,{isPreorder:e.target.checked})}/> Pre-order</label>}
                       </div>}
