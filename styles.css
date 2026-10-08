@@ -5865,45 +5865,96 @@ a {
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:18px;
-  background:rgba(35,22,23,.62);
-  backdrop-filter:blur(5px);
-  -webkit-backdrop-filter:blur(5px);
+  padding:12px;
+  background:rgba(35,22,23,.58);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
 }
 .fonepay-modal-card{
-  width:min(470px,100%);
-  max-height:min(88vh,760px);
+  width:min(410px,100%);
+  max-height:min(84vh,700px);
   overflow:auto;
   background:#fff;
   border:1px solid #eadfd9;
   border-radius:22px;
-  box-shadow:0 24px 70px rgba(0,0,0,.25);
-  padding:20px;
+  box-shadow:0 22px 60px rgba(0,0,0,.24);
+  padding:14px 16px 16px;
+}
+.fonepay-brand-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:4px 2px 10px;
+  border-bottom:1px solid #eee6df;
+}
+.fonepay-logo-lockup{
+  display:inline-flex;
+  align-items:center;
+  gap:0;
+  height:32px;
+  min-height:30px;
+  white-space:nowrap;
+  letter-spacing:-.04em;
+}
+.fonepay-logo-fone{
+  display:inline-flex;
+  align-items:center;
+  height:30px;
+  padding:0 8px 0 9px;
+  border-radius:4px 0 0 4px;
+  background:#ce2027;
+  color:#fff;
+  font:700 18px/1 Arial,sans-serif;
+}
+.fonepay-logo-pay{
+  display:inline-flex;
+  align-items:center;
+  height:30px;
+  color:#0a0d12;
+  font:700 18px/1 Arial,sans-serif;
+  padding-left:2px;
+}
+.fonepay-logo-network{
+  width:21px;
+  height:21px;
+  margin-left:7px;
+  fill:none;
+  stroke:#ce2027;
+  stroke-width:2.4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.fonepay-logo-network circle{fill:#fff;stroke:#ce2027}
+.fonepay-checkout-label{
+  color:#6b5a55;
+  font-size:.72rem;
+  font-weight:600;
+  white-space:nowrap;
 }
 .fonepay-modal-header{
   display:flex;
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
-  gap:14px;
-  margin-bottom:10px;
+  gap:12px;
+  margin:10px 0 8px;
 }
-.fonepay-modal-header .eyebrow{margin:0 0 5px}
 .fonepay-modal-header h3{
   margin:0;
   color:#6f222b;
-  font-size:22px;
+  font-size:19px;
   line-height:1.2;
 }
 .fonepay-modal-minimize{
-  width:40px!important;
-  min-width:40px!important;
-  height:40px!important;
+  width:36px!important;
+  min-width:36px!important;
+  height:36px!important;
   padding:0!important;
   border:1px solid #eadfd9!important;
   border-radius:50%!important;
   background:#fff!important;
   color:#4a292b!important;
-  font-size:24px!important;
+  font-size:22px!important;
   line-height:1!important;
 }
 .fonepay-modal-card .fonepay-payment-card{
@@ -5914,27 +5965,121 @@ a {
   background:transparent;
   box-shadow:none;
 }
-.fonepay-modal-card .fonepay-payment-card h3{
-  margin:8px 0 10px;
+.fonepay-pay-amount{
+  color:#241719;
+  font-size:21px;
+  font-weight:800;
+  line-height:1.18;
+  margin:0 0 4px;
 }
-.fonepay-modal-card .fonepay-payment-card img{
-  width:min(320px,78vw)!important;
-  height:auto!important;
-  aspect-ratio:1/1;
-  border-radius:10px;
-  background:#fff;
+.fonepay-instruction{
+  margin:0 0 10px!important;
+  color:#6c625f;
+  font-size:.8rem;
+  line-height:1.45;
 }
-.fonepay-modal-card .fonepay-qr-placeholder{
-  min-height:280px;
+.fonepay-qr-wrap{
+  width:min(230px,64vw);
+  aspect-ratio:1;
+  margin:8px auto 11px;
+  padding:8px;
   display:flex;
   align-items:center;
   justify-content:center;
-  margin:12px auto;
+  background:#fff;
+  border:1px solid #efe8e2;
+  border-radius:16px;
+  box-shadow:0 7px 22px rgba(30,20,18,.08);
+}
+.fonepay-qr-wrap img{
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:contain;
+  border-radius:8px;
+  background:#fff;
+}
+.fonepay-modal-card .fonepay-qr-placeholder{
+  width:min(230px,64vw);
+  aspect-ratio:1;
+  min-height:0;
+  margin:8px auto 11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   border:1px dashed #d8cbc5;
-  border-radius:14px;
+  border-radius:16px;
   background:#fffaf7;
-  padding:20px;
+  padding:16px;
   text-align:center;
+  font-size:.82rem;
+  color:#6f6460;
+}
+.fonepay-payment-meta{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:3px 0 10px;
+}
+.fonepay-payment-meta>div{
+  min-width:0;
+  padding:9px 10px;
+  border:1px solid #eee6df;
+  border-radius:10px;
+  background:#fffdfb;
+}
+.fonepay-payment-meta>div span{
+  display:block;
+  margin-bottom:2px;
+  color:#7b706b;
+  font-size:.68rem;
+  line-height:1.2;
+}
+.fonepay-payment-meta>div strong{
+  display:block;
+  color:#321f22;
+  font-size:.9rem;
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
+.fonepay-payment-meta .fonepay-reference{
+  grid-column:1/-1;
+  background:#faf7f4;
+}
+.fonepay-reference strong{
+  font-size:.72rem!important;
+  letter-spacing:.01em;
+  word-break:break-all;
+}
+.fonepay-auto-status{
+  display:flex;
+  align-items:flex-start;
+  gap:7px;
+  margin:0!important;
+  padding:9px 10px;
+  border-radius:10px;
+  background:#f7faf7;
+  color:#55645a;
+  font-size:.75rem;
+  line-height:1.4;
+}
+.fonepay-live-dot{
+  flex:0 0 auto;
+  width:8px;
+  height:8px;
+  margin-top:4px;
+  border-radius:50%;
+  background:#4b8a5a;
+  box-shadow:0 0 0 3px rgba(75,138,90,.12);
+}
+.fonepay-expiry-note{
+  margin:7px 0 0!important;
+  padding:7px 9px;
+  border-radius:8px;
+  background:#fff8f2;
+  color:#684f43;
+  text-align:center;
+  font-size:.72rem;
 }
 .fonepay-reopen-button{
   position:fixed;
@@ -5950,14 +6095,25 @@ a {
   box-shadow:0 10px 28px rgba(0,0,0,.18);
 }
 @media(max-width:480px){
-  .fonepay-modal-backdrop{padding:10px;align-items:flex-end}
+  .fonepay-modal-backdrop{padding:8px;align-items:center}
   .fonepay-modal-card{
     width:100%;
-    max-height:92vh;
-    border-radius:20px 20px 14px 14px;
-    padding:16px;
+    max-height:82vh;
+    border-radius:18px;
+    padding:12px 13px 14px;
   }
-  .fonepay-modal-header h3{font-size:20px}
-  .fonepay-modal-card .fonepay-qr-placeholder{min-height:240px}
+  .fonepay-brand-row{padding-bottom:8px}
+  .fonepay-logo-lockup{height:30px}
+  .fonepay-logo-fone,.fonepay-logo-pay{height:28px;font-size:17px}
+  .fonepay-logo-fone{padding-left:8px;padding-right:7px}
+  .fonepay-logo-network{width:19px;height:19px;margin-left:6px}
+  .fonepay-checkout-label{font-size:.68rem}
+  .fonepay-modal-header{margin:8px 0 7px}
+  .fonepay-modal-header h3{font-size:18px}
+  .fonepay-pay-amount{font-size:20px}
+  .fonepay-qr-wrap,.fonepay-modal-card .fonepay-qr-placeholder{width:min(214px,60vw)}
+  .fonepay-payment-meta{gap:7px}
+  .fonepay-payment-meta>div{padding:8px 9px}
+  .fonepay-payment-meta>div strong{font-size:.84rem}
   .fonepay-reopen-button{right:12px;bottom:12px}
 }
