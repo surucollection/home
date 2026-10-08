@@ -366,9 +366,9 @@
 }
 .fonepay-modal-minimize{
   position:absolute!important;
-  top:50%;
-  right:2px;
-  transform:translateY(-50%);
+  top:8px;
+  right:8px;
+  transform:none;
   width:32px!important;
   min-width:32px!important;
   height:32px!important;
