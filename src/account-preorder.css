@@ -225,3 +225,49 @@
   .preorder-fonepay-amount{font-size:12px;margin:8px 0}
   .preorder-fonepay-qr,.preorder-fonepay-qr-placeholder{width:min(180px,52vw)}
 }
+
+/* Pre-order payment confirmation */
+.preorder-confirmation{
+  margin:18px 0 0;
+  padding:24px 18px;
+  border:1px solid #e3d8d3;
+  border-radius:14px;
+  background:#fffaf7;
+  text-align:center;
+}
+.preorder-confirmation-icon{
+  width:48px;
+  height:48px;
+  margin:0 auto 10px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#76292d;
+  color:#fff;
+  font-size:25px;
+  font-weight:800;
+}
+.preorder-confirmation-kicker{
+  margin:0 0 5px;
+  color:#9b7661;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.15em;
+}
+.preorder-confirmation h4{
+  margin:0 0 8px;
+  color:#4a292b;
+  font:500 24px/1.2 Georgia,"Times New Roman",serif;
+}
+.preorder-confirmation p{
+  margin:0;
+  color:#756763;
+  font-size:14px;
+  line-height:1.55;
+}
+.preorder-confirmation-balance{
+  margin-top:8px!important;
+}
+.preorder-confirmation .buy-now-button{
+  margin-top:16px;
+}
