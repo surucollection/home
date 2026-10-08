@@ -5883,17 +5883,17 @@ a {
 .fonepay-brand-row{
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:12px;
+  justify-content:center;
+  gap:0;
   min-height:42px;
-  padding:1px 2px 9px;
+  padding:1px 2px 8px;
   border-bottom:1px solid #ece7e3;
 }
 .fonepay-real-logo{
   display:block;
-  width:155px;
+  width:min(250px,100%);
   height:auto;
-  max-width:56%;
+  max-width:100%;
   object-fit:contain;
   object-position:left center;
 }
@@ -6077,8 +6077,7 @@ a {
     padding:11px 12px 13px;
   }
   .fonepay-brand-row{min-height:40px;padding-bottom:8px}
-  .fonepay-real-logo{width:145px}
-  .fonepay-checkout-label{font-size:.67rem}
+  .fonepay-real-logo{width:min(235px,100%)}
   .fonepay-modal-header{margin:8px 0 6px}
   .fonepay-modal-header h3{font-size:17px}
   .fonepay-pay-amount{font-size:19px}
