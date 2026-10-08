@@ -6079,3 +6079,86 @@ a {
   .fonepay-payment-meta>div strong{font-size:.82rem}
   .fonepay-reopen-button{right:12px;bottom:12px}
 }
+
+/* =========================================================
+   FONEPAY DARK PAYMENT MODAL
+   ========================================================= */
+
+.fonepay-modal-backdrop{
+  background:rgba(0,0,0,.78);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.fonepay-modal-card{
+  background:#0b0e12;
+  color:#f4f6f8;
+  border-color:#262c34;
+  box-shadow:0 26px 70px rgba(0,0,0,.58);
+}
+
+.fonepay-brand-row{
+  border-bottom-color:#262c34;
+}
+
+.fonepay-modal-header h3{
+  color:#f7f8fa;
+}
+
+.fonepay-modal-minimize{
+  border-color:#343b44!important;
+  background:#151a20!important;
+  color:#f4f6f8!important;
+}
+
+.fonepay-pay-amount{
+  color:#ffffff;
+}
+
+.fonepay-instruction{
+  color:#aeb6c0;
+}
+
+.fonepay-qr-wrap{
+  background:#ffffff;
+  border-color:#3a424c;
+  box-shadow:0 8px 26px rgba(0,0,0,.34);
+}
+
+.fonepay-modal-card .fonepay-qr-placeholder{
+  border-color:#47515d;
+  background:#12171d;
+  color:#9ca6b1;
+}
+
+.fonepay-payment-meta>div{
+  border-color:#2c333c;
+  background:#151a20;
+}
+
+.fonepay-payment-meta>div span{
+  color:#99a3ae;
+}
+
+.fonepay-payment-meta>div strong{
+  color:#f3f5f7;
+}
+
+.fonepay-payment-meta .fonepay-reference{
+  background:#10151a;
+}
+
+.fonepay-auto-status{
+  background:#101914;
+  border:1px solid #24402d;
+  color:#b5c8b9;
+}
+
+.fonepay-live-dot{
+  background:#51a765;
+  box-shadow:0 0 0 3px rgba(81,167,101,.13);
+}
+
+.fonepay-reopen-button{
+  box-shadow:0 12px 32px rgba(0,0,0,.34);
+}
