@@ -352,7 +352,7 @@
 }
 .fonepay-logo-picture{
   position:absolute;
-  left:calc(50% + 60px);
+  left:50%;
   transform:translateX(-50%);
   display:block;
   line-height:0;
