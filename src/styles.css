@@ -354,6 +354,7 @@
   display:block;
   line-height:0;
   max-width:100%;
+  margin:0 auto;
 }
 .fonepay-real-logo{
   display:block;
@@ -391,9 +392,12 @@
   min-height:30px;
   display:flex;
   align-items:center;
+  justify-content:center;
+  text-align:center;
 }
 
 .fonepay-modal-header h3{
+  width:100%;
   margin:0;
   color:#fff;
   font-size:13px;
@@ -405,6 +409,7 @@
   text-overflow:clip;
 }
 .fonepay-pay-amount{
+  width:100%;
   margin:0;
   color:#fff;
   font-size:13px;
