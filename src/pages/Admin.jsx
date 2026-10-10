@@ -90,7 +90,7 @@ function Admin(){
      return true;
    }catch(e){
      setMessage("Could not mark direct delivery: "+(e?.message||"Please try again."));
-     throw e;
+     return false;
    }finally{setNcmBusy(false)}
  };
  const reviewCancellation=async(o,action)=>{
