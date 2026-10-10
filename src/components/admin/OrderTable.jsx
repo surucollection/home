@@ -3,9 +3,14 @@ import { money } from "../../lib/api.js";
 
 const ADMIN_INVOICE_ACTIONS_VERSION="2026.09.29.5";
 
-export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,onInvoice,onCancelInvoice,onCreateShipment,compact=false}){
+export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,onInvoice,onCancelInvoice,onCreateShipment,onManualPayment,onSelfDelivery,compact=false}){
   const [busy,setBusy]=useState("");
   const [resultModal,setResultModal]=useState(null);
+  const [paymentOrder,setPaymentOrder]=useState(null);
+  const [paymentMethod,setPaymentMethod]=useState("cash");
+  const [paymentReference,setPaymentReference]=useState("");
+  const [paymentNote,setPaymentNote]=useState("");
+  const [paymentSaving,setPaymentSaving]=useState(false);
   const [ncmCancelled,setNcmCancelled]=useState({});
   const ncmCommentChecks=useRef({});
 
@@ -42,7 +47,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
 
   const isNcmCancelled=o=>ncmCancelled[o.id]===String(o.ncm_order_id)||/^(cancelled|canceled)$/i.test(String(o.ncm_status||"").trim());
   const codAdvancePaid=o=>String(o.payment_method||"").toLowerCase()==="cod"&&Number(o.cod_advance_required||0)>0&&Number(o.cod_advance_paid||0)>=Number(o.cod_advance_required||0);
-  const allowedOrderStatuses=o=>codAdvancePaid(o)?["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"]:["pending","cancelled"];
+  const allowedOrderStatuses=o=>(codAdvancePaid(o)||o.payment_status==="paid"||o.delivery_method==="self_delivery")?["pending","confirmed","processing","packed","shipped","delivered","cancelled","returned"]:["pending","cancelled"];
   const prettyLabel=k=>String(k||"").replace(/_/g," ").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/\b\w/g,x=>x.toUpperCase());
   const displayValue=v=>{
     if(v===null||v===undefined||v==="")return "—";
@@ -101,6 +106,15 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     }finally{
       setBusy("");
     }
+  };
+
+  const submitManualPayment=async()=>{
+    if(!paymentOrder||!onManualPayment)return;
+    setPaymentSaving(true);
+    try{
+      const ok=await onManualPayment(paymentOrder,{method:paymentMethod,reference:paymentReference.trim(),note:paymentNote.trim()});
+      if(ok){setPaymentOrder(null);setPaymentReference("");setPaymentNote("");}
+    }finally{setPaymentSaving(false);}
   };
 
   const actionOptions=[
@@ -184,6 +198,10 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
                       {o.ncm_order_id&&!isNcmCancelled(o)&&onNcmAction&&<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a)runNcm(o,a)}}>{actionOptions.map(([v,l])=>{const s=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();const exchangeBlocked=v==="exchange"&&!s.includes("deliver");const returnBlocked=v==="return"&&!["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));const redirectBlocked=v==="redirect"&&!["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));return <option key={v} value={v} disabled={exchangeBlocked||returnBlocked||redirectBlocked}>{exchangeBlocked?"Create Exchange (after delivery)":returnBlocked?"Return Shipment (after allowed status)":redirectBlocked?"Redirect Shipment (after allowed status)":l}</option>})}</select>}
                       {(!o.ncm_order_id||isNcmCancelled(o))&&(onCreateShipment||onNcm)&&(String(o.payment_method||"").toLowerCase()!=="cod"||codAdvancePaid(o))&&<button className="secondary" disabled={!!busy} onClick={()=>onCreateShipment?onCreateShipment(o):onNcm(o)}>Create shipment</button>}
                       {(!o.ncm_order_id||isNcmCancelled(o))&&String(o.payment_method||"").toLowerCase()==="cod"&&!codAdvancePaid(o)&&<small style={{fontWeight:700}}>Shipment locked until COD advance is paid.</small>}
+                      {(!o.ncm_order_id||isNcmCancelled(o))&&o.order_status!=="delivered"&&!['cancelled','returned'].includes(String(o.order_status||'').toLowerCase())&&<button className="secondary" disabled={!!busy||!!onSelfDelivery===false} onClick={async()=>{const note=prompt("Optional delivery note (e.g. self-delivery / nearby customer):","");if(note===null)return;if(!confirm("Mark order #"+(o.order_number||o.id)+" as delivered without NCM?"))return;setBusy(o.id+":self_delivery");try{await onSelfDelivery?.(o,note.trim());}finally{setBusy("")}}}>{busy===o.id+":self_delivery"?"Saving…":"Mark Delivered (Direct)"}</button>}
+                      {o.payment_status!=="paid"&&!['cancelled','returned'].includes(String(o.order_status||'').toLowerCase())&&<button className="secondary" disabled={!!busy} onClick={()=>{setPaymentOrder(o);setPaymentMethod("cash");setPaymentReference("");setPaymentNote("")}}>Record Payment</button>}
+                      {o.payment_status==="paid"&&<small style={{fontWeight:700,color:"#267342"}}>Paid{ o.manual_payment_method?" · "+(o.manual_payment_method==="cash"?"Cash":"Bank transfer / Static QR"):""}{o.manually_paid_at?" · "+new Date(o.manually_paid_at).toLocaleDateString():""}</small>}
+                      {o.delivery_method==="self_delivery"&&<small style={{fontWeight:700}}>Delivered directly{o.delivered_at?" · "+new Date(o.delivered_at).toLocaleDateString():""}</small>}
                     </div>
                   </td>
                 </>}
@@ -193,6 +211,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
         </table>
       </div>
 
+      {paymentOrder&&<div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget&&!paymentSaving)setPaymentOrder(null)}}><div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="manual-payment-title"><div className="page-title"><div><h2 id="manual-payment-title">Record Payment</h2><p>Order {paymentOrder.order_number} · {money(paymentOrder.total)}</p></div><button className="secondary" type="button" disabled={paymentSaving} onClick={()=>setPaymentOrder(null)}>Close</button></div><div className="admin-form"><label>Payment received via<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="cash">Cash</option><option value="bank_transfer_static_qr">Bank transfer / Static QR</option></select></label><label>Bank transaction reference (optional)<input value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} placeholder="Transaction ID / reference"/></label><label>Internal note (optional)<textarea rows="3" value={paymentNote} onChange={e=>setPaymentNote(e.target.value)} placeholder="e.g. received at delivery / verified bank transfer"/></label><p className="small-note">Only mark paid after you have actually received or verified the payment.</p><div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:16}}><button className="secondary" type="button" disabled={paymentSaving} onClick={()=>setPaymentOrder(null)}>Cancel</button><button className="primary" type="button" disabled={paymentSaving} onClick={submitManualPayment}>{paymentSaving?"Saving…":"Confirm Payment Received"}</button></div></div></div></div>}
       {resultModal&&<div className="modal-backdrop ncm-result-backdrop" onClick={e=>{if(e.target===e.currentTarget)setResultModal(null)}}>
         <div className="modal-card ncm-result-modal" role="dialog" aria-modal="true">
           <div className="ncm-result-header">
