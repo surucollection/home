@@ -95,6 +95,19 @@ function Admin(){
      return false;
    }finally{setNcmBusy(false)}
  };
+ const markOrderReturned=async(o,reason)=>{
+   try{
+     setNcmBusy(true);
+     const{data,error}=await supabase.rpc("admin_mark_order_returned",{p_order_id:o.id,p_reason:reason});
+     if(error)throw error;
+     setNcmSyncMessage("Order "+(data?.order_number||o.order_number)+" marked as returned. Payment and invoice records were preserved; no refund or inventory restoration was performed.");
+     await loadOrders();
+     return true;
+   }catch(e){
+     setMessage("Return failed: "+(e?.message||"Unable to mark order as returned."));
+     return false;
+   }finally{setNcmBusy(false)}
+ };
  const reviewCancellation=async(o,action)=>{
    let note=null;
    if(action==="reject_cancellation"){note=prompt("Reason/note for rejecting the cancellation (optional):","");if(note===null)return}
@@ -145,7 +158,7 @@ function Admin(){
     <main className="main">
       {tab!=="orders"&&message&&<div className="message">{message}</div>}
       {tab==="dashboard"&&<AdminDashboardTab stats={stats} dashboardOrders={dashboardOrders}/>}
-      {tab==="orders"&&<AdminOrdersTab message={message} ncmSyncMessage={ncmSyncMessage} branches={branches} getNcmBranchName={getNcmBranchName} search={search} setSearch={setSearch} status={status} setStatus={setStatus} orders={orders} updateOrder={updateOrder} onManualPayment={recordManualPayment} onSelfDelivery={markSelfDelivery} openCreateShipment={openCreateShipment} createShipment={createShipment} getRate={getRate} syncShipment={syncShipment} reviewCancellation={reviewCancellation} ncmOrderAction={ncmOrderAction} adminIssueInvoice={adminIssueInvoice} adminCancelInvoice={adminCancelInvoice} invoiceHistoryBusy={invoiceHistoryBusy} loadInvoiceHistory={loadInvoiceHistory} invoiceHistoryOpen={invoiceHistoryOpen} setInvoiceHistoryOpen={setInvoiceHistoryOpen} invoiceHistory={invoiceHistory} openInvoice={openInvoice} shipmentOrder={shipmentOrder} ncmBusy={ncmBusy} setShipmentOrder={setShipmentOrder} loadNcmBranches={loadNcmBranches} checkShipmentRates={checkShipmentRates} shipmentSource={shipmentSource} setShipmentSource={setShipmentSource} shipmentDestination={shipmentDestination} setShipmentDestination={setShipmentDestination} shipmentDeliveryType={shipmentDeliveryType} setShipmentDeliveryType={setShipmentDeliveryType} shipmentWeight={shipmentWeight} setShipmentWeight={setShipmentWeight} ncmBranchMessage={ncmBranchMessage} ncmPopup={ncmPopup} setNcmPopup={setNcmPopup} onOrderCreated={async()=>{await loadOrders();await refreshDashboard()}}/>}
+      {tab==="orders"&&<AdminOrdersTab message={message} ncmSyncMessage={ncmSyncMessage} branches={branches} getNcmBranchName={getNcmBranchName} search={search} setSearch={setSearch} status={status} setStatus={setStatus} orders={orders} updateOrder={updateOrder} onManualPayment={recordManualPayment} onSelfDelivery={markSelfDelivery} onReturnOrder={markOrderReturned} openCreateShipment={openCreateShipment} createShipment={createShipment} getRate={getRate} syncShipment={syncShipment} reviewCancellation={reviewCancellation} ncmOrderAction={ncmOrderAction} adminIssueInvoice={adminIssueInvoice} adminCancelInvoice={adminCancelInvoice} invoiceHistoryBusy={invoiceHistoryBusy} loadInvoiceHistory={loadInvoiceHistory} invoiceHistoryOpen={invoiceHistoryOpen} setInvoiceHistoryOpen={setInvoiceHistoryOpen} invoiceHistory={invoiceHistory} openInvoice={openInvoice} shipmentOrder={shipmentOrder} ncmBusy={ncmBusy} setShipmentOrder={setShipmentOrder} loadNcmBranches={loadNcmBranches} checkShipmentRates={checkShipmentRates} shipmentSource={shipmentSource} setShipmentSource={setShipmentSource} shipmentDestination={shipmentDestination} setShipmentDestination={setShipmentDestination} shipmentDeliveryType={shipmentDeliveryType} setShipmentDeliveryType={setShipmentDeliveryType} shipmentWeight={shipmentWeight} setShipmentWeight={setShipmentWeight} ncmBranchMessage={ncmBranchMessage} ncmPopup={ncmPopup} setNcmPopup={setNcmPopup} onOrderCreated={async()=>{await loadOrders();await refreshDashboard()}}/>}
       {tab==="preorders"&&<PreorderAdminQueue/>}
       {tab==="settings"&&<AdminSettingsTab products={products} preorderBulkBusy={preorderBulkBusy} enablePreordersForAll={enablePreordersForAll} disablePreordersForAll={disablePreordersForAll} setCouponManagerOpen={setCouponManagerOpen} loadCoupons={loadCoupons} preorderAdvancePercent={invoiceSettings.preorder_advance_percent??30} setPreorderAdvancePercent={v=>setInvoiceSettings(x=>({...x,preorder_advance_percent:v}))} savePreorderAdvancePercent={saveInvoiceSettings} preorderSettingsBusy={invoiceSettingsBusy}/>}
       {tab==="products"&&<AdminProductsTab showAdd={showAdd} setShowAdd={setShowAdd} addProduct={addProduct} products={products} editing={editing} setEditing={setEditing} saveProduct={saveProduct}/>}
