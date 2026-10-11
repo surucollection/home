@@ -59,8 +59,9 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
           <label>Product Name<input value={e.name??""} onChange={x=>setE({...e,name:x.target.value})}/></label>
         </div>
 
+        <p className="form-note">Current website selling price: <b>{money(p.price)}</b>. After you save a base cost, the website price is calculated from the global markup and packaging settings. Existing prices stay unchanged until a base cost is entered.</p>
         <div className="admin-product-row admin-product-row-price">
-          <label>Price<input type="number" min="0" value={e.price??""} onChange={x=>setE({...e,price:x.target.value})}/></label>
+          <label>Base Cost (NPR)<input type="number" min="0" step="0.01" value={e.base_cost??""} onChange={x=>setE({...e,base_cost:x.target.value})}/></label>
           <label>Compare-at Price<input type="number" min="0" value={e.compare_at_price??""} onChange={x=>setE({...e,compare_at_price:x.target.value})}/></label>
           <label>MOQ<input type="number" min="1" value={e.moq??1} onChange={x=>setE({...e,moq:x.target.value})}/></label>
         </div>
