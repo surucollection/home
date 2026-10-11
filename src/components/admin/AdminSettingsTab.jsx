@@ -4,7 +4,7 @@ export default function AdminSettingsTab({
   products,preorderBulkBusy,enablePreordersForAll,disablePreordersForAll,
   setCouponManagerOpen,loadCoupons,
   preorderAdvancePercent,setPreorderAdvancePercent,savePreorderAdvancePercent,preorderSettingsBusy,
-  pricingSettings,savePricingSettings,pricingSettingsBusy
+  pricingSettings,setPricingSettings,savePricingSettings,pricingSettingsBusy
 }){
  return <><div className="page-title"><div><h2>Settings</h2><p>Manage universal pre-order rules and discount coupons.</p></div></div>
 
