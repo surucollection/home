@@ -4,7 +4,7 @@ export default function AdminSettingsTab({
   products,preorderBulkBusy,enablePreordersForAll,disablePreordersForAll,
   setCouponManagerOpen,loadCoupons,
   preorderAdvancePercent,setPreorderAdvancePercent,savePreorderAdvancePercent,preorderSettingsBusy,
-  pricingSettings,setPricingSettings,savePricingSettings,pricingSettingsBusy
+  pricingSettings,setPricingSettings,savePricingSettings,pricingSettingsBusy,message=""
 }){
   const [preorderPopupOpen,setPreorderPopupOpen]=useState(false);
   const [pricingPopupOpen,setPricingPopupOpen]=useState(false);
@@ -12,6 +12,7 @@ export default function AdminSettingsTab({
   const noPreordersEnabled=!!products?.length&&products.every(p=>!p.preorder_enabled);
   const preorderAvailability=!products?.length?"No products loaded":allPreordersEnabled?"Enabled for all products":noPreordersEnabled?"Disabled for all products":"Mixed product availability";
   const openCouponManager=()=>{setCouponManagerOpen(true);loadCoupons()};
+  const pricingMessage=String(message||"").startsWith("Pricing settings saved.")||String(message||"").startsWith("Unable to save pricing settings:")?message:"";
 
   return <>
     <div className="page-title">
@@ -77,6 +78,7 @@ export default function AdminSettingsTab({
           <div><h3 id="product-pricing-title">Product Pricing & Delivery Settings</h3><p>Centralized settings used to calculate selling prices for products with a saved base cost.</p></div>
           <button className="secondary" type="button" onClick={()=>setPricingPopupOpen(false)} disabled={pricingSettingsBusy}>Close</button>
         </div>
+        {pricingMessage&&<div className={pricingMessage.startsWith("Pricing settings saved.")?"message success":"message error"} role="status" aria-live="polite" style={{marginBottom:16}}>{pricingMessage}</div>}
         <div className="card">
           <form className="admin-form" onSubmit={savePricingSettings}>
             <div className="form-grid">
