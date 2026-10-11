@@ -15,6 +15,7 @@ export default function AdminSettingsTab({
   const pricingMessage=String(message||"").startsWith("Pricing settings saved.")||String(message||"").startsWith("Unable to save pricing settings:")?message:"";
 
   return <>
+    {pricingPopupOpen&&<style>{'.main:has(#product-pricing-title) > .message { display: none; }'}</style>}
     <div className="page-title">
       <div><h2>Settings</h2><p>Manage discount coupons, universal pre-order rules, and product pricing.</p></div>
     </div>
