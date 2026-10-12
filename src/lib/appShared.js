@@ -1,3 +1,4 @@
+import NEPAL_MUNICIPALITIES from "./nepalMunicipalities.json";
 import { supabase } from "./api.js";
 
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
@@ -141,6 +142,21 @@ const NEPAL_PROVINCES=[
  {name:"Sudurpashchim Province",districts:["Bajura","Bajhang","Darchula","Baitadi","Dadeldhura","Doti","Achham","Kailali","Kanchanpur"]}
 ];
 const provinceDistricts=name=>NEPAL_PROVINCES.find(p=>p.name===name)?.districts||[];
+const normalizeAdminName=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const municipalityDistrictAliases={
+  nawalpur:"nawalparasieast",
+  tehrathum:"terhathum",
+  pachthar:"panchthar",
+  kapilvastu:"kapilbastu"
+};
+const municipalityOptions=(province,district)=>{
+  const p=canonicalProvince(province);
+  const provinceCode=({"Koshi Province":"1","Madhesh Province":"2","Bagmati Province":"3","Gandaki Province":"4","Lumbini Province":"5","Karnali Province":"6","Sudurpashchim Province":"7"})[p];
+  if(!provinceCode||!String(district||"").trim())return [];
+  const wanted=normalizeAdminName(district);
+  const target=municipalityDistrictAliases[wanted]||wanted;
+  return NEPAL_MUNICIPALITIES.filter(x=>x.provinceCode===provinceCode&&((normalizeAdminName(x.district)===target)||(municipalityDistrictAliases[normalizeAdminName(x.district)]===wanted))).map(x=>x.name).sort((a,b)=>a.localeCompare(b));
+};
 const canonicalProvince=v=>{
  const s=String(v||"").trim().toLowerCase();
  if(!s)return "";
@@ -179,4 +195,4 @@ function normalizeNepalPhone(value){
  return "+977"+raw;
 }
 
-export { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone };
+export { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone };
