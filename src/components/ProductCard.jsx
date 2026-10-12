@@ -2,8 +2,8 @@ import React,{useEffect,useMemo,useState} from "react";
 import { money, norm, imageUrl, get } from "../lib/api.js";
 import { addCart } from "../lib/cart.js";
 
-export default function ProductCard({product,image,variants=[],priority=false}){
-  const href="/product.html?code="+encodeURIComponent(product.product_code);
+export default function ProductCard({product,image,variants=[],displayColour="",priority=false}){
+  const href="/product.html?code="+encodeURIComponent(product.product_code)+(displayColour?"&color="+encodeURIComponent(displayColour):"");
   const cardImage=imageUrl(image?.image_url||"",480);
   const[loadedVariants,setLoadedVariants]=useState(variants);
   const[variantLoading,setVariantLoading]=useState(false);
@@ -61,6 +61,7 @@ export default function ProductCard({product,image,variants=[],priority=false}){
     </a>
     <div className="product-card-content">
       {product.category&&<div className="product-category">{product.category}</div>}
+      {displayColour&&<div className="product-category product-listing-colour">Colour: {displayColour}</div>}
       <h3><a href={href}>{product.name}</a></h3>
       <div className="product-price">{money(product.price)}{product.compare_at_price&&<span className="compare-price">{money(product.compare_at_price)}</span>}</div>
       <div className="product-card-actions">
