@@ -5,6 +5,7 @@ const starsFor = value => "★".repeat(value)+"☆".repeat(5-value);
 
 export default function ProductReviews({product}){
   const [reviews,setReviews]=useState([]);
+  const [myReview,setMyReview]=useState(null);
   const [user,setUser]=useState(null);
   const [displayName,setDisplayName]=useState("");
   const [rating,setRating]=useState(5);
@@ -21,13 +22,13 @@ export default function ProductReviews({product}){
       setLoading(true);
       setError("");
       const [reviewResult,authResult]=await Promise.all([
-        supabase.from("product_reviews").select("id,product_id,user_id,display_name,rating,title,review_text,created_at,updated_at").eq("product_id",product.id).order("created_at",{ascending:false}),
+        supabase.from("product_reviews").select("id,product_id,user_id,display_name,rating,title,review_text,created_at,updated_at,is_approved").eq("product_id",product.id).order("created_at",{ascending:false}),
         supabase.auth.getUser()
       ]);
       if(reviewResult.error)throw reviewResult.error;
       if(!active)return;
       const rows=reviewResult.data||[];
-      setReviews(rows);
+      setReviews(rows.filter(review=>review.is_approved));
       const signedInUser=authResult.data?.user||null;
       setUser(signedInUser);
       if(signedInUser){
@@ -37,7 +38,8 @@ export default function ProductReviews({product}){
           name=profile?.name||[profile?.first_name,profile?.last_name].filter(Boolean).join(" ");
         }catch{}
         if(!active)return;
-        const ownReview=rows.find(review=>review.user_id===signedInUser.id);
+        const ownReview=rows.find(review=>review.user_id===signedInUser.id)||null;
+        setMyReview(ownReview);
         setDisplayName(ownReview?.display_name||name||signedInUser.email?.split("@")[0]||"Customer");
         if(ownReview){
           setRating(Number(ownReview.rating)||5);
@@ -49,7 +51,7 @@ export default function ProductReviews({product}){
     return()=>{active=false};
   },[product.id]);
 
-  const ownReview=useMemo(()=>reviews.find(review=>review.user_id===user?.id)||null,[reviews,user?.id]);
+  const ownReview=myReview;
   const average=useMemo(()=>reviews.length?reviews.reduce((total,review)=>total+Number(review.rating||0),0)/reviews.length:0,[reviews]);
   const returnUrl=encodeURIComponent(location.pathname+location.search);
 
@@ -72,12 +74,14 @@ export default function ProductReviews({product}){
         rating:Number(rating),
         title:title.trim().slice(0,120)||null,
         review_text:cleanText,
-        updated_at:new Date().toISOString()
+        updated_at:new Date().toISOString(),
+        is_approved:false
       };
-      const {data,error:saveError}=await supabase.from("product_reviews").upsert(payload,{onConflict:"product_id,user_id"}).select("id,product_id,user_id,display_name,rating,title,review_text,created_at,updated_at").single();
+      const {data,error:saveError}=await supabase.from("product_reviews").upsert(payload,{onConflict:"product_id,user_id"}).select("id,product_id,user_id,display_name,rating,title,review_text,created_at,updated_at,is_approved").single();
       if(saveError)throw saveError;
-      setReviews(previous=>[data,...previous.filter(item=>item.user_id!==user.id)].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)));
-      setNotice(ownReview?"Your review has been updated.":"Thank you for sharing your review!");
+      setMyReview(data);
+      setReviews(previous=>previous.filter(item=>item.user_id!==user.id));
+      setNotice(ownReview?"Your review was updated and sent for approval again.":"Thank you! Your review has been submitted and will appear after approval.");
     }catch(e){
       setError(e?.message||"Unable to save your review. Please try again.");
     }finally{
@@ -106,7 +110,7 @@ export default function ProductReviews({product}){
 
       <aside className="product-review-form-card">
         <h3>{ownReview?"Edit your review":"Write a review"}</h3>
-        <p className="product-review-form-intro">{ownReview?"Update your rating or tell us more about your experience.":"Tried this product? Share your thoughts with other shoppers."}</p>
+        <p className="product-review-form-intro">{ownReview?(ownReview.is_approved?"Editing your review will send it for approval again.":"Your review is awaiting approval. You can still edit it."):"Tried this product? Share your thoughts with other shoppers."}</p>
         {!user?<div className="product-review-signin"><p>Sign in to leave a review.</p><a className="buy-button" href={"/login.html?return="+returnUrl}>Sign in to review</a></div>:<form onSubmit={submitReview}>
           <label className="product-review-field-label">Your rating</label>
           <div className="product-review-rating-picker" role="group" aria-label="Choose a rating from one to five stars">
@@ -123,7 +127,7 @@ export default function ProductReviews({product}){
         </form>}
         {user&&error&&<p className="product-review-message error" role="alert">{error}</p>}
         {user&&notice&&<p className="product-review-message success" role="status">{notice}</p>}
-        <p className="product-review-note">One review per account for each product. You can edit your review later.</p>
+        <p className="product-review-note">One review per account for each product. New reviews and edits must be approved by Suru Collection before they appear publicly.</p>
       </aside>
     </div>
   </section>;
