@@ -119,8 +119,6 @@ export default function ProductReviews({product}){
           <textarea id={"review-text-"+product.id} value={reviewText} onChange={e=>setReviewText(e.target.value)} rows={5} minLength={5} maxLength={2000} required placeholder="What did you like or notice about this product?"/>
           <label className="product-review-field-label" htmlFor={"review-name-"+product.id}>Display name</label>
           <input id={"review-name-"+product.id} value={displayName} onChange={e=>setDisplayName(e.target.value)} maxLength={80} required/>
-          {error&&<p className="product-review-message error" role="alert">{error}</p>}
-          {notice&&<p className="product-review-message success" role="status">{notice}</p>}
           <button type="submit" className="buy-button product-review-submit" disabled={submitting}>{submitting?"Saving…":ownReview?"Update Review":"Submit Review"}</button>
         </form>}
         {user&&error&&<p className="product-review-message error" role="alert">{error}</p>}
