@@ -151,7 +151,7 @@ const municipalityDistrictAliases={
 };
 const municipalityOptions=(province,district)=>{
   const p=canonicalProvince(province);
-  const provinceCode=({"Koshi Province":"1","Madhesh Province":"2","Bagmati Province":"3","Gandaki Province":"4","Lumbini Province":"5","Karnali Province":"6","Sudurpashchim Province":"7"})[p];
+  const provinceCode=({"Koshi Province":"1","Madhesh Province":"2","Bagmati Province":"3","Gandaki Province":"4","Lumbini Province":"5","Karnali Province":"6","Sudurpashchim Province":"7","Koshi":"1","Madhesh":"2","Bagmati":"3","Gandaki":"4","Lumbini":"5","Karnali":"6","Sudurpashchim":"7"})[p]||({"Koshi":"1","Madhesh":"2","Bagmati":"3","Gandaki":"4","Lumbini":"5","Karnali":"6","Sudurpashchim":"7"})[String(province||"").trim()];
   if(!provinceCode||!String(district||"").trim())return [];
   const wanted=normalizeAdminName(district);
   const target=municipalityDistrictAliases[wanted]||wanted;
