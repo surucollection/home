@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useState} from "react";
 import { supabase, money, norm } from "../../lib/api.js";
 
 const EDITABLE_STATUSES=new Set(["pending","confirmed","processing","packed"]);
-const isNcmCancelled=order=>/^(cancelled|canceled)$/i.test(String(order?.ncm_status||"").trim());
+const isNcmCancelled=order=>/(cancelled|canceled)/i.test(String(order?.ncm_status||"").trim());
 
 function optionLabel(variant){
   const details=[variant.size,variant.color].filter(Boolean).join(" · ")||"Standard option";
