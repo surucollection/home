@@ -14,12 +14,12 @@ import ProductAdminCard from "../components/admin/ProductAdminCard.jsx";
 import StockRow from "../components/admin/StockRow.jsx";
 import PreorderAdminQueue from "../components/admin/PreorderAdminQueue.jsx";
 import CustomerAddressesPanel from "../components/customer/CustomerAddressesPanel.jsx";
-import { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone } from "../lib/appShared.js";
+import { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone } from "../lib/appShared.js";
 
 function Register(){
  const[verifyMethod,setVerifyMethod]=useState("email"),[f,setF]=useState({first_name:"",last_name:"",email:"",password:"",confirm:"",phone:"",address:"",city:"",district:"",province:"",postal_code:""}),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[otp,setOtp]=useState(""),[otpStep,setOtpStep]=useState(false),[registeredPhone,setRegisteredPhone]=useState(""),[pendingUser,setPendingUser]=useState(null);
  async function googleSignIn(){setBusy(true);setMsg("Redirecting to Google account creation…");const{error}=await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+"/login/?return=%2Faccount%2F"}});if(error){setMsg(error.message||"Google sign-up could not be started.");setBusy(false)}}
- const change=e=>{const{name,value}=e.target;if(name==="province")setF({...f,province:value,district:""});else if(name==="phone")setF({...f,phone:value.replace(/\D/g,"").slice(0,10)});else setF({...f,[name]:value});};
+ const change=e=>{const{name,value}=e.target;if(name==="province")setF({...f,province:value,district:"",city:""});else if(name==="district")setF({...f,district:value,city:""});else if(name==="phone")setF({...f,phone:value.replace(/\D/g,"").slice(0,10)});else setF({...f,[name]:value});};
  async function createAccount(e){
    e.preventDefault();
    if(!f.first_name.trim()||!f.last_name.trim()||!f.address.trim()||!f.city.trim()||!f.district.trim()||!f.province.trim())return setMsg("Please fill in all required fields.");
@@ -80,7 +80,7 @@ function Register(){
   <div className="registration-address-grid">
    <label className="field">Province <span className="required-star">*</span><select name="province" value={f.province} onChange={change} required><option value="">Select Province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
    <label className="field">District <span className="required-star">*</span><select name="district" value={f.district} onChange={change} required disabled={!f.province}><option value="">{f.province?"Select District":"Select Province First"}</option>{provinceDistricts(f.province).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
-   <label className="field">City <span className="required-star">*</span><input name="city" value={f.city} onChange={change} required placeholder="e.g. Gaur"/></label>
+   <label className="field">City / Municipality <span className="required-star">*</span><select name="city" value={f.city} onChange={change} required disabled={!f.district}><option value="">{f.district?"Select Municipality":"Select District First"}</option>{municipalityOptions(f.province,f.district).map(x=><option key={x} value={x}>{x}</option>)}{f.city&&!municipalityOptions(f.province,f.district).includes(f.city)&&<option value={f.city}>Existing: {f.city}</option>}</select></label>
    <label className="field">Postal Code <span className="optional-label">(Optional)</span><input name="postal_code" value={f.postal_code} onChange={change} inputMode="numeric" autoComplete="postal-code" placeholder="Postal code"/></label>
   </div>
  </div>
