@@ -1377,3 +1377,13 @@
   .order-action-rows{min-width:540px!important}
   .order-action-row{flex-wrap:nowrap!important}
 }
+
+
+/* Three-row admin order actions: Sync / Track / Select Action; invoice controls; edit / payment */
+.order-action-row-primary .ncm-action-select{width:auto!important;min-width:145px;max-width:190px;flex:1 1 auto;box-sizing:border-box}
+.order-action-row-primary{flex-wrap:nowrap!important}
+.order-action-row-invoice{flex-wrap:nowrap!important}
+.order-action-row-payment{flex-wrap:nowrap!important;overflow-x:visible}
+.order-action-row-payment>button{flex:0 0 auto!important;white-space:nowrap}
+.order-action-row-payment .order-payment-status{white-space:normal;overflow-wrap:anywhere}
+.order-action-row-select{display:none!important}
