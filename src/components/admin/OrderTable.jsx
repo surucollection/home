@@ -205,7 +205,7 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
                 <td>
                   {onStatus?<div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
                     <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{allowedOrderStatuses(o).map(s=><option key={s} value={s}>{s}</option>)}</select>
-                    {String(o.payment_method||"").toLowerCase()==="cod"&&<small style={{fontWeight:700}}>{codAdvancePaid(o)?<>COD Advance Paid: {money(o.cod_advance_paid||0)} · Balance Due: {money(o.cod_balance_due||0)}</>:<>COD Advance Pending: {money(o.cod_advance_required||0)} required before confirmation</>}</small>}
+                    {String(o.payment_method||"").toLowerCase()==="cod"&&String(o.order_source||"").toLowerCase()==="website"&&<small style={{fontWeight:700}}>{codAdvancePaid(o)?<>COD Advance Paid: {money(o.cod_advance_paid||0)} · Balance Due: {money(o.cod_balance_due||0)}</>:<>COD Advance Pending: {money(o.cod_advance_required||0)} required before confirmation</>}</small>}
                     {o.cancellation_status==="requested"&&<div className="cancellation-review"><small>Cancellation request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>}
                     {o.cancellation_status==="rejected"&&<small>Cancellation request rejected</small>}
                     {String(o.order_status||"").toLowerCase()==="delivered"
