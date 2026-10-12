@@ -306,6 +306,34 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     return sum+Math.round(lineTotal(l)*0.05);
   },0),[lines,activeProducts]);
   const estimatedTotal=Math.max(0,subtotal-estimatedPreorderDiscount);
+  const ncmDestinationBranch=cleanText(addressDraft.ncm_destination_branch);
+  const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"?Number(ncmAdvance||0):0);
+
+  useEffect(()=>{
+    if(!open||paymentMethod!=="cod"||!ncmDestinationBranch){
+      setNcmAdvance(null);
+      return;
+    }
+    let active=true;
+    setNcmAdvance(null);
+    setNcmRateLoading(true);
+    supabase.functions.invoke("ncm-rate",{
+      body:{destinationBranch:ncmDestinationBranch}
+    }).then(({data,error:rateError})=>{
+      if(!active)return;
+      if(rateError)throw rateError;
+      if(!data?.ok)throw Error(data?.error||"Unable to fetch NCM delivery charge.");
+      setNcmAdvance(Number(data.advanceDeliveryCharge||0));
+    }).catch(e=>{
+      if(active){
+        setNcmAdvance(null);
+        setError(e?.message||"Unable to fetch NCM delivery charge.");
+      }
+    }).finally(()=>{
+      if(active)setNcmRateLoading(false);
+    });
+    return()=>{active=false};
+  },[open,paymentMethod,ncmDestinationBranch]);
 
   const lineEligibility=(line)=>{
     const p=lineProduct(line),v=getLineVariant(line,false),qty=Math.max(1,Number(line.qty||1));
@@ -409,7 +437,7 @@ Thank you for ordering from Suru Collection.`;
     }
     const paid=Math.max(0,Number(amountPaid||0));
     if(!Number.isFinite(paid))return setError("Enter a valid amount paid.");
-    if(paid>Math.max(0,estimatedTotal)+1000000)return setError("Amount paid is invalid.");
+    if(paid>Math.max(0,totalIncludingDelivery)+1000000)return setError("Amount paid is invalid.");
     if(paymentMethod==="cod"&&!cleanText(addressDraft.ncm_destination_branch)){
       setError("Select an NCM destination branch for COD orders.");
       return;
@@ -595,8 +623,9 @@ Thank you for ordering from Suru Collection.`;
                 <div className="admin-create-order-summary">
                   <div><span>Subtotal</span><b>{money(subtotal)}</b></div>
                   <div><span>Pre-order discount</span><b>− {money(estimatedPreorderDiscount)}</b></div>
-                  <div className="grand"><span>Estimated total</span><b>{money(estimatedTotal)}</b></div>
-                  {paymentMethod==="cod"&&<small>{ncmAdvance!==null?`Current NCM advance delivery charge: ${money(ncmAdvance)}. This rate is refreshed automatically when the order is created.`:"NCM advance delivery charge will be refreshed automatically when the order is created."}</small>}
+                  {paymentMethod==="cod"&&<div><span>NCM delivery charge</span><b>{ncmRateLoading?"Calculating…":ncmAdvance!==null?money(ncmAdvance):"Select destination / unavailable"}</b></div>}
+                  <div className="grand"><span>Total including delivery</span><b>{money(totalIncludingDelivery)}</b></div>
+                  {paymentMethod==="cod"&&<small>{ncmAdvance!==null?`NCM delivery charge for ${ncmDestinationBranch}. The rate is refreshed again when the order is created.`:"Select an NCM destination branch to calculate the delivery charge before creating the order."}</small>}
                 </div>
               </section>
 
