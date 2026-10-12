@@ -66,7 +66,7 @@ export default function ProductCard({product,image,variants=[],displayColour="",
       <div className="product-price">{money(product.price)}{product.compare_at_price&&<span className="compare-price">{money(product.compare_at_price)}</span>}</div>
       <div className="product-card-actions">
         <button type="button" className="secondary-button" onClick={startAdd}>{added?"Added ✓":"Add to Cart"}</button>
-        {preorderAvailable&&<button type="button" className="buy-now-button preorder-button" onClick={startPreorder}>Pre-order</button>}<button type="button" className="buy-now-button" onClick={startBuyNow}>Buy Now</button>
+        <button type="button" className="buy-now-button" onClick={startBuyNow}>Buy Now</button>
       </div>
     </div>
     {open&&<div className="variant-modal-backdrop" onClick={()=>setOpen(false)}>
