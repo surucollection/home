@@ -61,6 +61,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [saving,setSaving]=useState(false);
   const [ncmRateLoading,setNcmRateLoading]=useState(false);
   const [ncmAdvance,setNcmAdvance]=useState(null);
+  const [codAdvanceOverride,setCodAdvanceOverride]=useState("");
   const [error,setError]=useState("");
   const [created,setCreated]=useState(null);
   const [copied,setCopied]=useState(false);
@@ -307,7 +308,8 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   },0),[lines,activeProducts]);
   const estimatedTotal=Math.max(0,subtotal-estimatedPreorderDiscount);
   const ncmDestinationBranch=cleanText(addressDraft.ncm_destination_branch);
-  const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"?Number(ncmAdvance||0):0);
+  const effectiveCodAdvance=codAdvanceOverride!==""?Math.max(0,Number(codAdvanceOverride)||0):Number(ncmAdvance||0);
+  const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"?effectiveCodAdvance:0);
 
   useEffect(()=>{
     if(!open||paymentMethod!=="cod"||!ncmDestinationBranch){
@@ -324,6 +326,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
       if(rateError)throw rateError;
       if(!data?.ok)throw Error(data?.error||"Unable to fetch NCM delivery charge.");
       setNcmAdvance(Number(data.advanceDeliveryCharge||0));
+      setCodAdvanceOverride(String(Number(data.advanceDeliveryCharge||0)));
     }).catch(e=>{
       if(active){
         setNcmAdvance(null);
@@ -468,7 +471,8 @@ Thank you for ordering from Suru Collection.`;
         district:cleanText(addressDraft.district),
         province:canonicalProvince(addressDraft.province),
         postal_code:cleanText(addressDraft.postal_code)||null,
-        ncm_destination_branch:cleanText(addressDraft.ncm_destination_branch)||null
+        ncm_destination_branch:cleanText(addressDraft.ncm_destination_branch)||null,
+        cod_advance_override:paymentMethod==="cod"?effectiveCodAdvance:null
       };
       const args={
         p_customer_id:mode==="existing"?selectedCustomer.id:null,
@@ -623,7 +627,7 @@ Thank you for ordering from Suru Collection.`;
                 <div className="admin-create-order-summary">
                   <div><span>Subtotal</span><b>{money(subtotal)}</b></div>
                   <div><span>Pre-order discount</span><b>− {money(estimatedPreorderDiscount)}</b></div>
-                  {paymentMethod==="cod"&&<div><span>NCM delivery charge</span><b>{ncmRateLoading?"Calculating…":ncmAdvance!==null?money(ncmAdvance):"Select destination / unavailable"}</b></div>}
+                  {paymentMethod==="cod"&&<div className="admin-create-order-cod-advance"><label htmlFor="admin-cod-advance">NCM advance / delivery charge</label><input id="admin-cod-advance" type="number" min="0" step="1" value={codAdvanceOverride} onChange={e=>setCodAdvanceOverride(e.target.value)} disabled={ncmRateLoading||ncmAdvance===null} /><small>{ncmRateLoading?"Calculating destination rate…":ncmAdvance!==null?`Suggested NCM charge: ${money(ncmAdvance)}. You can edit the amount before creating the order.`:"Select an NCM destination to load the suggested amount."}</small></div>}
                   <div className="grand"><span>Total including delivery</span><b>{money(totalIncludingDelivery)}</b></div>
                   {paymentMethod==="cod"&&<small>{ncmAdvance!==null?`NCM delivery charge for ${ncmDestinationBranch}. The rate is refreshed again when the order is created.`:"Select an NCM destination branch to calculate the delivery charge before creating the order."}</small>}
                 </div>
