@@ -350,7 +350,7 @@ Deno.serve(async (req) => {
       if (!userToken) throw new Error("Unauthorized");
       const order = await getOrder(body.order_id, userToken);
       const hasPreviousNcmShipment = !!order.ncm_order_id;
-      const previousNcmCancelled = /^(cancelled|canceled)$/i.test(String(order.ncm_status || "").trim());
+      const previousNcmCancelled = /(cancelled|canceled)/i.test(String(order.ncm_status || "").trim());
       if (hasPreviousNcmShipment && !previousNcmCancelled) {
         return json({ error: "NCM shipment already exists", order }, 409);
       }
