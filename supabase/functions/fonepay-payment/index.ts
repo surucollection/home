@@ -86,7 +86,7 @@ async function checkPayment(order:any,purpose:string){
   if(isCodAdvance){
     if(String(order.payment_method)!=="cod")throw new Error("This order is not configured for COD");
     const reference=String(order.cod_advance_fonepay_reference||"");if(!reference)throw new Error("COD advance payment has not been initiated");
-    const expected=Number(order.cod_advance_required);
+    const expected=Math.max(0,Number(order.cod_advance_required)-Number(order.cod_advance_paid||0));
     if(String(order.cod_advance_payment_status)==="paid")return{orderId:order.id,orderNumber:order.order_number,paymentStatus:"success",verified:true,purpose,balanceDue:Number(order.cod_balance_due||0),alreadyPaid:true,paymentExpiresAt:order.payment_expires_at||null};
     const rawResult=await fonepayRequest(FONEPAY_STATUS_PATH,{terminalId:FONEPAY_TERMINAL_ID,referenceLabel:reference});
     const result=rawResult?.data&&typeof rawResult.data==="object"&&!rawResult.paymentStatus?rawResult.data:rawResult;
@@ -94,7 +94,7 @@ async function checkPayment(order:any,purpose:string){
     if(upstreamStatus==="success"&&!amountOk)throw new Error("Fonepay reported a successful COD advance, but the paid amount does not match the required advance. The order was not confirmed.");
     const nextStatus=upstreamStatus==="success"&&amountOk?"paid":upstreamStatus==="failed"?"failed":"initiated";
     const patch:Record<string,unknown>={cod_advance_fonepay_trace_id:result?.fonepayTraceId!=null?String(result.fonepayTraceId):null,cod_advance_fonepay_response:result,updated_at:new Date().toISOString()};
-    if(nextStatus==="paid"){patch.cod_advance_paid=expected;patch.cod_balance_due=Math.max(0,Number(order.total)-expected);patch.cod_advance_payment_status="paid";patch.cod_advance_fonepay_paid_at=new Date().toISOString();if(String(order.order_status)==="pending")patch.order_status="confirmed"}
+    if(nextStatus==="paid"){patch.cod_advance_paid=Math.min(Number(order.cod_advance_required||0),Number(order.cod_advance_paid||0)+expected);patch.cod_balance_due=Math.max(0,Number(order.cod_balance_due||0)-expected);patch.cod_advance_payment_status="paid";patch.cod_advance_fonepay_paid_at=new Date().toISOString();if(String(order.order_status)==="pending")patch.order_status="confirmed"}
     else if(nextStatus==="failed"&&String(order.cod_advance_payment_status)!=="paid")patch.cod_advance_payment_status="failed";
     else if(String(order.cod_advance_payment_status)!=="paid"&&String(order.cod_advance_payment_status)!=="failed")patch.cod_advance_payment_status="initiated";
     const update=admin.from("orders").update(patch).eq("id",order.id).neq("cod_advance_payment_status","paid");
