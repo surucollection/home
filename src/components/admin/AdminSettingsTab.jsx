@@ -4,7 +4,7 @@ export default function AdminSettingsTab({
   products,preorderBulkBusy,enablePreordersForAll,disablePreordersForAll,
   setCouponManagerOpen,loadCoupons,
   preorderAdvancePercent,setPreorderAdvancePercent,savePreorderAdvancePercent,preorderSettingsBusy,
-  pricingSettings,setPricingSettings,savePricingSettings,pricingSettingsBusy,message=""
+  pricingSettings,setPricingSettings,savePricingSettings,pricingSettingsBusy,ncmTrackingUrl,setNcmTrackingUrl,saveNcmTrackingUrl,message=""
 }){
   const [preorderPopupOpen,setPreorderPopupOpen]=useState(false);
   const [pricingPopupOpen,setPricingPopupOpen]=useState(false);
@@ -36,6 +36,16 @@ export default function AdminSettingsTab({
         </div>
         <button className="primary" type="button" onClick={()=>setPreorderPopupOpen(true)}>Manage Pre-order Settings</button>
       </div>
+    </div>
+
+    <div className="card admin-settings-card">
+      <div className="page-title">
+        <div><h3>Tracking Link</h3><p>Set the URL opened inside the tracking popup on the admin and customer order pages.</p></div>
+        <button className="primary" type="button" onClick={()=>document.getElementById("ncm-tracking-settings-form")?.requestSubmit()}>Save Tracking Link</button>
+      </div>
+      <form id="ncm-tracking-settings-form" className="admin-form" onSubmit={saveNcmTrackingUrl}>
+        <label>Tracking URL<input type="url" required value={ncmTrackingUrl||""} onChange={e=>setNcmTrackingUrl(e.target.value)} placeholder="https://portal.nepalcanmove.com/track/"/><small className="form-note">Use the full HTTPS URL. Changes apply to future tracking popups.</small></label>
+      </form>
     </div>
 
     <div className="card admin-settings-card">
