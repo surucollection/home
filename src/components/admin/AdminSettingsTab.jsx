@@ -2,7 +2,7 @@ import React,{useState} from "react";
 
 export default function AdminSettingsTab({
   products,preorderBulkBusy,enablePreordersForAll,disablePreordersForAll,
-  setCouponManagerOpen,loadCoupons,
+  setCouponManagerOpen,loadCoupons,setReviewManagerOpen,
   preorderAdvancePercent,setPreorderAdvancePercent,savePreorderAdvancePercent,preorderSettingsBusy,
   pricingSettings,setPricingSettings,savePricingSettings,pricingSettingsBusy,ncmTrackingUrl,setNcmTrackingUrl,saveNcmTrackingUrl,message=""
 }){
@@ -24,6 +24,13 @@ export default function AdminSettingsTab({
       <div className="page-title">
         <div><h3>Discount Coupons</h3><p>Create and manage promotional coupon codes that apply to eligible customer orders.</p></div>
         <button className="primary" type="button" onClick={openCouponManager}>Manage Discount Coupons</button>
+      </div>
+    </div>
+
+    <div className="card admin-settings-card">
+      <div className="page-title">
+        <div><h3>Customer Reviews</h3><p>Review customer submissions, approve or hide published reviews, and send edited reviews back through approval.</p></div>
+        <button className="primary" type="button" onClick={()=>setReviewManagerOpen(true)}>Manage Reviews</button>
       </div>
     </div>
 
