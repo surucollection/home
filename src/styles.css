@@ -1424,3 +1424,29 @@
   .admin-orders-table .order-action-row>button{font-size:10px!important;padding:6px 3px!important}
   .admin-orders-table .order-action-row-primary .ncm-action-select{font-size:10px!important}
 }
+
+
+/* Compact admin Orders table so the Actions column is reachable with less scrolling */
+.admin-orders-table{table-layout:fixed}
+.admin-orders-table th,.admin-orders-table td{overflow-wrap:anywhere;word-break:normal}
+.admin-orders-table .order-customer-cell>span{display:block;line-height:1.3}
+.admin-orders-table .order-customer-cell>small{display:block;margin-top:4px;line-height:1.25;font-size:11px}
+.admin-orders-table .order-total-cell>span{display:block;white-space:nowrap}
+.admin-orders-table .order-total-cell>small{display:block;margin-top:4px;font-size:10px;line-height:1.3;overflow-wrap:anywhere}
+.admin-orders-table .order-date-cell{white-space:nowrap}
+.admin-orders-table .order-date-cell .order-date-day,
+.admin-orders-table .order-date-cell .order-date-time{display:block;line-height:1.35}
+.admin-orders-table .order-date-cell .order-date-time{font-size:11px;opacity:.82}
+.admin-orders-table .ncm-status-cell{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+.admin-orders-table .ncm-status-cell small{font-size:10px;line-height:1.3}
+.admin-orders-table .order-actions-cell{width:235px!important;min-width:235px!important;max-width:235px!important}
+@media(max-width:700px){
+  .admin-orders-table .order-customer-cell{font-size:12px;line-height:1.3}
+  .admin-orders-table .order-customer-cell>small{font-size:10px}
+  .admin-orders-table .order-total-cell{font-size:12px}
+  .admin-orders-table .order-total-cell>small{font-size:9px}
+  .admin-orders-table .order-date-cell{font-size:11px}
+  .admin-orders-table .order-date-cell .order-date-time{font-size:10px}
+  .admin-orders-table .ncm-status-cell{font-size:10px}
+  .admin-orders-table .ncm-status-cell small{font-size:9px}
+}
