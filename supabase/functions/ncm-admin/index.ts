@@ -351,14 +351,14 @@ Deno.serve(async (req) => {
       const order = await getOrder(body.order_id, userToken);
       const hasPreviousNcmShipment = !!order.ncm_order_id;
       const previousNcmCancelled = /(cancelled|canceled)/i.test(String(order.ncm_status || "").trim());
-      if (hasPreviousNcmShipment && !previousNcmCancelled) {
-        return json({ error: "NCM shipment already exists", order }, 409);
-      }
-      if (hasPreviousNcmShipment && previousNcmCancelled) {
-        // The admin explicitly marked the previous shipment cancelled. Keep its
-        // details in audit history and permit a replacement shipment using current
-        // order_items, without requiring an external status lookup.
-        await archiveCancelledNcmShipment(order);
+      if (hasPreviousNcmShipment) {
+        // Creating a shipment is an explicit admin action. Keep the previous
+        // NCM record for audit, but allow a replacement even if the older shipment
+        // is still active. Editing the order alone never reaches this create path.
+        await archiveCancelledNcmShipment({
+          ...order,
+          ncm_status: previousNcmCancelled ? order.ncm_status : ("Replaced by new shipment" + (order.ncm_status ? " (previous status: " + order.ncm_status + ")" : "")),
+        });
       }
 
       const sourceBranch = String(body.source_branch || "").trim();
