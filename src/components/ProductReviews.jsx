@@ -74,7 +74,11 @@ export default function ProductReviews({product}){
     event.preventDefault();
     setError("");
     setNotice("");
-    if(!user){
+    const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
+    const session=sessionData?.session;
+    const {data:authData,error:authError}=await supabase.auth.getUser();
+    const activeUser=authData?.user;
+    if(sessionError||authError||!session?.access_token||!activeUser){
       location.href="/login.html?return="+returnUrl;
       return;
     }
@@ -84,8 +88,8 @@ export default function ProductReviews({product}){
     try{
       const payload={
         product_id:product.id,
-        user_id:user.id,
-        display_name:displayName.trim().slice(0,80)||user.email?.split("@")[0]||"Customer",
+        user_id:activeUser.id,
+        display_name:displayName.trim().slice(0,80)||activeUser.email?.split("@")[0]||"Customer",
         rating:Number(rating),
         title:title.trim().slice(0,120)||null,
         review_text:cleanText,
@@ -95,11 +99,12 @@ export default function ProductReviews({product}){
       const {data,error:saveError}=await supabase.from("product_reviews").upsert(payload,{onConflict:"product_id,user_id"}).select("id,product_id,user_id,display_name,rating,title,review_text,created_at,updated_at,is_approved").single();
       if(saveError)throw saveError;
       setMyReview(data);
-      setReviews(previous=>previous.filter(item=>item.user_id!==user.id));
-      const session=(await supabase.auth.getSession()).data.session;
-      for(const file of selectedPhotos){const form=new FormData();form.append("review_id",data.id);form.append("file",file);const response=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=upload",{method:"POST",headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session?.access_token},body:form});const result=await response.json();if(!response.ok)throw new Error(result.message||"Review saved, but a photo could not be uploaded.");}
+      if(data.user_id!==activeUser.id)throw new Error("Your sign-in changed while saving. Please refresh the page and try again.");
+      setUser(activeUser);
+      setReviews(previous=>previous.filter(item=>item.user_id!==activeUser.id));
+      for(const file of selectedPhotos){const form=new FormData();form.append("review_id",data.id);form.append("file",file);const response=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=upload",{method:"POST",headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session.access_token},body:form});const result=await response.json();if(!response.ok)throw new Error(result.message||"Review saved, but a photo could not be uploaded.");}
       setSelectedPhotos([]);
-      const photoResponse=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=list&review_id="+encodeURIComponent(data.id),{headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session?.access_token}});
+      const photoResponse=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=list&review_id="+encodeURIComponent(data.id),{headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session.access_token}});
       const photoData=await photoResponse.json();setOwnPhotos(photoData.photos||[]);
       setNotice(ownReview?"Your review was updated and sent for approval again. New photos need approval too.":"Thank you! Your review has been submitted and will appear after approval.");
     }catch(e){
