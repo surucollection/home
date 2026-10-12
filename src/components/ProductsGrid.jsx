@@ -11,7 +11,7 @@ export default function ProductsGrid({limit,category,featured=false}){
   const load=useCallback(async(reset=false)=>{
     const id=++requestId.current;
     const pageSize=limit?Math.max(1,Math.min(Number(limit)||1,PAGE_SIZE)):PAGE_SIZE;
-    const offset=reset?0:loadedCount;
+    const offset=reset?0:loadedCountRef.current;
     if(reset)setLoading(true);else setLoadingMore(true);
     setErr("");
     try{
@@ -43,16 +43,16 @@ export default function ProductsGrid({limit,category,featured=false}){
         });
       });
       setP(prev=>reset?expanded:[...prev,...expanded]);
-      setLoadedCount(prev=>reset?next.length:prev+next.length);
+      const newLoadedCount=reset?next.length:loadedCountRef.current+next.length;\n      loadedCountRef.current=newLoadedCount;\n      setLoadedCount(newLoadedCount);
       setHasMore(next.length===pageSize);
     }catch(e){
       if(id===requestId.current)setErr(e.message||"Unable to load products.");
     }finally{
       if(id===requestId.current){setLoading(false);setLoadingMore(false);}
     }
-  },[category,featured,loadedCount]);
+  },[category,featured]);
 
-  useEffect(()=>{setP([]);setLoadedCount(0);setHasMore(true);load(true)},[category,featured]);
+  useEffect(()=>{setP([]);setLoadedCount(0);loadedCountRef.current=0;setHasMore(true);load(true)},[category,featured,load]);
 
   if(loading&&!p.length)return <div className="product-loading">Loading products…</div>;
   if(err&&!p.length)return <div className="product-loading">{err}</div>;
