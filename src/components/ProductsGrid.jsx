@@ -28,7 +28,21 @@ export default function ProductsGrid({limit,category,featured=false}){
       const rows=await get("products",params);
       if(id!==requestId.current)return;
       const next=rows||[];
-      setP(prev=>reset?next:[...prev,...next]);
+      // Expand each product into one listing card per colour variant across every ProductsGrid section.
+      const expanded=next.flatMap(product=>{
+        const variants=product.product_sizes||[];
+        const images=product.product_images||[];
+        const colours=[...new Set([...variants.map(v=>String(v.color||"").trim()),...images.map(i=>String(i.color||"").trim())].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+        if(!colours.length)return [{...product,listingColour:"",listingImage:undefined,listingVariants:variants}];
+        return colours.map(colour=>{
+          const sameColour=images.filter(i=>String(i.color||"").trim().toLowerCase()===colour.toLowerCase());
+          const shared=images.filter(i=>!String(i.color||"").trim());
+          const candidates=sameColour.length?sameColour:(shared.length?shared:images);
+          const listingImage=candidates.find(i=>i.is_main)||[...candidates].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0];
+          return {...product,listingColour:colour,listingImage,listingVariants:variants.filter(v=>String(v.color||"").trim().toLowerCase()===colour.toLowerCase()||!String(v.color||"").trim())};
+        });
+      });
+      setP(prev=>reset?expanded:[...prev,...expanded]);
       setHasMore(next.length===pageSize);
     }catch(e){
       if(id===requestId.current)setErr(e.message||"Unable to load products.");
@@ -48,12 +62,13 @@ export default function ProductsGrid({limit,category,featured=false}){
     <div className="product-grid">
       {visible.map((product,index)=>{
         const images=product.product_images||[];
-        const image=images.find(i=>i.is_main)||[...images].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0];
+        const image=product.listingImage||images.find(i=>i.is_main)||[...images].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0];
         return <ProductCard
-          key={product.id}
+          key={product.id+(product.listingColour?"-"+product.listingColour:"")}
           product={product}
           image={image}
-          variants={[]}
+          variants={product.listingVariants||product.product_sizes||[]}
+          displayColour={product.listingColour||""}
           priority={index<2}
         />;
       })}
