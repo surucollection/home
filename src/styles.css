@@ -1450,3 +1450,35 @@
   .admin-orders-table .ncm-status-cell{font-size:10px}
   .admin-orders-table .ncm-status-cell small{font-size:9px}
 }
+
+
+/* Correct mobile Orders table sizing: keep all columns within a shorter horizontal scroll */
+.admin-orders-table{width:100%;min-width:0!important;table-layout:fixed!important;border-collapse:collapse}
+.admin-orders-table th,.admin-orders-table td{box-sizing:border-box;padding:8px 5px!important;overflow-wrap:anywhere;word-break:break-word}
+.admin-orders-table .order-customer-cell{font-size:12px;line-height:1.25}
+.admin-orders-table .order-customer-cell>span{display:block;overflow-wrap:anywhere}
+.admin-orders-table .order-customer-cell>small{display:block;margin-top:3px;font-size:9px;line-height:1.2;overflow-wrap:anywhere}
+.admin-orders-table .order-total-cell{font-size:11px;line-height:1.25}
+.admin-orders-table .order-total-cell>span{white-space:normal;overflow-wrap:anywhere}
+.admin-orders-table .order-total-cell>small{font-size:9px;line-height:1.2}
+.admin-orders-table .order-date-cell{white-space:normal;font-size:10px;line-height:1.25}
+.admin-orders-table .order-date-day,.admin-orders-table .order-date-time{display:block}
+.admin-orders-table .order-date-time{font-size:9px}
+.admin-orders-table .ncm-status-cell{font-size:9px;line-height:1.2;overflow-wrap:anywhere}
+.admin-orders-table .ncm-status-cell small{font-size:9px;line-height:1.2}
+.admin-orders-table .order-actions-cell{width:210px!important;min-width:210px!important;max-width:210px!important;padding:6px 4px!important}
+.admin-orders-table .order-action-rows{width:100%!important;min-width:0!important}
+.admin-orders-table .order-action-row{gap:3px!important}
+.admin-orders-table .order-action-row>button{padding:5px 3px!important;font-size:10px!important;min-width:0!important}
+.admin-orders-table .order-action-row-primary .ncm-action-select{font-size:10px!important;max-width:90px!important}
+@media(max-width:700px){
+ .admin-orders-table th,.admin-orders-table td{padding:6px 3px!important}
+ .admin-orders-table .order-customer-cell{font-size:10px}
+ .admin-orders-table .order-customer-cell>small{font-size:8px}
+ .admin-orders-table .order-total-cell{font-size:10px}
+ .admin-orders-table .order-total-cell>small{font-size:8px}
+ .admin-orders-table .order-date-cell{font-size:9px}
+ .admin-orders-table .order-date-time{font-size:8px}
+ .admin-orders-table .ncm-status-cell,.admin-orders-table .ncm-status-cell small{font-size:8px}
+ .admin-orders-table .order-actions-cell{width:210px!important;min-width:210px!important;max-width:210px!important}
+}
