@@ -14,6 +14,7 @@ export default function RelatedProducts({product}){
         const params={
           select:"id,product_code,name,category,price,compare_at_price,color,is_active,preorder_enabled,created_at,product_images(product_id,image_url,alt_text,is_main,sort_order,color),product_sizes(id,size,color,stock,is_active)",
           is_active:"eq.true",
+          "product_sizes.is_active":"eq.true",
           id:"neq."+product.id,
           order:"created_at.desc",
           limit:"24"
