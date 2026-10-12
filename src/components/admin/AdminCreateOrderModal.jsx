@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useState} from "react";
+import QRCode from "qrcode";
 import AdminModal from "./AdminModal.jsx";
 import {supabase,money} from "../../lib/api.js";
 import {NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,getNcmBranches,matchNcmBranch,normalizeNepalPhone} from "../../lib/appShared.js";
@@ -65,6 +66,9 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [error,setError]=useState("");
   const [created,setCreated]=useState(null);
   const [copied,setCopied]=useState(false);
+  const [paymentQr,setPaymentQr]=useState(null);
+  const [qrLoading,setQrLoading]=useState(false);
+  const [qrError,setQrError]=useState("");
 
   const activeProducts=useMemo(()=>products.filter(p=>p.is_active!==false),[products]);
   const filteredCustomers=useMemo(()=>{
@@ -509,6 +513,57 @@ Thank you for ordering from Suru Collection.`;
     }
   };
 
+  const generatePaymentQr=async()=>{
+    if(!created?.order_id||qrLoading)return;
+    setQrLoading(true);setQrError("");
+    try{
+      const purpose=String(created.payment_method||paymentMethod).toLowerCase()==="cod"?"cod_advance":"full";
+      const {data,error:invokeError}=await supabase.functions.invoke("fonepay-payment",{body:{action:"create",orderId:created.order_id,purpose}});
+      if(invokeError)throw invokeError;
+      if(data?.error)throw new Error(data.error);
+      if(data?.alreadyPaid)throw new Error("This payment has already been confirmed.");
+      if(data?.expired)throw new Error("This payment request has expired. Please refresh the order payment request.");
+      const payload=String(data?.qrString||data?.qrMessage||"").trim();
+      if(!payload)throw new Error("Fonepay did not return a QR payload.");
+      const qrImage=await QRCode.toDataURL(payload,{width:360,margin:2,errorCorrectionLevel:"M"});
+      setPaymentQr({...data,qrImage,purpose});
+    }catch(e){setQrError(e?.message||"Unable to generate Fonepay QR.");}
+    finally{setQrLoading(false);}
+  };
+
+  const sharePaymentQr=async()=>{
+    if(!paymentQr?.qrImage)return;
+    const amount=money(paymentQr.amount||0);
+    const textMessage=`Suru Collection order #${created?.order_number}\nFonepay amount: ${amount}\nPlease scan the attached QR using your bank's Fonepay payment option. Reference: ${paymentQr.reference||"—"}`;
+    try{
+      const response=await fetch(paymentQr.qrImage);
+      const blob=await response.blob();
+      const file=new File([blob],`Suru-Fonepay-${created?.order_number||"payment"}.png`,{type:"image/png"});
+      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+        await navigator.share({title:"Suru Collection Fonepay payment",text:textMessage,files:[file]});
+      }else{
+        await navigator.clipboard.writeText(textMessage);
+        setCopied(true);
+        setQrError("Payment instructions copied. Save or share the QR image above separately.");
+      }
+    }catch(e){
+      if(e?.name!=="AbortError")setQrError("Unable to open the share sheet. You can save the QR image and send it to the customer manually.");
+    }
+  };
+
+  const checkPaymentStatus=async()=>{
+    if(!paymentQr?.purpose||!created?.order_id)return;
+    setQrLoading(true);setQrError("");
+    try{
+      const {data,error:invokeError}=await supabase.functions.invoke("fonepay-payment",{body:{action:"status",orderId:created.order_id,purpose:paymentQr.purpose}});
+      if(invokeError)throw invokeError;
+      if(data?.error)throw new Error(data.error);
+      if(data?.verified)setQrError("Payment verified successfully.");
+      else setQrError(`Payment status: ${data?.paymentStatus||"pending"}. The order is not marked paid unless Fonepay confirms success.`);
+    }catch(e){setQrError(e?.message||"Unable to check payment status.");}
+    finally{setQrLoading(false);}
+  };
+
   const copyConfirmation=async()=>{
     if(!created?.confirmation)return;
     try{
@@ -539,6 +594,17 @@ Thank you for ordering from Suru Collection.`;
           <h3>Order #{created.order_number} created</h3>
           <p>{created.preorder?"Pre-order advance handling is included.":"The order has been added to the normal order workflow."}</p>
           <div className="admin-create-order-confirmation"><pre>{created.confirmation}</pre></div>
+          {["cod","fonepay"].includes(String(created.payment_method||paymentMethod).toLowerCase())&&<section className="admin-create-order-payment-qr">
+            <h4>Fonepay payment</h4>
+            <p>{String(created.payment_method||paymentMethod).toLowerCase()==="cod"?"Generate a QR for the COD delivery advance. The customer scans it using their bank app; the remaining order balance is payable on delivery.":"Generate a QR for the full order amount. The customer scans it using their bank app to pay."}</p>
+            {!paymentQr&&<button type="button" className="primary" onClick={generatePaymentQr} disabled={qrLoading}>{qrLoading?"Generating QR…":"Generate Fonepay QR"}</button>}
+            {paymentQr&&<div className="admin-create-order-payment-qr-result">
+              <img src={paymentQr.qrImage} alt="Fonepay payment QR" />
+              <div><b>Amount: {money(paymentQr.amount||0)}</b><small>Reference: {paymentQr.reference||"—"}</small><small>Customer: scan this QR in their banking app that supports Fonepay.</small></div>
+              <div className="admin-create-order-payment-qr-actions"><button type="button" className="secondary" onClick={sharePaymentQr}>Share QR</button><button type="button" className="secondary" onClick={checkPaymentStatus} disabled={qrLoading}>{qrLoading?"Checking…":"Check Payment"}</button></div>
+            </div>}
+            {qrError&&<div className="message">{qrError}</div>}
+          </section>}
           {created.advance_required>0&&<div className="message">Advance required: <b>{money(created.advance_required)}</b> · Paid now: <b>{money(created.amount_paid||0)}</b> · Balance due: <b>{money(created.balance_due||0)}</b></div>}
         </div>
       : <form onSubmit={submit} className="admin-create-order-form">
