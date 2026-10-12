@@ -476,7 +476,7 @@ Deno.serve(async (req) => {
         ncm_created_at: new Date().toISOString(),
         ncm_last_sync_at: new Date().toISOString(),
         ncm_response: response,
-        order_status: order.order_status === "pending" ? "processing" : order.order_status,
+        order_status: order.order_status === "pending" || (hasPreviousNcmShipment && previousNcmCancelled && order.order_status === "shipped") ? "processing" : order.order_status,
       };
       const updated = await updateOrder(order.id, patch);
       return json({ success: true, order: updated, ncm: response });
