@@ -158,9 +158,8 @@ function Admin(){
      setNcmBusy(true);
      const data=await ncm({action,order_id:o.id,...requestPayload});
      if(!silent)setNcmSyncMessage("NCM "+action+" completed for "+o.order_number+".");
-     if(action==="cancel_order"){
-       const{error:updateError}=await supabase.from("orders").update({ncm_status:"Cancelled",ncm_last_sync_at:new Date().toISOString()}).eq("id",o.id);
-       if(updateError)throw updateError;
+     if(action==="cancel_order"&&!silent){
+       setNcmSyncMessage(data?.message||"NCM cancellation requested. The shipment remains active until NCM confirms cancellation; sync its status before creating a replacement.");
      }
      if(action==="cancel_order"||action==="return"||action==="exchange"||action==="redirect")loadOrders();
      return data;
