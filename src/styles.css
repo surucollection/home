@@ -1090,3 +1090,37 @@
     grid-column:1/-1;
   }
 }
+
+
+/* Keep Province, District and Municipality controls aligned in admin customer editor */
+.admin-customer-address-location-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  align-items:start;
+}
+.admin-customer-address-location-grid label{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  min-width:0;
+  line-height:1.35;
+}
+.admin-customer-address-location-grid select{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  margin-top:5px;
+  min-height:36px;
+  padding:6px 8px;
+  font:inherit;
+  font-size:12px;
+}
+@media(max-width:640px){
+  .admin-customer-address-location-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .admin-customer-address-location-grid label:last-child{
+    grid-column:1/-1;
+  }
+}
