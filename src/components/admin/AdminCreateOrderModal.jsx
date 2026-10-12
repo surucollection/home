@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useState} from "react";
 import AdminModal from "./AdminModal.jsx";
 import {supabase,money} from "../../lib/api.js";
-import {NEPAL_PROVINCES,provinceDistricts,canonicalProvince,getNcmBranches,matchNcmBranch,normalizeNepalPhone} from "../../lib/appShared.js";
+import {NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,getNcmBranches,matchNcmBranch,normalizeNepalPhone} from "../../lib/appShared.js";
 
 const SOURCE_OPTIONS=[
   ["whatsapp","WhatsApp"],
@@ -546,9 +546,9 @@ Thank you for ordering from Suru Collection.`;
                     </div>
                     <label className="admin-create-order-full-field">Address *<textarea value={addressDraft.address} onChange={e=>updateAddressDraft({address:e.target.value})} rows="2"/></label>
                     <div className="admin-create-order-grid admin-create-order-grid-4">
-                      <label>Province *<select value={canonicalProvince(addressDraft.province)} onChange={e=>{const v=e.target.value;updateAddressDraft({province:v,district:""});setTimeout(()=>applyBranchMatch({...addressDraft,province:v,district:""}),0)}}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
-                      <label>District *<select value={addressDraft.district} onChange={e=>{const v=e.target.value;updateAddressDraft({district:v});setTimeout(()=>applyBranchMatch({...addressDraft,district:v}),0)}} disabled={!addressDraft.province}><option value="">Select district</option>{provinceDistricts(canonicalProvince(addressDraft.province)).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
-                      <label>City / Municipality *<input value={addressDraft.city} onChange={e=>{const v=e.target.value;updateAddressDraft({city:v});setTimeout(()=>applyBranchMatch({...addressDraft,city:v}),0)}}/></label>
+                      <label>Province *<select value={canonicalProvince(addressDraft.province)} onChange={e=>{const v=e.target.value;updateAddressDraft({province:v,district:"",city:""});setTimeout(()=>applyBranchMatch({...addressDraft,province:v,district:""}),0)}}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
+                      <label>District *<select value={addressDraft.district} onChange={e=>{const v=e.target.value;updateAddressDraft({district:v,city:""});setTimeout(()=>applyBranchMatch({...addressDraft,district:v,city:""}),0)}} disabled={!addressDraft.province}><option value="">Select district</option>{provinceDistricts(canonicalProvince(addressDraft.province)).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+                      <label>City / Municipality *<select value={addressDraft.city||""} onChange={e=>{const v=e.target.value;updateAddressDraft({city:v});setTimeout(()=>applyBranchMatch({...addressDraft,city:v}),0)}} disabled={!addressDraft.district}><option value="">{addressDraft.district?"Select Municipality":"Select District First"}</option>{municipalityOptions(addressDraft.province,addressDraft.district).map(x=><option key={x} value={x}>{x}</option>)}{addressDraft.city&&!municipalityOptions(addressDraft.province,addressDraft.district).includes(addressDraft.city)&&<option value={addressDraft.city}>Existing: {addressDraft.city}</option>}</select></label>
                       <label>NCM Destination Branch<select value={addressDraft.ncm_destination_branch} onChange={e=>updateAddressDraft({ncm_destination_branch:e.target.value})}><option value="">Select branch</option>{branches.map((b,i)=><option key={i} value={b?.name||b?.branch_name||b?.title||b?.branch||""}>{b?.name||b?.branch_name||b?.title||b?.branch||"Unnamed branch"}</option>)}</select></label>
                     </div>
                     {addressMode==="new"&&<label className="admin-create-order-check"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>updateAddressDraft({is_default:e.target.checked})}/> Save this as the customer's default address</label>}
