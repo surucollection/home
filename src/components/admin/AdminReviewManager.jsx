@@ -12,6 +12,7 @@ export default function AdminReviewManager({open,onClose}){
   const [message,setMessage]=useState("");
   const [photos,setPhotos]=useState([]);
   const [photoBusy,setPhotoBusy]=useState("");
+  const [photoImages,setPhotoImages]=useState({});
 
   const loadReviews=useCallback(async()=>{
     setLoading(true);setMessage("");
@@ -32,6 +33,25 @@ export default function AdminReviewManager({open,onClose}){
   },[]);
 
   useEffect(()=>{if(open)void loadReviews()},[open,loadReviews]);
+
+  useEffect(()=>{
+    let active=true;
+    const loadImages=async()=>{
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session?.access_token)return;
+      const pairs=await Promise.all(photos.map(async photo=>{
+        try{
+          const response=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=image&id="+encodeURIComponent(photo.id),{headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session.access_token}});
+          if(!response.ok)return [photo.id,""];
+          const blob=await response.blob();return [photo.id,URL.createObjectURL(blob)];
+        }catch{return [photo.id,""]}
+      }));
+      if(!active){pairs.forEach(([,url])=>{if(url)URL.revokeObjectURL(url)});return;}
+      setPhotoImages(previous=>{Object.values(previous).forEach(url=>URL.revokeObjectURL(url));return Object.fromEntries(pairs.filter(([,url])=>url));});
+    };
+    if(open&&photos.length)void loadImages();
+    return()=>{active=false};
+  },[open,photos]);
 
   const visible=useMemo(()=>{
     const q=search.trim().toLowerCase();
@@ -85,7 +105,7 @@ export default function AdminReviewManager({open,onClose}){
             <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{review.review_text}</p>
             <small className="form-note">{review.is_approved?"Approved and public":"Pending approval"}</small>
             {photos.some(photo=>photo.review_id===review.id)&&<div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:12}}><strong style={{width:"100%"}}>Customer photos</strong>{photos.filter(photo=>photo.review_id===review.id).map(photo=><div key={photo.id} style={{border:"1px solid var(--border,#ddd)",borderRadius:8,padding:8,minWidth:130}}>
-              <img src={"https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=image&id="+photo.id} alt="Customer review" style={{width:100,height:100,objectFit:"cover",borderRadius:6}}/>
+              {photoImages[photo.id]?<img src={photoImages[photo.id]} alt="Customer review" style={{width:100,height:100,objectFit:"cover",borderRadius:6}}/>:<div style={{width:100,height:100,display:"grid",placeItems:"center",fontSize:12,textAlign:"center"}}>Loading photo…</div>}
               <div><small>{photo.approval_status==="approved"?"Approved":photo.approval_status==="rejected"?"Rejected":"Pending"}</small></div>
               <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:6}}>
                 {photo.approval_status!=="approved"&&<button type="button" className="primary" disabled={!!photoBusy} onClick={async()=>{setPhotoBusy(photo.id);try{const {data:{session}}=await supabase.auth.getSession();const response=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=moderate",{method:"POST",headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session?.access_token,"Content-Type":"application/json"},body:JSON.stringify({photo_id:photo.id,approval_status:"approved"})});const result=await response.json();if(!response.ok)throw new Error(result.message);setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,approval_status:"approved"}:p));}catch(e){setMessage("Unable to approve photo: "+(e.message||"Try again."));}finally{setPhotoBusy("");}}}>Approve photo</button>}
