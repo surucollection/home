@@ -1482,3 +1482,22 @@
  .admin-orders-table .ncm-status-cell,.admin-orders-table .ncm-status-cell small{font-size:8px}
  .admin-orders-table .order-actions-cell{width:210px!important;min-width:210px!important;max-width:210px!important}
 }
+
+
+.admin-create-order-cod-advance{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,180px);gap:6px 12px;align-items:center;width:100%}
+.admin-create-order-cod-advance>label{font-weight:700}
+.admin-create-order-cod-advance>input{width:100%;min-width:0;box-sizing:border-box}
+.admin-create-order-cod-advance>small{grid-column:1/-1;line-height:1.4}
+.admin-create-order-payment-qr{margin-top:16px;padding:14px;border:1px solid #eadbd5;border-radius:14px;display:grid;gap:10px}
+.admin-create-order-payment-qr h4,.admin-create-order-payment-qr p{margin:0}
+.admin-create-order-payment-qr-result{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;align-items:center}
+.admin-create-order-payment-qr-result>img{display:block;width:140px;max-width:100%;height:auto;background:#fff;border-radius:8px}
+.admin-create-order-payment-qr-result>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.admin-create-order-payment-qr-result small{overflow-wrap:anywhere}
+.admin-create-order-payment-qr-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:600px){
+ .admin-create-order-cod-advance{grid-template-columns:minmax(0,1fr) 110px}
+ .admin-create-order-payment-qr-result{grid-template-columns:110px minmax(0,1fr)}
+ .admin-create-order-payment-qr-result>img{width:110px}
+ .admin-create-order-payment-qr-actions button{flex:1 1 auto}
+}
