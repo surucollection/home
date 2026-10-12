@@ -146,7 +146,7 @@ const normalizeAdminName=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"")
 const municipalityDistrictAliases={
   nawalpur:"nawalparasieast",
   tehrathum:"terhathum",
-  pachthar:"panchthar",
+  panchthar:"pachthar",
   kapilvastu:"kapilbastu"
 };
 const municipalityOptions=(province,district)=>{
