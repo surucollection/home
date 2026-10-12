@@ -129,7 +129,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
         <button className="secondary" type="button" disabled={saving} onClick={onClose}>Close</button>
       </div>
 
-      {ncmShipmentCancelled&&<div className="admin-edit-order-notice" role="note"><strong>The previous NCM shipment is confirmed cancelled.</strong><p>Save the new size/colour first, then create the replacement shipment. The replacement package will use the updated order item details.</p></div>}
+      {ncmShipmentCancelled&&<div className="admin-edit-order-notice" role="note"><strong>The previous NCM shipment is marked cancelled locally.</strong><p>Save the new size/colour first, then create a replacement shipment if needed. The new package will use the updated order item details. The original NCM shipment record is archived for reference.</p></div>}
       {activeNcm&&<div className="admin-edit-order-notice warning" role="note">
         <strong>NCM shipment #{order.ncm_order_id} will remain unchanged.</strong>
         <p>This edit will not call NCM, cancel the shipment, or update its package text. If NCM must receive the new size, cancel this shipment using the existing NCM action and create a replacement after saving.</p>
