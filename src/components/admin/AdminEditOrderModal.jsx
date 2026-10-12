@@ -65,12 +65,14 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
 
   if(!order)return null;
   const status=String(order.order_status||"").toLowerCase();
-  const statusEditable=EDITABLE_STATUSES.has(status)&&!order.inventory_released_at;
-  const activeNcm=!!order.ncm_order_id&&!isNcmCancelled(order);
+  const ncmShipmentCancelled=isNcmCancelled(order);
+  const statusAllowed=EDITABLE_STATUSES.has(status)||(status==="shipped"&&ncmShipmentCancelled);
+  const statusEditable=statusAllowed&&!order.inventory_released_at;
+  const activeNcm=!!order.ncm_order_id&&!ncmShipmentCancelled;
   const invoiceActive=!!(order.invoice_number&&order.invoice_data)&&String(order.invoice_status||"active").toLowerCase()!=="cancelled";
   const invoiceCancelled=String(order.invoice_status||"").toLowerCase()==="cancelled";
-  const blockedMessage=!EDITABLE_STATUSES.has(status)
-    ?"Size changes are only available while the order is pending, confirmed, processing, or packed. If it has shipped or been delivered, resolve the shipment or use the exchange workflow first."
+  const blockedMessage=!statusAllowed
+    ?"Size changes are available for pending, confirmed, processing, and packed orders. A shipped order can only be edited after NCM confirms shipment cancellation; delivered orders require the exchange workflow."
     :order.inventory_released_at
       ?"Inventory for this order has already been released. This order cannot be edited through this workflow."
       :"";
@@ -127,6 +129,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
         <button className="secondary" type="button" disabled={saving} onClick={onClose}>Close</button>
       </div>
 
+      {ncmShipmentCancelled&&<div className="admin-edit-order-notice" role="note"><strong>The previous NCM shipment is confirmed cancelled.</strong><p>Save the new size/colour first, then create the replacement shipment. The replacement package will use the updated order item details.</p></div>}
       {activeNcm&&<div className="admin-edit-order-notice warning" role="note">
         <strong>NCM shipment #{order.ncm_order_id} will remain unchanged.</strong>
         <p>This edit will not call NCM, cancel the shipment, or update its package text. If NCM must receive the new size, cancel this shipment using the existing NCM action and create a replacement after saving.</p>
