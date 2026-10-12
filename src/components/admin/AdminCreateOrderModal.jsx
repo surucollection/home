@@ -313,7 +313,8 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const estimatedTotal=Math.max(0,subtotal-estimatedPreorderDiscount);
   const ncmDestinationBranch=cleanText(addressDraft.ncm_destination_branch);
   const effectiveCodAdvance=codAdvanceOverride!==""?Math.max(0,Number(codAdvanceOverride)||0):Number(ncmAdvance||0);
-  const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"?effectiveCodAdvance:0);
+  const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"?Number(ncmAdvance||0):0);
+  const balanceAfterPaid=Math.max(0,totalIncludingDelivery-Math.max(0,Number(amountPaid||0)));
 
   useEffect(()=>{
     if(!open||paymentMethod!=="cod"||!ncmDestinationBranch){
@@ -693,9 +694,9 @@ Thank you for ordering from Suru Collection.`;
                 <div className="admin-create-order-summary">
                   <div><span>Subtotal</span><b>{money(subtotal)}</b></div>
                   <div><span>Pre-order discount</span><b>− {money(estimatedPreorderDiscount)}</b></div>
-                  {paymentMethod==="cod"&&<div className="admin-create-order-cod-advance"><label htmlFor="admin-cod-advance">NCM advance / delivery charge</label><input id="admin-cod-advance" type="number" min="0" step="1" value={codAdvanceOverride} onChange={e=>setCodAdvanceOverride(e.target.value)} disabled={ncmRateLoading||ncmAdvance===null} /><small>{ncmRateLoading?"Calculating destination rate…":ncmAdvance!==null?`Suggested NCM charge: ${money(ncmAdvance)}. You can edit the amount before creating the order.`:"Select an NCM destination to load the suggested amount."}</small></div>}
-                  <div className="grand"><span>Total including delivery</span><b>{money(totalIncludingDelivery)}</b></div>
-                  {paymentMethod==="cod"&&<small>{ncmAdvance!==null?`NCM delivery charge for ${ncmDestinationBranch}. The rate is refreshed again when the order is created.`:"Select an NCM destination branch to calculate the delivery charge before creating the order."}</small>}
+                  {paymentMethod==="cod"&&<div className="admin-create-order-cod-advance"><label htmlFor="admin-cod-advance">Advance required before delivery</label><input id="admin-cod-advance" type="number" min="0" step="1" value={codAdvanceOverride} onChange={e=>setCodAdvanceOverride(e.target.value)} disabled={ncmRateLoading||ncmAdvance===null} /><small>{ncmRateLoading?"Calculating destination rate…":ncmAdvance!==null?`Actual NCM delivery charge: ${money(ncmAdvance)}. Enter 0 for no advance, or any amount to collect before shipment.`:"Select an NCM destination to load the delivery charge."}</small></div>}
+                  <div><span>Actual NCM delivery charge</span><b>{paymentMethod==="cod"?(ncmRateLoading?"Calculating…":ncmAdvance!==null?money(ncmAdvance):"Select destination"):"—"}</b></div><div className="grand"><span>Total including delivery</span><b>{money(totalIncludingDelivery)}</b></div><div><span>Amount paid now</span><b>{money(Math.max(0,Number(amountPaid||0)))}</b></div><div className="grand"><span>Remaining payable on delivery</span><b>{money(balanceAfterPaid)}</b></div>
+                  {paymentMethod==="cod"&&<small>{ncmAdvance!==null?`NCM delivery charge for ${ncmDestinationBranch} is included in the total even when advance required is 0. Any amount already paid is deducted from the total payable on delivery.`:"Select an NCM destination branch to calculate the delivery charge before creating the order."}</small>}
                 </div>
               </section>
 
