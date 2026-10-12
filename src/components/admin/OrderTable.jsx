@@ -188,10 +188,10 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
   return (
     <>
       <div className="table-wrap">
-        <table className="admin-orders-table" style={{width:"100%",minWidth:compact?"760px":"1120px",tableLayout:"fixed"}}>
+        <table className="admin-orders-table" style={{width:"100%",minWidth:compact?"650px":"925px",tableLayout:"fixed"}}>
           <colgroup>
-            <col style={{width:"145px"}}/><col style={{width:"180px"}}/><col style={{width:"100px"}}/><col style={{width:"175px"}}/><col style={{width:"165px"}}/>
-            {!compact&&<><col style={{width:"205px"}}/><col style={{width:"235px"}}/></>}
+            <col style={{width:"125px"}}/><col style={{width:"125px"}}/><col style={{width:"75px"}}/><col style={{width:"115px"}}/><col style={{width:"100px"}}/>
+            {!compact&&<><col style={{width:"115px"}}/><col style={{width:"235px"}}/></>}
           </colgroup>
           <thead>
             <tr>
@@ -203,8 +203,8 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
             {rows.map(o=>(
               <tr key={o.id}>
                 <td><b>{o.order_number}</b>{o.order_source&&o.order_source!=="website"&&<small style={{display:"block",marginTop:3,fontWeight:700}}>Source: {prettyLabel(o.order_source)}</small>}</td>
-                <td>{o.customer_name}<br/><small>{o.customer_phone}</small></td>
-                <td>{money(o.total)}{o.payment_method==="cod"&&<small style={{display:"block",marginTop:4}}>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(o.cod_balance_due??o.total??0)}</small>}</td>
+                <td className="order-customer-cell"><span>{o.customer_name}</span><small>{o.customer_phone}</small></td>
+                <td className="order-total-cell"><span>{money(o.total)}</span>{o.payment_method==="cod"&&<small>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(o.cod_balance_due??o.total??0)}</small>}</td>
                 <td>
                   {onStatus?<div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
                     <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{allowedOrderStatuses(o).map(s=><option key={s} value={s}>{s}</option>)}</select>
@@ -215,7 +215,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
                       ?<button className="secondary" disabled={!!busy} onClick={()=>requestOrderReturn(o)}>{busy===o.id+":return"?"Saving…":"Return Order"}</button>
                       :!["cancelled","returned"].includes(String(o.order_status||"").toLowerCase())&&<button className="danger" disabled={!!busy} onClick={()=>{const reason=prompt("Reason for cancelling order #"+(o.order_number||o.id)+":","");if(reason===null)return;if(!reason.trim()){alert("Please enter a reason for cancelling the order.");return}onStatus(o.id,"cancelled",reason.trim())}}>Cancel Order</button>}
                   </div>:o.order_status||"—"}</td>
-                <td className="order-date-cell">{new Date(o.created_at).toLocaleString()}</td>
+                <td className="order-date-cell"><span className="order-date-day">{new Date(o.created_at).toLocaleDateString()}</span><span className="order-date-time">{new Date(o.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</span></td>
                 {!compact&&<>
                   <td className="ncm-status-cell">
                     {o.ncm_order_id&&!isNcmCancelled(o)?<small>NCM #{o.ncm_order_id}<br/>{o.ncm_status||"created"}{o.ncm_destination_branch&&<><br/>Destination: {o.ncm_destination_branch}</>}</small>:isNcmCancelled(o)?<small>NCM shipment cancelled</small>:<small>—</small>}
