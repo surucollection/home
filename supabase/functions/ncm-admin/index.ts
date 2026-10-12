@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
       if (trackingId && trackingId !== String(order.ncm_order_id)) {
         patch.ncm_tracking_id = trackingId;
       }
-      if (mapped) patch.order_status = mapped;
+      if (mapped && mapped !== "cancelled") patch.order_status = mapped; // Cancelling a shipment alone must not cancel the store order.
       const updated = await updateOrder(order.id, patch, userToken);
       return json({ order: updated, history });
     }
@@ -355,8 +355,41 @@ Deno.serve(async (req) => {
         return json({ error: "NCM shipment already exists", order }, 409);
       }
       if (hasPreviousNcmShipment && previousNcmCancelled) {
-        // Keep the cancelled external shipment for audit, then allow the replacement
-        // package to be built from the latest order_items below.
+        // Verify cancellation with NCM itself before allowing a replacement. A local
+        // cancellation request/comment is not proof that the external shipment stopped.
+        const statusPath = "/api/v1/order/status?id=" + encodeURIComponent(String(order.ncm_order_id));
+        let externalHistory: any = null;
+        const verificationErrors: string[] = [];
+        for (const [base, path] of [
+          [NCM_BASE, statusPath],
+          ["https://portal.nepalcanmove.com", statusPath],
+        ]) {
+          try {
+            externalHistory = await ncmJson(path, {}, base);
+            break;
+          } catch (e) {
+            verificationErrors.push(base + path + ": " + (e instanceof Error ? e.message : String(e)));
+          }
+        }
+        if (!externalHistory) {
+          throw new Error("Unable to verify NCM cancellation. Open the NCM portal, confirm cancellation, sync the shipment status, and retry. " + verificationErrors.join(" | "));
+        }
+        const externalRows = Array.isArray(externalHistory) ? externalHistory
+          : Array.isArray(externalHistory?.results) ? externalHistory.results
+          : Array.isArray(externalHistory?.data) ? externalHistory.data
+          : Array.isArray(externalHistory?.history) ? externalHistory.history : [];
+        const latestExternalStatus = externalRows.slice().sort((a: any, b: any) =>
+          new Date(a.added_time || a.addedTime || a.timestamp || 0).getTime() -
+          new Date(b.added_time || b.addedTime || b.timestamp || 0).getTime()
+        ).pop();
+        const externalStatus = latestExternalStatus?.status || latestExternalStatus?.event ||
+          externalHistory?.last_delivery_status || externalHistory?.status || externalHistory?.status_name ||
+          externalHistory?.data?.status || "";
+        if (mapNcmStatus(String(externalStatus)) !== "cancelled") {
+          throw new Error("NCM has not confirmed cancellation of shipment #" + order.ncm_order_id +
+            ". No replacement was created. Confirm cancellation in NCM, then Sync the shipment status and retry.");
+        }
+        // Archive the cancelled external shipment before the new package is created.
         await archiveCancelledNcmShipment(order);
       }
 
@@ -505,10 +538,16 @@ Deno.serve(async (req) => {
         });
         if (action === "cancel_order") {
           const updated = await updateOrder(order.id, {
-            ncm_status: "Cancelled",
+            ncm_status: "Cancellation Requested",
             ncm_last_sync_at: new Date().toISOString(),
           }, SERVICE_ROLE_KEY);
-          return json({ response, order: updated, cancellation_confirmed: true });
+          return json({
+            response,
+            order: updated,
+            cancellation_requested: true,
+            cancellation_confirmed: false,
+            message: "Cancellation request sent to NCM. The shipment remains active until NCM confirms cancellation. Sync the NCM status before creating a replacement shipment."
+          });
         }
         return json({ response });
       }
