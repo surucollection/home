@@ -7,7 +7,7 @@ export default function ProductCard({product,image,variants=[],priority=false}){
   const cardImage=imageUrl(image?.image_url||"",480);
   const[loadedVariants,setLoadedVariants]=useState(variants);
   const[variantLoading,setVariantLoading]=useState(false);
-  const[added,setAdded]=useState(false),[open,setOpen]=useState(false),[buyNow,setBuyNow]=useState(false),[size,setSize]=useState(""),[colour,setColour]=useState(""),[qty,setQty]=useState(1);
+  const[added,setAdded]=useState(false),[open,setOpen]=useState(false),[buyNow,setBuyNow]=useState(false),[size,setSize]=useState(""),[colour,setColour]=useState(displayColour||""),[qty,setQty]=useState(1);
   const activeVariants=loadedVariants;
   const sizes=useMemo(()=>[...new Set(activeVariants.map(v=>v.size).filter(Boolean))],[activeVariants]);
   const colours=useMemo(()=>[...new Set(activeVariants.map(v=>v.color).filter(Boolean))],[activeVariants]);
