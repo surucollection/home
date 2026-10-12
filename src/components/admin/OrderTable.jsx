@@ -48,7 +48,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
     return()=>{active=false};
   },[rows,compact,onNcmAction,ncmCancelled]);
 
-  const isNcmCancelled=o=>ncmCancelled[o.id]===String(o.ncm_order_id)||/^(cancelled|canceled)$/i.test(String(o.ncm_status||"").trim());
+  const isNcmCancelled=o=>ncmCancelled[o.id]===String(o.ncm_order_id)||/(cancelled|canceled)/i.test(String(o.ncm_status||"").trim());
   const codAdvancePaid=o=>String(o.payment_method||"").toLowerCase()==="cod"&&Number(o.cod_advance_required||0)>0&&Number(o.cod_advance_paid||0)>=Number(o.cod_advance_required||0);
   const manualPaymentDue=o=>Math.max(0,Number(o.total||0)-(String(o.payment_method||"").toLowerCase()==="cod"?Number(o.cod_advance_paid||0):0));
   const allowedOrderStatuses=o=>{
