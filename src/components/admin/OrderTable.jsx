@@ -20,7 +20,10 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
   const [fonepayLoading,setFonepayLoading]=useState(false);
   const [fonepayError,setFonepayError]=useState("");
   const [ncmCancelled,setNcmCancelled]=useState({});
+  const [returnWindowClock,setReturnWindowClock]=useState(Date.now());
   const ncmCommentChecks=useRef({});
+
+  useEffect(()=>{const timer=setInterval(()=>setReturnWindowClock(Date.now()),60000);return()=>clearInterval(timer)},[]);
 
   useEffect(()=>{
     let active=true;
@@ -56,6 +59,12 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
   const isNcmCancelled=o=>ncmCancelled[o.id]===String(o.ncm_order_id)||/(cancelled|canceled)/i.test(String(o.ncm_status||"").trim());
   const codAdvancePaid=o=>String(o.payment_method||"").toLowerCase()==="cod"&&Number(o.cod_advance_required||0)>0&&Number(o.cod_advance_paid||0)>=Number(o.cod_advance_required||0);
   const manualPaymentDue=o=>Math.max(0,Number(o.total||0)-(String(o.payment_method||"").toLowerCase()==="cod"?Number(o.cod_advance_paid||0):0));
+  const canReturnOrder=o=>{
+    if(String(o?.order_status||"").toLowerCase()!=="delivered")return false;
+    const deliveredAt=o?.delivered_at?new Date(o.delivered_at).getTime():NaN;
+    // Hide the return action if the delivery timestamp is missing or the 48-hour window has elapsed.
+    return Number.isFinite(deliveredAt)&&deliveredAt>0&&returnWindowClock<deliveredAt+48*60*60*1000;
+  };
   const allowedOrderStatuses=o=>{
     const current=String(o.order_status||"").toLowerCase();
     if(current==="delivered")return ["delivered"];
@@ -245,7 +254,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
                     {o.cancellation_status==="requested"&&<div className="cancellation-review"><small>Cancellation request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>}
                     {o.cancellation_status==="rejected"&&<small>Cancellation request rejected</small>}
                     {String(o.order_status||"").toLowerCase()==="delivered"
-                      ?<button className="secondary" disabled={!!busy} onClick={()=>requestOrderReturn(o)}>{busy===o.id+":return"?"Saving…":"Return Order"}</button>
+                      ?canReturnOrder(o)&&<button className="secondary" disabled={!!busy} onClick={()=>requestOrderReturn(o)}>{busy===o.id+":return"?"Saving…":"Return Order"}</button>
                       :!["cancelled","returned"].includes(String(o.order_status||"").toLowerCase())&&<button className="danger" disabled={!!busy} onClick={()=>{const reason=prompt("Reason for cancelling order #"+(o.order_number||o.id)+":","");if(reason===null)return;if(!reason.trim()){alert("Please enter a reason for cancelling the order.");return}onStatus(o.id,"cancelled",reason.trim())}}>Cancel Order</button>}
                   </div>:o.order_status||"—"}</td>
                 <td className="order-date-cell"><span className="order-date-day">{new Date(o.created_at).toLocaleDateString()}</span><span className="order-date-time">{new Date(o.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</span></td>
