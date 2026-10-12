@@ -188,10 +188,10 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
   return (
     <>
       <div className="table-wrap">
-        <table className="admin-orders-table" style={{width:"100%",minWidth:compact?"650px":"925px",tableLayout:"fixed"}}>
+        <table className="admin-orders-table" style={{width:"100%",minWidth:compact?"620px":"790px",tableLayout:"fixed"}}>
           <colgroup>
-            <col style={{width:"125px"}}/><col style={{width:"125px"}}/><col style={{width:"75px"}}/><col style={{width:"115px"}}/><col style={{width:"100px"}}/>
-            {!compact&&<><col style={{width:"115px"}}/><col style={{width:"235px"}}/></>}
+            <col style={{width:"95px"}}/><col style={{width:"105px"}}/><col style={{width:"65px"}}/><col style={{width:"90px"}}/><col style={{width:"75px"}}/>
+            {!compact&&<><col style={{width:"85px"}}/><col style={{width:"210px"}}/></>}
           </colgroup>
           <thead>
             <tr>
