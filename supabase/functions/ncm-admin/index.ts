@@ -190,6 +190,36 @@ async function updateOrder(orderId: string, patch: Record<string, unknown>, _bea
   return rows?.[0] || null;
 }
 
+async function archiveCancelledNcmShipment(order: Record<string, any>) {
+  const ncmOrderId = Number(order.ncm_order_id);
+  if (!order.ncm_order_id || !Number.isFinite(ncmOrderId)) return;
+
+  const record = {
+    order_id: order.id,
+    order_number: String(order.order_number || order.id),
+    ncm_order_id: ncmOrderId,
+    tracking_id: order.ncm_tracking_id || null,
+    ncm_status: String(order.ncm_status || "Cancelled"),
+    delivery_charge: order.ncm_delivery_charge ?? null,
+    delivery_type: order.ncm_delivery_type || null,
+    source_branch: order.ncm_source_branch || null,
+    destination_branch: order.ncm_destination_branch || null,
+    ncm_created_at: order.ncm_created_at || null,
+    ncm_last_sync_at: order.ncm_last_sync_at || null,
+    ncm_response: order.ncm_response || null,
+    archived_at: new Date().toISOString(),
+  };
+
+  const r = await supabase("ncm_shipment_history?on_conflict=order_id,ncm_order_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(record),
+  }, SERVICE_ROLE_KEY);
+  if (!r.ok) {
+    throw new Error("Could not archive cancelled NCM shipment: " + (await r.text()).slice(0, 500));
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -319,7 +349,16 @@ Deno.serve(async (req) => {
       const userToken = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
       if (!userToken) throw new Error("Unauthorized");
       const order = await getOrder(body.order_id, userToken);
-      if (order.ncm_order_id) return json({ error: "NCM shipment already exists", order }, 409);
+      const hasPreviousNcmShipment = !!order.ncm_order_id;
+      const previousNcmCancelled = /^(cancelled|canceled)$/i.test(String(order.ncm_status || "").trim());
+      if (hasPreviousNcmShipment && !previousNcmCancelled) {
+        return json({ error: "NCM shipment already exists", order }, 409);
+      }
+      if (hasPreviousNcmShipment && previousNcmCancelled) {
+        // Keep the cancelled external shipment for audit, then allow the replacement
+        // package to be built from the latest order_items below.
+        await archiveCancelledNcmShipment(order);
+      }
 
       const sourceBranch = String(body.source_branch || "").trim();
       const destinationBranch = String(body.destination_branch || "").trim();
