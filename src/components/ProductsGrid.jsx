@@ -6,7 +6,7 @@ const PAGE_SIZE=24;
 
 export default function ProductsGrid({limit,category,featured=false}){
   const[p,setP]=useState([]),[loadedCount,setLoadedCount]=useState(0),[err,setErr]=useState(""),[loading,setLoading]=useState(true),[loadingMore,setLoadingMore]=useState(false),[hasMore,setHasMore]=useState(true);
-  const requestId=useRef(0);
+  const requestId=useRef(0),loadedCountRef=useRef(0);
 
   const load=useCallback(async(reset=false)=>{
     const id=++requestId.current;
@@ -43,7 +43,9 @@ export default function ProductsGrid({limit,category,featured=false}){
         });
       });
       setP(prev=>reset?expanded:[...prev,...expanded]);
-      const newLoadedCount=reset?next.length:loadedCountRef.current+next.length;\n      loadedCountRef.current=newLoadedCount;\n      setLoadedCount(newLoadedCount);
+      const newLoadedCount=reset?next.length:loadedCountRef.current+next.length;
+      loadedCountRef.current=newLoadedCount;
+      setLoadedCount(newLoadedCount);
       setHasMore(next.length===pageSize);
     }catch(e){
       if(id===requestId.current)setErr(e.message||"Unable to load products.");
