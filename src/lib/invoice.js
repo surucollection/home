@@ -13,7 +13,7 @@ export function openInvoice(order,targetWindow=null,allowCancelled=false,custome
   const customerFooter=customerView?'<div class="note electronic-note">This invoice is electronically generated and downloaded from Suru Collection. No physical signature is required for this electronically issued copy.</div>':`<div class="signature">${esc(d.seller_signature||"Authorized Signature")}<br><span>Seller</span></div><div class="note">This invoice was generated from the Suru Collection order record. Please retain this invoice for your records.</div>`;
   const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(d.invoice_number||"Invoice")}</title><style>
   *{box-sizing:border-box}body{margin:0;background:#f5f2ef;color:#211915;font-family:Arial,Helvetica,sans-serif}.sheet{width:min(900px,100%);margin:24px auto;background:#fff;padding:42px;box-shadow:0 8px 35px rgba(0,0,0,.08)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #211915;padding-bottom:22px;margin-bottom:24px}.brand .logo{display:block;width:190px;height:auto;max-height:90px;object-fit:contain;object-position:left center;margin-bottom:8px}.brand h1{margin:0 0 8px;font-size:28px}.brand p,.meta p{margin:3px 0;color:#5e534d;font-size:13px}.meta{text-align:right}.meta h2{margin:0 0 10px;font-size:22px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:26px}.box h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px;color:#7a6c64}.box p{margin:4px 0;font-size:14px;line-height:1.45}.box strong{font-size:15px}.items{width:100%;border-collapse:collapse;margin-top:12px}.items th,.items td{padding:11px 9px;border-bottom:1px solid #e4ddd8;text-align:left;font-size:13px;vertical-align:top}.items th{background:#f7f3f0;font-size:12px;text-transform:uppercase}.items td:nth-child(1),.items th:nth-child(1),.items td:nth-child(3),.items th:nth-child(3){text-align:center}.items td:nth-child(4),.items th:nth-child(4),.items td:nth-child(5),.items th:nth-child(5){text-align:right}.items small{display:block;color:#746861;margin-top:4px}.totals{margin:22px 0 0 auto;width:min(360px,100%)}.total-row{display:flex;justify-content:space-between;padding:7px 0;font-size:14px}.grand{border-top:2px solid #211915;margin-top:7px;padding-top:11px;font-size:17px;font-weight:700}.note{margin-top:34px;padding-top:18px;border-top:1px solid #e4ddd8;color:#6c6059;font-size:12px}.electronic-note{text-align:center;margin-top:30px}.signature{margin-top:42px;text-align:right;font-size:13px}.actions{width:min(900px,100%);margin:0 auto 18px;display:flex;justify-content:flex-end;gap:10px}.actions button{border:0;border-radius:8px;padding:10px 16px;cursor:pointer;background:#211915;color:#fff;font-weight:600}.actions button.secondary{background:#fff;color:#211915;border:1px solid #d8cec7}@media print{body{background:#fff}.sheet{margin:0;width:100%;padding:18px;box-shadow:none}.actions{display:none}}@media(max-width:650px){.sheet{padding:22px}.grid{grid-template-columns:1fr}header{display:block}.meta{text-align:left;margin-top:18px}.items{font-size:11px}.items th,.items td{padding:8px 5px}}
-  </style></head><body><div class="actions"><button class="secondary" onclick="window.close()">Close</button><button onclick="window.print()">Print / Save PDF</button></div><main class="sheet">
+  </style></head><body><div class="actions"><button id="invoice-close" class="secondary" type="button">Close</button><button id="invoice-print" type="button">Print / Save PDF</button></div><main class="sheet">
   <header><div class="brand"><img class="logo" src="${LOGO_URL}" alt="Suru Collection logo" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/surucollection/home/main/assets/suru-logo-official.png';"><h1>${esc(seller.name||"Suru Collection")}</h1><p>${esc(seller.address||"")}</p><p>${seller.phone?esc(String(seller.phone).startsWith("+977")?seller.phone:"+977 "+seller.phone):""}${seller.email?" · "+esc(seller.email):""}</p><p><strong>Seller PAN:</strong> ${esc(seller.pan||"Not configured")}</p></div><div class="meta"><h2>${vatRegistered?"TAX INVOICE":"PAN BILL / INVOICE"}</h2><p><strong>Invoice No:</strong> ${esc(d.invoice_number)}</p><p><strong>Transaction Date:</strong> ${esc(new Date(d.transaction_date).toLocaleDateString())}</p><p><strong>Invoice Issue Date:</strong> ${esc(new Date(d.invoice_issue_date).toLocaleDateString())}</p></div></header>
   <div class="grid"><div class="box"><h3>Bill To</h3><p><strong>${esc(buyer.name||"Customer")}</strong></p><p>${esc(buyer.address||"")}</p><p>${esc([buyer.city,buyer.district,buyer.province,buyer.postal_code].filter(Boolean).join(", "))}</p><p>${esc(buyer.phone||"")}${buyer.email?" · "+esc(buyer.email):""}</p>${buyer.pan?`<p><strong>Buyer PAN:</strong> ${esc(buyer.pan)}</p>`:""}</div><div class="box"><h3>Payment</h3><p><strong>Method:</strong> ${esc(d.payment_method||"—")}</p><p><strong>Status:</strong> ${esc(d.payment_status||"—")}</p></div></div>
   <table class="items"><thead><tr><th>S.N.</th><th>Details</th><th>Qty</th><th>Per Unit</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
@@ -25,6 +25,22 @@ export function openInvoice(order,targetWindow=null,allowCancelled=false,custome
   w.document.open();
   w.document.write(html);
   w.document.close();
+  try{
+    const closeButton=w.document.getElementById("invoice-close");
+    const printButton=w.document.getElementById("invoice-print");
+    closeButton?.addEventListener("click",()=>{
+      try{w.close()}catch{}
+      if(!w.closed){
+        try{w.location.href="about:blank"}catch{}
+      }
+    });
+    printButton?.addEventListener("click",()=>{
+      try{w.focus()}catch{}
+      try{w.print()}catch(e){
+        try{alert("Printing is unavailable in this browser. Use the browser Share or Print option to save this invoice as PDF.")}catch{}
+      }
+    });
+  }catch(e){console.warn("Invoice actions could not be initialized",e)}
 }
 export function openCustomerInvoice(order,targetWindow=null){
   return openInvoice(order,targetWindow,false,true);
