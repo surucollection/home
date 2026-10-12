@@ -5,13 +5,13 @@ import ProductCard from "./ProductCard.jsx";
 const PAGE_SIZE=24;
 
 export default function ProductsGrid({limit,category,featured=false}){
-  const[p,setP]=useState([]),[err,setErr]=useState(""),[loading,setLoading]=useState(true),[loadingMore,setLoadingMore]=useState(false),[hasMore,setHasMore]=useState(true);
+  const[p,setP]=useState([]),[loadedCount,setLoadedCount]=useState(0),[err,setErr]=useState(""),[loading,setLoading]=useState(true),[loadingMore,setLoadingMore]=useState(false),[hasMore,setHasMore]=useState(true);
   const requestId=useRef(0);
 
   const load=useCallback(async(reset=false)=>{
     const id=++requestId.current;
     const pageSize=limit?Math.max(1,Math.min(Number(limit)||1,PAGE_SIZE)):PAGE_SIZE;
-    const offset=reset?0:p.length;
+    const offset=reset?0:loadedCount;
     if(reset)setLoading(true);else setLoadingMore(true);
     setErr("");
     try{
@@ -43,15 +43,16 @@ export default function ProductsGrid({limit,category,featured=false}){
         });
       });
       setP(prev=>reset?expanded:[...prev,...expanded]);
+      setLoadedCount(prev=>reset?next.length:prev+next.length);
       setHasMore(next.length===pageSize);
     }catch(e){
       if(id===requestId.current)setErr(e.message||"Unable to load products.");
     }finally{
       if(id===requestId.current){setLoading(false);setLoadingMore(false);}
     }
-  },[category,featured,p.length]);
+  },[category,featured,loadedCount]);
 
-  useEffect(()=>{setP([]);setHasMore(true);load(true)},[category,featured]);
+  useEffect(()=>{setP([]);setLoadedCount(0);setHasMore(true);load(true)},[category,featured]);
 
   if(loading&&!p.length)return <div className="product-loading">Loading products…</div>;
   if(err&&!p.length)return <div className="product-loading">{err}</div>;
