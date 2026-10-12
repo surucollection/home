@@ -1359,3 +1359,21 @@
   .admin-page .admin-edit-order-current strong{text-align:left}
   .admin-page .admin-edit-order-footer>*{flex:1}
 }
+
+
+/* Admin Orders: preserve the requested four horizontal action rows, including on phones */
+.order-actions-cell{min-width:540px!important;width:540px!important;vertical-align:top}
+.order-action-rows{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;width:100%!important;min-width:540px!important}
+.order-action-row{display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:nowrap!important;gap:8px!important;width:100%!important;min-width:0!important}
+.order-action-row>button{flex:0 0 auto!important;white-space:nowrap!important;min-height:38px;padding:8px 13px!important}
+.order-action-row-invoice>button{flex:1 1 0!important;min-width:0!important}
+.order-action-row-payment{flex-wrap:nowrap!important;overflow:visible}
+.order-action-row-payment>button{flex:0 0 auto!important}
+.order-action-row-payment .order-payment-status{white-space:normal;overflow-wrap:anywhere}
+.order-action-row-select{width:100%!important}
+.order-action-row-select .ncm-action-select{display:block;width:100%!important;min-width:0!important;box-sizing:border-box}
+@media(max-width:700px){
+  .order-actions-cell{min-width:540px!important;width:540px!important;max-width:none!important}
+  .order-action-rows{min-width:540px!important}
+  .order-action-row{flex-wrap:nowrap!important}
+}
