@@ -80,9 +80,13 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     setError("");
     if(!statusEditable){setError(blockedMessage);return}
     if(!changedItems.length){setError("Choose a different size or colour before saving.");return}
+    if(changedItems.length>1){setError("For safety, change one order item per save. Save this change, then reopen the order to edit another item.");return}
     const invalid=changedItems.find(item=>{
-      const chosen=(variantsByItem[item.id]||[]).find(v=>v.id===drafts[item.id]);
-      return !chosen||item.is_preorder||Number(chosen.stock||0)<Number(item.quantity||0);
+      const variants=variantsByItem[item.id]||[];
+      const chosen=variants.find(v=>v.id===drafts[item.id]);
+      const oldVariant=variants.find(v=>norm(v.size)===norm(item.size)&&norm(v.color)===norm(item.color))
+        ||variants.find(v=>norm(v.size)===norm(item.size)&&!String(v.color||"").trim());
+      return !chosen||item.is_preorder||(oldVariant?.id!==chosen.id&&Number(chosen.stock||0)<Number(item.quantity||0));
     });
     if(invalid){
       setError(invalid.is_preorder
@@ -139,7 +143,8 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
       </div>}
 
       {blockedMessage&&<div className="message error" role="alert">{blockedMessage}</div>}
-      {loading?<div className="product-loading">Loading order items and available options…</div>:!items.length?<div className="message error">No items were found for this order.</div>:<form className="admin-form" onSubmit={submit}>
+      {loading?<div className="product-loading">Loading order items and available options…</div>:error&&!items.length?<div className="message error" role="alert">{error}</div>:!items.length?<div className="message error">No items were found for this order.</div>:<form className="admin-form" onSubmit={submit}>
+        {changedItems.length>1&&<div className="message">For safety, save one item change at a time. After saving, reopen this order to edit another item.</div>}
         <div className="admin-edit-order-items">
           {items.map(item=>{
             const variants=variantsByItem[item.id]||[];
@@ -160,9 +165,10 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
                   <select value={drafts[item.id]||""} onChange={e=>setDrafts(prev=>({...prev,[item.id]:e.target.value}))} disabled={!statusEditable||saving} required>
                     <option value="" disabled>Select an option</option>
                     {variants.map(v=>{
-                      const isCurrent=v.size===item.size&&v.color===item.color;
+                      const oldVariant=variants.find(x=>norm(x.size)===norm(item.size)&&norm(x.color)===norm(item.color))
+                        ||variants.find(x=>norm(x.size)===norm(item.size)&&!String(x.color||"").trim());
                       const available=Number(v.stock||0);
-                      const blocked=!isCurrent&&available<Number(item.quantity||0);
+                      const blocked=oldVariant?.id!==v.id&&available<Number(item.quantity||0);
                       return <option key={v.id} value={v.id} disabled={blocked}>{optionLabel(v)}{blocked?" — Not enough stock":""}</option>;
                     })}
                   </select>
@@ -178,12 +184,11 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
         {error&&<div className="message error" role="alert">{error}</div>}
         <div className="admin-edit-order-footer">
           <button className="secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button>
-          <button className="primary" type="submit" disabled={saving||loading||!statusEditable||!changedItems.length||!reason.trim()}>
+          <button className="primary" type="submit" disabled={saving||loading||!statusEditable||changedItems.length!==1||!reason.trim()}>
             {saving?"Saving…":"Save Order Changes"}
           </button>
         </div>
       </form>}
-      {error&&loading&&<div className="message error" role="alert">{error}</div>}
     </section>
   </div>;
 }
