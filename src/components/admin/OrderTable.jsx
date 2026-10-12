@@ -116,7 +116,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       const data=await onNcmAction(o,action,payload);
       const value=data?.ncm||data?.history||data?.comments||data?.response||data;
       if(["details","status_history","comments"].includes(action))openResult(action,value,o);
-      else setResultModal({action,value:{message:"Action completed successfully."},order:o});
+      else setResultModal({action,value:{message:action==="cancel_order"?(data?.message||"Cancellation requested. Sync the NCM status after cancellation is confirmed."): "Action completed successfully."},order:o});
     }catch(e){
       setResultModal({action:"error",value:{message:e?.message||"Request failed."},order:o});
     }finally{
