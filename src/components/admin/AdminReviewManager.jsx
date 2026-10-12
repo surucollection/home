@@ -10,6 +10,8 @@ export default function AdminReviewManager({open,onClose}){
   const [loading,setLoading]=useState(true);
   const [busyId,setBusyId]=useState("");
   const [message,setMessage]=useState("");
+  const [photos,setPhotos]=useState([]);
+  const [photoBusy,setPhotoBusy]=useState("");
 
   const loadReviews=useCallback(async()=>{
     setLoading(true);setMessage("");
@@ -22,6 +24,9 @@ export default function AdminReviewManager({open,onClose}){
       if(productError)throw productError;
       const byId=Object.fromEntries((products||[]).map(p=>[p.id,p]));
       setReviews((rows||[]).map(r=>({...r,product:byId[r.product_id]||null})));
+      const {data:photoRows,error:photoError}=await supabase.from("product_review_photos").select("id,review_id,approval_status,sort_order,created_at").order("created_at",{ascending:false}).limit(1000);
+      if(photoError)throw photoError;
+      setPhotos(photoRows||[]);
     }catch(e){setMessage("Unable to load reviews: "+(e?.message||"Please try again."))}
     finally{setLoading(false)}
   },[]);
@@ -79,6 +84,14 @@ export default function AdminReviewManager({open,onClose}){
             {review.title&&<h4 style={{margin:"8px 0"}}>{review.title}</h4>}
             <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{review.review_text}</p>
             <small className="form-note">{review.is_approved?"Approved and public":"Pending approval"}</small>
+            {photos.some(photo=>photo.review_id===review.id)&&<div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:12}}><strong style={{width:"100%"}}>Customer photos</strong>{photos.filter(photo=>photo.review_id===review.id).map(photo=><div key={photo.id} style={{border:"1px solid var(--border,#ddd)",borderRadius:8,padding:8,minWidth:130}}>
+              <img src={"https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=image&id="+photo.id} alt="Customer review" style={{width:100,height:100,objectFit:"cover",borderRadius:6}}/>
+              <div><small>{photo.approval_status==="approved"?"Approved":photo.approval_status==="rejected"?"Rejected":"Pending"}</small></div>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:6}}>
+                {photo.approval_status!=="approved"&&<button type="button" className="primary" disabled={!!photoBusy} onClick={async()=>{setPhotoBusy(photo.id);try{const {data:{session}}=await supabase.auth.getSession();const response=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=moderate",{method:"POST",headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session?.access_token,"Content-Type":"application/json"},body:JSON.stringify({photo_id:photo.id,approval_status:"approved"})});const result=await response.json();if(!response.ok)throw new Error(result.message);setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,approval_status:"approved"}:p));}catch(e){setMessage("Unable to approve photo: "+(e.message||"Try again."));}finally{setPhotoBusy("");}}}>Approve photo</button>}
+                {photo.approval_status!=="rejected"&&<button type="button" className="secondary" disabled={!!photoBusy} onClick={async()=>{setPhotoBusy(photo.id);try{const {data:{session}}=await supabase.auth.getSession();const response=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=moderate",{method:"POST",headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session?.access_token,"Content-Type":"application/json"},body:JSON.stringify({photo_id:photo.id,approval_status:"rejected"})});const result=await response.json();if(!response.ok)throw new Error(result.message);setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,approval_status:"rejected"}:p));}catch(e){setMessage("Unable to reject photo: "+(e.message||"Try again."));}finally{setPhotoBusy("");}}}>Reject photo</button>}
+              </div>
+            </div>)}</div>}
           </div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>
             {!review.is_approved?<button type="button" className="primary" disabled={busyId===review.id} onClick={()=>void setApproval(review,true)}>{busyId===review.id?"Saving…":"Approve"}</button>:<button type="button" className="secondary" disabled={busyId===review.id} onClick={()=>void setApproval(review,false)}>{busyId===review.id?"Saving…":"Unapprove"}</button>}
