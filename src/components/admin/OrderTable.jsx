@@ -55,8 +55,8 @@ export default function OrderTable({rows,onStatus,onNcm,onNcmRate,onNcmSync,onCa
     if(current==="cancelled")return ["cancelled"];
     // Admin-created orders are managed manually; website COD advance rules must not
     // prevent staff from confirming or processing an unpaid order they created.
-    const adminCreated=["admin","admin_created","manual","manual_admin"].includes(String(o.order_source||"").toLowerCase())
-      || o.created_by_admin===true;
+    const source=String(o.order_source||"").toLowerCase();
+    const adminCreated=(!!source&&source!=="website")||o.created_by_admin===true;
     return (adminCreated||codAdvancePaid(o)||o.payment_status==="paid"||o.delivery_method==="self_delivery")
       ?["pending","confirmed","processing","packed","shipped","delivered","cancelled"]
       :["pending","cancelled"];
