@@ -1501,3 +1501,8 @@
  .admin-create-order-payment-qr-result>img{width:110px}
  .admin-create-order-payment-qr-actions button{flex:1 1 auto}
 }
+
+
+/* Prevent the mobile order-status selector from touching the Date column. */
+.admin-orders-table td:nth-child(4) select{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;padding:5px 2px!important;font-size:10px!important;}
+@media(max-width:700px){.admin-orders-table td:nth-child(4) select{font-size:9px!important;padding:4px 1px!important;}}
