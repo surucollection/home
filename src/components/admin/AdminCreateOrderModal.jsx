@@ -598,7 +598,7 @@ Thank you for ordering from Suru Collection.`;
           {["cod","fonepay"].includes(String(created.payment_method||paymentMethod).toLowerCase())&&<section className="admin-create-order-payment-qr">
             <h4>Fonepay payment</h4>
             <p>{String(created.payment_method||paymentMethod).toLowerCase()==="cod"?"Generate a QR for the COD delivery advance. The customer scans it using their bank app; the remaining order balance is payable on delivery.":"Generate a QR for the full order amount. The customer scans it using their bank app to pay."}</p>
-            {!paymentQr&&<button type="button" className="primary" onClick={generatePaymentQr} disabled={qrLoading}>{qrLoading?"Generating QR…":"Generate Fonepay QR"}</button>}
+            {!paymentQr&&{(String(created.payment_method||paymentMethod).toLowerCase()!=="cod"||Number(created.advance_required||0)>Number(created.amount_paid||0))&&<button type="button" className="primary" onClick={generatePaymentQr} disabled={qrLoading}>{qrLoading?"Generating QR…":"Generate Fonepay QR"}</button>}{String(created.payment_method||paymentMethod).toLowerCase()==="cod"&&Number(created.advance_required||0)<=Number(created.amount_paid||0)&&<p>No additional advance is required. The remaining payable amount includes the NCM delivery charge.</p>}}
             {paymentQr&&<div className="admin-create-order-payment-qr-result">
               <img src={paymentQr.qrImage} alt="Fonepay payment QR" />
               <div><b>Amount: {money(paymentQr.amount||0)}</b><small>Reference: {paymentQr.reference||"—"}</small><small>Customer: scan this QR in their banking app that supports Fonepay.</small></div>
