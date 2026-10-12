@@ -55,6 +55,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [paymentReference,setPaymentReference]=useState("");
   const [balanceMethod,setBalanceMethod]=useState("cod");
   const [couponCode,setCouponCode]=useState("");
+  const [manualDiscount,setManualDiscount]=useState("0");
   const [customerNote,setCustomerNote]=useState("");
   const [branches,setBranches]=useState([]);
   const [branchManual,setBranchManual]=useState(false);
@@ -144,6 +145,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     setNcmAdvance(null);
     setNcmRateLoading(false);
     setCouponCode("");
+    setManualDiscount("0");
     setCustomerNote("");
     setBranchManual(false);
     setLoading(true);
@@ -310,7 +312,8 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     if(!l.isPreorder)return sum;
     return sum+Math.round(lineTotal(l)*0.05);
   },0),[lines,activeProducts]);
-  const estimatedTotal=Math.max(0,subtotal-estimatedPreorderDiscount);
+  const effectiveManualDiscount=Math.min(Math.max(0,Number(manualDiscount)||0),Math.max(0,subtotal-estimatedPreorderDiscount));
+  const estimatedTotal=Math.max(0,subtotal-estimatedPreorderDiscount-effectiveManualDiscount);
   const ncmDestinationBranch=cleanText(addressDraft.ncm_destination_branch);
   const effectiveCodAdvance=codAdvanceOverride!==""?Math.max(0,Number(codAdvanceOverride)||0):Number(ncmAdvance||0);
   const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"?Number(ncmAdvance||0):0);
@@ -477,7 +480,8 @@ Thank you for ordering from Suru Collection.`;
         province:canonicalProvince(addressDraft.province),
         postal_code:cleanText(addressDraft.postal_code)||null,
         ncm_destination_branch:cleanText(addressDraft.ncm_destination_branch)||null,
-        cod_advance_override:paymentMethod==="cod"?effectiveCodAdvance:null
+        cod_advance_override:paymentMethod==="cod"?effectiveCodAdvance:null,
+        manual_discount_amount:effectiveManualDiscount
       };
       const args={
         p_customer_id:mode==="existing"?selectedCustomer.id:null,
@@ -690,10 +694,12 @@ Thank you for ordering from Suru Collection.`;
                 <div className="admin-create-order-grid admin-create-order-grid-2">
                   <label>Payment Reference<input value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} placeholder="Fonepay ref / receipt note (optional)"/></label>
                   <label>Coupon Code<input value={couponCode} onChange={e=>setCouponCode(e.target.value)} placeholder="Optional"/></label>
+                  <label>Extra Discount Amount<input type="number" min="0" step="0.01" value={manualDiscount} onChange={e=>setManualDiscount(e.target.value)} placeholder="Any amount"/></label>
                 </div>
                 <div className="admin-create-order-summary">
                   <div><span>Subtotal</span><b>{money(subtotal)}</b></div>
                   <div><span>Pre-order discount</span><b>− {money(estimatedPreorderDiscount)}</b></div>
+                  <div><span>Extra discount</span><b>− {money(effectiveManualDiscount)}</b></div>
                   {paymentMethod==="cod"&&<div className="admin-create-order-cod-advance"><label htmlFor="admin-cod-advance">Advance required before delivery</label><input id="admin-cod-advance" type="number" min="0" step="1" value={codAdvanceOverride} onChange={e=>setCodAdvanceOverride(e.target.value)} disabled={ncmRateLoading||ncmAdvance===null} /><small>{ncmRateLoading?"Calculating destination rate…":ncmAdvance!==null?`Actual NCM delivery charge: ${money(ncmAdvance)}. Enter 0 for no advance, or any amount to collect before shipment.`:"Select an NCM destination to load the delivery charge."}</small></div>}
                   <div><span>Actual NCM delivery charge</span><b>{paymentMethod==="cod"?(ncmRateLoading?"Calculating…":ncmAdvance!==null?money(ncmAdvance):"Select destination"):"—"}</b></div><div className="grand"><span>Total including delivery</span><b>{money(totalIncludingDelivery)}</b></div><div><span>Amount paid now</span><b>{money(Math.max(0,Number(amountPaid||0)))}</b></div><div className="grand"><span>Remaining payable on delivery</span><b>{money(balanceAfterPaid)}</b></div>
                   {paymentMethod==="cod"&&<small>{ncmAdvance!==null?`NCM delivery charge for ${ncmDestinationBranch} is included in the total even when advance required is 0. Any amount already paid is deducted from the total payable on delivery.`:"Select an NCM destination branch to calculate the delivery charge before creating the order."}</small>}
