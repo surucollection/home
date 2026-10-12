@@ -40,7 +40,7 @@ export default function AdminSettingsTab({
 
     <div className="card admin-settings-card">
       <div className="page-title">
-        <div><h3>Tracking Link</h3><p>Set the URL opened inside the tracking popup on the admin and customer order pages.</p></div>
+        <div><h3>Tracking Link</h3><p>Set the URL used by the tracking popup. If the portal cannot load inside the popup, customers and staff can open it directly.</p></div>
         <button className="primary" type="button" onClick={()=>document.getElementById("ncm-tracking-settings-form")?.requestSubmit()}>Save Tracking Link</button>
       </div>
       <form id="ncm-tracking-settings-form" className="admin-form" onSubmit={saveNcmTrackingUrl}>
