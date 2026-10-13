@@ -507,6 +507,10 @@ Thank you for ordering from Suru Collection.`;
       const {data,error:e}=await supabase.rpc("admin_create_order",args);
       if(e)throw e;
       if(!data?.success)throw Error("Order creation returned no success response.");
+      if(data.order_id){
+        const {error:discountSaveError}=await supabase.from("orders").update({manual_discount_amount:effectiveManualDiscount}).eq("id",data.order_id);
+        if(discountSaveError)throw Error("Order was created, but its extra discount record could not be saved: "+discountSaveError.message);
+      }
       const result={...data,confirmation:buildConfirmation(data)};
       setCreated(result);
       await onCreated?.(data);
