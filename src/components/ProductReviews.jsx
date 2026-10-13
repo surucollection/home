@@ -67,7 +67,14 @@ export default function ProductReviews({product}){
     if(reviews.length||myReview)void loadPhotos();return()=>{active=false};
   },[reviews,myReview,user]);
 
-  useEffect(()=>{\n    if(!lightboxPhoto)return;\n    const onKeyDown=event=>{if(event.key==="Escape")setLightboxPhoto(null);};\n    window.addEventListener("keydown",onKeyDown);\n    return()=>window.removeEventListener("keydown",onKeyDown);\n  },[lightboxPhoto]);\n\n  const ownReview=myReview;
+  useEffect(()=>{
+    if(!lightboxPhoto)return;
+    const onKeyDown=event=>{if(event.key==="Escape")setLightboxPhoto(null);};
+    window.addEventListener("keydown",onKeyDown);
+    return()=>window.removeEventListener("keydown",onKeyDown);
+  },[lightboxPhoto]);
+
+  const ownReview=myReview;
   const average=useMemo(()=>reviews.length?reviews.reduce((total,review)=>total+Number(review.rating||0),0)/reviews.length:0,[reviews]);
   const returnUrl=encodeURIComponent(location.pathname+location.search);
 
