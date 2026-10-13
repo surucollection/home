@@ -250,7 +250,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
               <tr key={o.id}>
                 <td><b>{o.order_number}</b>{o.order_source&&o.order_source!=="website"&&<small style={{display:"block",marginTop:3,fontWeight:700}}>Source: {prettyLabel(o.order_source)}</small>}</td>
                 <td className="order-customer-cell"><span>{o.customer_name}</span><small>{o.customer_phone}</small></td>
-                <td className="order-total-cell"><span>{money(o.total)}</span>{o.payment_method==="cod"&&<small>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(o.cod_balance_due??o.total??0)}</small>}</td>
+                <td className="order-total-cell"><span>{money(o.total)}</span>{Number(o.manual_payment_amount||0)>0&&<small style={{display:"block",whiteSpace:"normal",overflowWrap:"anywhere"}}>Received: {money(o.manual_payment_amount)}<br/>Balance: {money(Math.max(0,Number(o.total||0)-(String(o.payment_method||"").toLowerCase()==="cod"?Number(o.cod_advance_paid||0):0)-Number(o.manual_payment_amount||0)))}</small>}{o.payment_method==="cod"&&<small>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(o.cod_balance_due??o.total??0)}</small>}</td>
                 <td>
                   {onStatus?<div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
                     <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{allowedOrderStatuses(o).map(s=><option key={s} value={s}>{s}</option>)}</select>
@@ -286,9 +286,8 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
                         {o.delivery_method==="self_delivery"&&<><small className="order-payment-status">Delivered directly{o.delivered_at?" · "+new Date(o.delivered_at).toLocaleDateString():""}</small>{o.delivery_note&&<small>Note: {o.delivery_note}</small>}</>}
                         {o.returned_at&&<small className="order-payment-status order-payment-status-warning">Returned · {new Date(o.returned_at).toLocaleDateString()}</small>}
                         {o.return_reason&&<small>Return reason: {o.return_reason}</small>}
-                        {o.manual_payment_reference&&<small>Payment ref: {o.manual_payment_reference}</small>}
-                      
                       </div>
+                      {(Number(o.manual_payment_amount||0)>0||o.manual_payment_reference||o.manual_payment_note)&&<div className="order-payment-details" style={{display:"block",width:"100%",boxSizing:"border-box",marginTop:8,padding:"9px 10px",border:"1px solid var(--line,#eadbd5)",borderRadius:8,background:"var(--surface,#fffaf8)",fontSize:12,lineHeight:1.5,whiteSpace:"normal",overflowWrap:"anywhere",wordBreak:"break-word"}}>{Number(o.manual_payment_amount||0)>0&&<div><strong>Manually received:</strong> {money(o.manual_payment_amount)}</div>}{o.manual_payment_reference&&<div><strong>Payment ref:</strong> {o.manual_payment_reference}</div>}{o.manual_payment_note&&<div><strong>Note:</strong> {o.manual_payment_note}</div>}</div>}
                       <div className="order-action-row order-action-row-edit">{onEditOrder&&["pending","confirmed","processing","packed","shipped"].includes(String(o.order_status||"").toLowerCase())&&<button className="secondary" disabled={!!busy} onClick={()=>setEditingOrder(o)}>Edit Order / Size</button>}</div>
                     </div>
                   </td>             </>}
