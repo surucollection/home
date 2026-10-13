@@ -88,6 +88,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     event.preventDefault();
     setError("");
     if(!statusEditable){setError(blockedMessage);return}
+    if(!reason.trim()||reason.trim().length<3){setError("Please enter a reason for the change (at least 3 characters).");return}
     if(!changedItems.length&&!discountChanged){setError("Change the size/colour or enter an extra discount before saving.");return}
     if(changedItems.length>1){setError("For safety, change one order item per save. Save this change, then reopen the order to edit another item.");return}
     const invalid=changedItems.find(item=>{
@@ -211,7 +212,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
         {error&&<div className="message error" role="alert">{error}</div>}
         <div className="admin-edit-order-footer">
           <button className="secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button>
-          <button className="primary" type="submit" disabled={saving||loading||!statusEditable||changedItems.length>1||(!changedItems.length&&!discountChanged)||!reason.trim()}>
+          <button className="primary" type="submit" disabled={saving||loading}>
             {saving?"Saving…":"Save Order Changes"}
           </button>
         </div>
