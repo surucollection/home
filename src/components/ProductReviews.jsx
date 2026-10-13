@@ -6,6 +6,7 @@ const starsFor = value => "★".repeat(value)+"☆".repeat(5-value);
 export default function ProductReviews({product}){
   const [reviews,setReviews]=useState([]);
   const [myReview,setMyReview]=useState(null);
+  const [isEditing,setIsEditing]=useState(false);
   const [user,setUser]=useState(null);
   const [displayName,setDisplayName]=useState("");
   const [rating,setRating]=useState(5);
@@ -45,11 +46,6 @@ export default function ProductReviews({product}){
         const ownReview=rows.find(review=>review.user_id===signedInUser.id)||null;
         setMyReview(ownReview);
         setDisplayName(ownReview?.display_name||name||signedInUser.email?.split("@")[0]||"Customer");
-        if(ownReview){
-          setRating(Number(ownReview.rating)||5);
-          setTitle(ownReview.title||"");
-          setReviewText(ownReview.review_text||"");
-        }
       }
     })().catch(e=>{if(active)setError(e?.message||"Unable to load customer reviews.")}).finally(()=>{if(active)setLoading(false)});
     return()=>{active=false};
@@ -114,6 +110,7 @@ export default function ProductReviews({product}){
       setSelectedPhotos([]);
       const photoResponse=await fetch("https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/review-photo?action=list&review_id="+encodeURIComponent(data.id),{headers:{apikey:"sb_publishable_IUD5XQOsqHtrGCj3BJ5jpA_EjSPTUrC",Authorization:"Bearer "+session.access_token}});
       const photoData=await photoResponse.json();setOwnPhotos(photoData.photos||[]);
+      setIsEditing(false);
       setNotice(ownReview?"Your review was updated and sent for approval again. New photos need approval too.":"Thank you! Your review has been submitted and will appear after approval.");
     }catch(e){
       setError(e?.message||"Unable to save your review. Please try again.");
@@ -145,7 +142,7 @@ export default function ProductReviews({product}){
       <aside className="product-review-form-card">
         <h3>{ownReview?"Edit your review":"Write a review"}</h3>
         <p className="product-review-form-intro">{ownReview?(ownReview.is_approved?"Editing your review will send it for approval again.":"Your review is awaiting approval. You can still edit it."):"Tried this product? Share your thoughts with other shoppers."}</p>
-        {!user?<div className="product-review-signin"><p>Sign in to leave a review.</p><a className="buy-button" href={"/login.html?return="+returnUrl}>Sign in to review</a></div>:<form onSubmit={submitReview}>
+        {!user?<div className="product-review-signin"><p>Sign in to leave a review.</p><a className="buy-button" href={"/login.html?return="+returnUrl}>Sign in to review</a></div>:ownReview&&!isEditing?<div className="product-review-signin"><p>You have already reviewed this product.</p><p>Your saved review: {starsFor(Number(ownReview.rating)||0)}{ownReview.title?" — "+ownReview.title:""}</p><button type="button" className="buy-button" onClick={()=>{setRating(Number(ownReview.rating)||5);setTitle(ownReview.title||"");setReviewText(ownReview.review_text||"");setDisplayName(ownReview.display_name||displayName);setError("");setNotice("");setIsEditing(true);}}>Edit review</button></div>:<form onSubmit={submitReview}>
           <label className="product-review-field-label">Your rating</label>
           <div className="product-review-rating-picker" role="group" aria-label="Choose a rating from one to five stars">
             {[1,2,3,4,5].map(value=><button key={value} type="button" className={value<=rating?"selected":""} aria-label={value+" star"+(value===1?"":"s")} aria-pressed={rating===value} onClick={()=>setRating(value)}>★</button>)}
