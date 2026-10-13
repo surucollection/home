@@ -14,6 +14,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
   const [variantsByItem,setVariantsByItem]=useState({});
   const [drafts,setDrafts]=useState({});
   const [reason,setReason]=useState("");
+  const [extraDiscount,setExtraDiscount]=useState(String(order?.manual_discount_amount??0));
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState("");
@@ -25,6 +26,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     setVariantsByItem({});
     setDrafts({});
     setReason("");
+    setExtraDiscount(String(order?.manual_discount_amount??0));
     setError("");
     setLoading(true);
     (async()=>{
@@ -58,6 +60,11 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     return()=>{active=false};
   },[order?.id]);
 
+  const discountBase=Math.max(0,Number(order?.subtotal||0)-Math.max(0,Number(order?.discount||0)-Number(order?.manual_discount_amount||0)));
+  const effectiveExtraDiscount=Math.min(Math.max(0,Number(extraDiscount)||0),discountBase);
+  const previewTotal=Math.max(0,Number(order?.subtotal||0)-Math.max(0,Number(order?.discount||0)-Number(order?.manual_discount_amount||0))-effectiveExtraDiscount)+Math.max(0,Number(order?.shipping_fee||0));
+  const discountChanged=Math.round(effectiveExtraDiscount)!==Math.round(Number(order?.manual_discount_amount||0));
+
   const changedItems=useMemo(()=>items.filter(item=>{
     const selected=(variantsByItem[item.id]||[]).find(v=>v.id===drafts[item.id]);
     return selected&&(selected.size!==item.size||selected.color!==item.color);
@@ -81,7 +88,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     event.preventDefault();
     setError("");
     if(!statusEditable){setError(blockedMessage);return}
-    if(!changedItems.length){setError("Choose a different size or colour before saving.");return}
+    if(!changedItems.length&&!discountChanged){setError("Change the size/colour or enter an extra discount before saving.");return}
     if(changedItems.length>1){setError("For safety, change one order item per save. Save this change, then reopen the order to edit another item.");return}
     const invalid=changedItems.find(item=>{
       const variants=variantsByItem[item.id]||[];
@@ -99,7 +106,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     if(activeNcm&&!window.confirm(
       "An NCM shipment already exists for this order. Saving will update the order and its active invoice, but will NOT modify or cancel the existing NCM shipment. NCM may continue to show the original package details.\n\nTo send NCM the new size, cancel the current NCM shipment first and create a replacement after saving. Continue without changing the shipment?"
     ))return;
-    if(!window.confirm("Save the selected size/colour change(s) for order "+order.order_number+"? Stock and the active invoice item details will be updated. Payment history and the order number will be preserved."))return;
+    if(!window.confirm("Save the order changes for "+order.order_number+"? The selected size/colour and/or extra discount will be saved, and the active invoice totals will be updated. Payment history and the order number will be preserved."))return;
 
     setSaving(true);
     try{
@@ -110,6 +117,14 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
           newVariantId:drafts[item.id],
           reason:reason.trim()
         });
+      }
+      if(discountChanged){
+        const {error:discountError}=await supabase.rpc("admin_update_order_extra_discount",{
+          p_order_id:order.id,
+          p_manual_discount_amount:effectiveExtraDiscount,
+          p_reason:reason.trim()
+        });
+        if(discountError)throw discountError;
       }
       onClose();
     }catch(e){
@@ -136,7 +151,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
       </div>}
       {invoiceActive?<div className="admin-edit-order-notice" role="note">
         <strong>Invoice {order.invoice_number} will be updated in place.</strong>
-        <p>The invoice number and issue date stay the same; only the item size/colour details are refreshed. Order totals and payment records are not changed.</p>
+        <p>The invoice number and issue date stay the same. Saved size/colour details and any extra discount will update the invoice totals; payment history remains unchanged.</p>
       </div>:invoiceCancelled?<div className="admin-edit-order-notice warning" role="note">
         <strong>The current invoice is cancelled.</strong>
         <p>Its archived copy will remain unchanged. This edit will not reactivate or rewrite a cancelled invoice.</p>
@@ -181,13 +196,22 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
             </article>;
           })}
         </div>
+        <section className="admin-edit-order-notice">
+          <strong>Order price summary</strong>
+          <p>Current subtotal: {money(order.subtotal)} · Current discount: {money(order.discount)} · Delivery: {money(order.shipping_fee)}</p>
+          <label className="field">Extra Discount Amount
+            <input type="number" min="0" step="1" value={extraDiscount} onChange={e=>setExtraDiscount(e.target.value)} disabled={!statusEditable||saving}/>
+          </label>
+          <p>Extra discount applied: − {money(effectiveExtraDiscount)}</p>
+          <p><strong>New order total: {money(previewTotal)}</strong></p>
+        </section>
         <label className="field">Reason for change <span className="optional-label">(required for audit)</span>
           <textarea rows="2" maxLength={500} minLength={3} value={reason} onChange={e=>setReason(e.target.value)} required placeholder="e.g. Customer requested a size exchange"/>
         </label>
         {error&&<div className="message error" role="alert">{error}</div>}
         <div className="admin-edit-order-footer">
           <button className="secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button>
-          <button className="primary" type="submit" disabled={saving||loading||!statusEditable||changedItems.length!==1||!reason.trim()}>
+          <button className="primary" type="submit" disabled={saving||loading||!statusEditable||changedItems.length>1||(!changedItems.length&&!discountChanged)||!reason.trim()}>
             {saving?"Saving…":"Save Order Changes"}
           </button>
         </div>
