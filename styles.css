@@ -6734,3 +6734,28 @@ a {
   line-height: 1 !important;
   cursor: pointer !important;
 }
+
+/* Small product-code badge on every product card image. */
+.product-card .product-image {
+  position: relative;
+}
+.product-card .product-code-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  max-width: calc(100% - 16px);
+  padding: 4px 7px;
+  border: 1px solid rgba(132, 33, 62, .16);
+  border-radius: 5px;
+  background: rgba(255, 250, 247, .94);
+  color: #84213e;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .045em;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
