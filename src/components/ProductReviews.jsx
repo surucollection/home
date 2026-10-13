@@ -18,6 +18,7 @@ export default function ProductReviews({product}){
   const [selectedPhotos,setSelectedPhotos]=useState([]);
   const [ownPhotos,setOwnPhotos]=useState([]);
   const [publicPhotos,setPublicPhotos]=useState({});
+  const [lightboxPhoto,setLightboxPhoto]=useState(null);
 
   useEffect(()=>{
     let active=true;
@@ -66,7 +67,7 @@ export default function ProductReviews({product}){
     if(reviews.length||myReview)void loadPhotos();return()=>{active=false};
   },[reviews,myReview,user]);
 
-  const ownReview=myReview;
+  useEffect(()=>{\n    if(!lightboxPhoto)return;\n    const onKeyDown=event=>{if(event.key==="Escape")setLightboxPhoto(null);};\n    window.addEventListener("keydown",onKeyDown);\n    return()=>window.removeEventListener("keydown",onKeyDown);\n  },[lightboxPhoto]);\n\n  const ownReview=myReview;
   const average=useMemo(()=>reviews.length?reviews.reduce((total,review)=>total+Number(review.rating||0),0)/reviews.length:0,[reviews]);
   const returnUrl=encodeURIComponent(location.pathname+location.search);
 
@@ -129,7 +130,7 @@ export default function ProductReviews({product}){
           <div className="product-review-card-top"><div className="product-review-avatar" aria-hidden="true">{String(review.display_name||"C").trim().charAt(0).toUpperCase()}</div><div className="product-review-author"><strong>{review.display_name}</strong><span>{review.created_at?new Date(review.created_at).toLocaleDateString("en-NP",{year:"numeric",month:"short",day:"numeric"}):""}</span></div><span className="product-review-stars" aria-label={review.rating+" out of 5 stars"}>{starsFor(Number(review.rating)||0)}</span></div>
           {review.title&&<h3 className="product-review-title">{review.title}</h3>}
           <p className="product-review-body">{review.review_text}</p>
-          {(publicPhotos[review.id]||[]).some(photo=>photo.approval_status==="approved")&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>{(publicPhotos[review.id]||[]).filter(photo=>photo.approval_status==="approved").map(photo=><a key={photo.id} href={photo.url} target="_blank" rel="noreferrer"><img src={photo.url} alt="Customer review photo" loading="lazy" style={{width:92,height:92,objectFit:"cover",borderRadius:8}}/></a>)}</div>}
+          {(publicPhotos[review.id]||[]).some(photo=>photo.approval_status==="approved")&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>{(publicPhotos[review.id]||[]).filter(photo=>photo.approval_status==="approved").map(photo=><button key={photo.id} type="button" onClick={()=>setLightboxPhoto(photo)} aria-label="View customer review photo" style={{padding:0,border:0,background:"none",cursor:"zoom-in",borderRadius:8,lineHeight:0}}><img src={photo.url} alt="Customer review photo" loading="lazy" style={{width:92,height:92,objectFit:"cover",borderRadius:8}}/></button>)}</div>}
           {review.user_id===user?.id&&<span className="product-review-own-label">Your review</span>}
         </article>)}
       </div>
@@ -160,5 +161,6 @@ export default function ProductReviews({product}){
         <p className="product-review-note">One review per account for each product. New reviews and edits must be approved by Suru Collection before they appear publicly.</p>
       </aside>
     </div>
+    {lightboxPhoto&&<div role="dialog" aria-modal="true" aria-label="Customer review photo gallery" onClick={()=>setLightboxPhoto(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}><button type="button" onClick={()=>setLightboxPhoto(null)} aria-label="Close photo gallery" style={{position:"absolute",top:16,right:16,border:0,borderRadius:999,width:44,height:44,fontSize:28,color:"#111",background:"#fff",cursor:"pointer"}}>×</button><img src={lightboxPhoto.url} alt="Customer review photo enlarged" onClick={event=>event.stopPropagation()} style={{display:"block",maxWidth:"min(100%,1000px)",maxHeight:"85vh",objectFit:"contain",borderRadius:8}}/></div>}
   </section>;
 }
