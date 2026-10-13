@@ -63,11 +63,11 @@ export default function ProductCard({product,image,variants=[],displayColour="",
       {product.category&&<div className="product-category">{product.category}</div>}
       {displayColour&&<div className="product-category product-listing-colour">Colour: {displayColour}</div>}
       <h3><a href={href}>{product.name}</a></h3>
-      <div className="product-price">{money(product.price)}{product.compare_at_price&&<span className="compare-price">{money(product.compare_at_price)}</span>}</div>
-      <div className="product-card-actions">
+      <div className="product-price">{Number(product.price)>0? <>{money(product.price)}{product.compare_at_price&&<span className="compare-price">{money(product.compare_at_price)}</span>}</> : <span>Price on request</span>}</div>
+      {Number(product.price)>0&&<div className="product-card-actions">
         <button type="button" className="secondary-button" onClick={startAdd}>{added?"Added ✓":"Add to Cart"}</button>
         <button type="button" className="buy-now-button" onClick={startBuyNow}>Buy Now</button>
-      </div>
+      </div>}
     </div>
     {open&&<div className="variant-modal-backdrop" onClick={()=>setOpen(false)}>
       <div className="variant-modal" onClick={e=>e.stopPropagation()}>
