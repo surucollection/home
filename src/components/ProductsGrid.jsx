@@ -4,7 +4,7 @@ import ProductCard from "./ProductCard.jsx";
 
 const PAGE_SIZE=24;
 
-export default function ProductsGrid({limit,category,featured=false}){
+export default function ProductsGrid({limit,category,featured=false,excludeFeatured=false}){
   const[p,setP]=useState([]),[loadedCount,setLoadedCount]=useState(0),[err,setErr]=useState(""),[loading,setLoading]=useState(true),[loadingMore,setLoadingMore]=useState(false),[hasMore,setHasMore]=useState(true);
   const requestId=useRef(0),loadedCountRef=useRef(0);
 
@@ -25,6 +25,7 @@ export default function ProductsGrid({limit,category,featured=false}){
       };
       if(category)params.category="eq."+category;
       if(featured)params.is_featured="eq.true";
+      else if(excludeFeatured)params.is_featured="not.is.true";
       const rows=await get("products",params);
       if(id!==requestId.current)return;
       const next=rows||[];
