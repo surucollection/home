@@ -98,10 +98,11 @@ function Admin(){
        p_order_id:o.id,
        p_method:payment.method,
        p_reference:payment.reference||null,
-       p_note:payment.note||null
+       p_note:payment.note||null,
+       p_amount:payment.amount
      });
      if(error)throw error;
-     setNcmSyncMessage("Payment recorded for order "+(data?.order_number||o.order_number)+".");
+     setNcmSyncMessage("Payment of NPR "+Number(payment.amount||0).toLocaleString("en-IN",{minimumFractionDigits:2})+" recorded for order "+(data?.order_number||o.order_number)+(data?.payment_status==="paid"?". Order fully paid.":". Partial payment saved; outstanding balance remains due."));
      await loadOrders();
      return true;
    }catch(e){
