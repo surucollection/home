@@ -6673,3 +6673,64 @@ a {
   .checkout-page .address-selector-panel .saved-address-card{padding:10px}
   .checkout-page .address-selector-panel .saved-address-actions .btn{min-height:32px}
 }
+
+/* Product image viewer: keep the clicked image in a fixed mobile overlay. */
+.product-page .product-gallery-lightbox {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: max(56px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom)) !important;
+  box-sizing: border-box !important;
+  background: rgba(18, 12, 20, .96) !important;
+  overflow: hidden !important;
+}
+.product-page .product-gallery-lightbox-stage {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.product-page .product-gallery-lightbox-stage img {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  margin: auto !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+.product-page .product-gallery-close {
+  position: absolute !important;
+  top: max(12px, env(safe-area-inset-top)) !important;
+  right: max(12px, env(safe-area-inset-right)) !important;
+  z-index: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255,255,255,.45) !important;
+  border-radius: 50% !important;
+  background: rgba(0,0,0,.5) !important;
+  color: #fff !important;
+  font-size: 30px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
