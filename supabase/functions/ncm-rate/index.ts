@@ -7,7 +7,7 @@ const NCM_TOKEN = Deno.env.get("NCM_TOKEN") || "";
 
 const ORIGIN_BRANCH = "GAUR";
 const DELIVERY_TYPE = "Pickup/Collect";
-const DOOR_PICKUP_CHARGE = 15;
+const DOOR_PICKUP_CHARGE = 0;
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const NCM_RATE_BASES = [
   "https://nepalcanmove.com",
@@ -221,7 +221,7 @@ Deno.serve(async (req: Request) => {
 
     const rate = await getRate(destination);
     const ncmCharge = Number(rate.ncm_charge);
-    const doorPickup = Number(rate.door_pickup_charge || DOOR_PICKUP_CHARGE);
+    const doorPickup = 0; // Always use the exact rate returned by NCM; no extra NPR 15 fee.
 
     return json({
       ok: true,
@@ -230,7 +230,7 @@ Deno.serve(async (req: Request) => {
       deliveryType: DELIVERY_TYPE,
       ncmDeliveryCharge: ncmCharge,
       doorPickupCharge: doorPickup,
-      advanceDeliveryCharge: Math.round((ncmCharge + doorPickup) * 100) / 100,
+      advanceDeliveryCharge: Math.round(ncmCharge * 100) / 100,
       fetchedAt: rate.fetched_at,
       expiresAt: rate.expires_at,
     });
