@@ -383,7 +383,7 @@ Deno.serve(async (req) => {
         name: String(order.customer_name || "").slice(0, 100),
         phone: customerPhone,
         phone2: "",
-        cod_charge: order.payment_method === "cod" ? String(Number(order.total || 0)) : "0",
+        cod_charge: order.payment_method === "cod" ? String(Math.max(0, Number(order.total || 0) - Number(order.cod_advance_paid || 0) - Number(order.manual_payment_amount || 0))) : "0",
         address: [order.shipping_address, order.city, order.district, order.province, order.postal_code].filter(Boolean).join(", ").slice(0, 500),
         fbranch: sourceBranch,
         branch: destinationBranch,
