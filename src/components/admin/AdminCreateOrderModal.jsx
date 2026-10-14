@@ -542,8 +542,14 @@ Thank you for ordering from Suru Collection.`;
 
   const sharePaymentQr=async()=>{
     if(!paymentQr?.qrImage)return;
-    const amount=money(paymentQr.amount||0);
-    const textMessage=`Suru Collection order #${created?.order_number}\nFonepay amount: ${amount}\nPlease scan the attached QR using your bank's Fonepay payment option. Reference: ${paymentQr.reference||"—"}`;
+    const amountValue=Math.max(0,Number(paymentQr.amount||0));
+    const amount=money(amountValue);
+    const isCodAdvance=paymentQr.purpose==="cod_advance"||String(created?.payment_method||paymentMethod).toLowerCase()==="cod";
+    const remainingValue=Math.max(0,Number(created?.balance_due||0)-amountValue);
+    const paymentOptions="You can pay using any supported payment app, such as eSewa, Khalti, Fonepay, or any bank mobile banking app. Simply scan the attached QR code.";
+    const textMessage=isCodAdvance
+      ? `Suru Collection — Order #${created?.order_number}\n\nPlease pay the delivery charges/advance of NPR ${amount} to confirm your order.\n\n${paymentOptions}\n\nRemaining amount: NPR ${money(remainingValue)} (payable on delivery).\nReference: ${paymentQr.reference||"—"}`
+      : `Suru Collection — Order #${created?.order_number}\n\nPlease pay NPR ${amount} to confirm your order.\n\n${paymentOptions}\nReference: ${paymentQr.reference||"—"}`;
     try{
       const response=await fetch(paymentQr.qrImage);
       const blob=await response.blob();
