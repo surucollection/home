@@ -6,7 +6,8 @@ const money=value=>"NPR "+Number(value||0).toLocaleString("en-IN",{maximumFracti
 const label=value=>String(value||"").replace(/[_-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 
 export default function TrackOrder(){
-  const orderNumber=decodeURIComponent(location.pathname.replace(/^\/track\//,"").replace(/\/+$/,"")).trim();
+  const params=new URLSearchParams(location.search);
+  const orderNumber=(params.get("order")||decodeURIComponent(location.pathname.replace(/^\/track\//,"").replace(/\/+$/,""))).trim();
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[refreshedAt,setRefreshedAt]=useState(null);
   const load=useCallback(async()=>{
     if(!orderNumber){setError("The tracking link is missing its order number.");setLoading(false);return}
