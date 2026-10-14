@@ -178,7 +178,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       const base64=fonepayQr.qrImage.split(",")[1];
       const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
       const file=new File([bytes],`Suru-Fonepay-${fonepayOrder.order_number||"payment"}.png`,{type:"image/png"});
-      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]})){
+      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
         await navigator.share({title:"Suru Collection payment instructions",text:textMessage,files:[file]});
       }else{
         await navigator.clipboard.writeText(textMessage);
