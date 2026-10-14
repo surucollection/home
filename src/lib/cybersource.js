@@ -5,7 +5,7 @@ export const CYBERSOURCE_ENABLED =
 
 const SDK_CACHE = new Map();
 
-export async function createCyberSourceSession(orderId) {
+export async function createCyberSourceSession(orderId, guestCheckoutKey = "") {
   if (!CYBERSOURCE_ENABLED) {
     throw new Error("Card / Payment Gateway is not enabled yet.");
   }
@@ -13,7 +13,7 @@ export async function createCyberSourceSession(orderId) {
   if (!id) throw new Error("Payment order ID is missing.");
 
   const { data, error } = await supabase.functions.invoke("cybersource-session", {
-    body: { orderId: id },
+    body: { orderId: id, guestCheckoutKey: String(guestCheckoutKey || "") },
   });
   if (error) throw error;
   if (data?.error) throw new Error(String(data.error));

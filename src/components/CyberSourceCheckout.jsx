@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from "react";
 import { createCyberSourceSession, loadCyberSourceLibrary } from "../lib/cybersource.js";
 import { supabase } from "../lib/api.js";
 
-function CyberSourceCheckout({orderId,onSuccess,onError}) {
+function CyberSourceCheckout({orderId,guestCheckoutKey="",onSuccess,onError}) {
   const [status,setStatus]=useState("loading");
   const [message,setMessage]=useState("");
   const [attempt,setAttempt]=useState(0);
@@ -24,7 +24,7 @@ function CyberSourceCheckout({orderId,onSuccess,onError}) {
         setStatus("loading");
         setMessage("");
 
-        const session=await createCyberSourceSession(orderId);
+        const session=await createCyberSourceSession(orderId,guestCheckoutKey);
         await loadCyberSourceLibrary(session.clientLibrary,session.clientLibraryIntegrity);
         if(cancelled)return;
         if(!window.VAS?.UnifiedCheckout)throw new Error("CyberSource secure checkout library is unavailable.");
@@ -60,7 +60,7 @@ function CyberSourceCheckout({orderId,onSuccess,onError}) {
 
         setStatus("processing");
         const {data,error}=await supabase.functions.invoke("cybersource-payment",{
-          body:{orderId:String(orderId),transientToken:token}
+          body:{orderId:String(orderId),transientToken:token,guestCheckoutKey:String(guestCheckoutKey||"")}
         });
         if(error)throw error;
         if(data?.error)throw new Error(String(data.error));
@@ -85,7 +85,7 @@ function CyberSourceCheckout({orderId,onSuccess,onError}) {
       try{checkout?.destroy?.()}catch{}
       try{client?.destroy?.()}catch{}
     };
-  },[orderId,attempt]);
+  },[orderId,guestCheckoutKey,attempt]);
 
   return <div className="cybersource-box" style={{marginTop:16,padding:18,border:"1px solid #e6dfd4",borderRadius:14,background:"#fff"}}>
     <div style={{marginBottom:14}}>

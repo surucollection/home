@@ -82,6 +82,7 @@ async function currentUser(req:Request){
   if(error||!data.user)throw new Error("Authentication required");
   return data.user;
 }
+async function optionalCurrentUser(req:Request){try{return await currentUser(req)}catch{return null}}
 async function ownedOrder(userId:string,orderId:string){
   const {data:customer,error:customerError}=await admin.from("customers").select("id").eq("auth_user_id",userId).maybeSingle();
   if(customerError)throw customerError;
@@ -90,6 +91,17 @@ async function ownedOrder(userId:string,orderId:string){
   if(error)throw error;
   if(!order)throw new Error("Order not found or access denied");
   return order;
+}
+async function guestOwnedOrder(orderId:string,guestCheckoutKey:string){
+  if(!/^[0-9a-fA-F-]{16,64}$/.test(guestCheckoutKey))throw new Error("Guest checkout verification failed.");
+  const{data:order,error}=await admin.from("orders").select("id,order_number,total,payment_method,payment_status,order_status,customer_id,checkout_idempotency_key,customer_email").eq("id",orderId).eq("checkout_idempotency_key",guestCheckoutKey).maybeSingle();
+  if(error)throw error;
+  if(!order)throw new Error("Order not found or guest checkout access could not be verified.");
+  const{data:customer,error:customerError}=await admin.from("customers").select("auth_user_id").eq("id",order.customer_id).maybeSingle();
+  if(customerError)throw customerError;
+  if(!customer||customer.auth_user_id!==null)throw new Error("Guest checkout verification failed.");
+  const{checkout_idempotency_key:_guestKey,...safeOrder}=order;
+  return safeOrder;
 }
 async function verifyTransientToken(token:string){
   const decoded=decodeJwt(token);
@@ -133,14 +145,14 @@ Deno.serve(async(req)=>{
   try{
     if(req.method!=="POST")return json({error:"Method not allowed"},405);
     if(!ENABLED)return json({error:"CyberSource online card payment is not enabled yet."},503);
-    const user=await currentUser(req);
     const body=await req.json().catch(()=>({}));
+    const user=await optionalCurrentUser(req);
     const orderId=String(body?.orderId||"").trim();
     const token=String(body?.transientToken||"").trim();
     if(!orderId)return json({error:"orderId is required"},400);
     if(!token)return json({error:"transientToken is required"},400);
-
-    const order=await ownedOrder(user.id,orderId);
+    const guestCheckoutKey=String(body?.guestCheckoutKey||"");
+    const order=user?await ownedOrder(user.id,orderId):await guestOwnedOrder(orderId,guestCheckoutKey);
     if(String(order.payment_method)!=="online")return json({error:"This order is not configured for online card payment."},400);
     if(String(order.payment_status)==="paid"){
       const {data:existing}=await admin.from("payments").select("transaction_id,gateway_reference,amount").eq("order_id",order.id).eq("gateway","cybersource").eq("status","paid").limit(1).maybeSingle();
