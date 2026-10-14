@@ -28,11 +28,12 @@ Deno.serve(async(req)=>{
   try{
     const url=new URL(req.url);
     const orderNumber=String(url.searchParams.get("order_number")||"").trim();
+    const suppliedToken=String(url.searchParams.get("token")||"").trim();
     if(!/^SC-[A-Za-z0-9-]{6,48}$/i.test(orderNumber))return json({error:"Invalid order number or tracking link."},400);
-    const orderResponse=await db("orders?order_number=eq."+encodeURIComponent(orderNumber)+"&select=id,order_number,created_at,total,order_status,payment_status,payment_method,ncm_order_id,ncm_tracking_id,ncm_status,ncm_last_sync_at&limit=1");
+    const orderResponse=await db("orders?order_number=eq."+encodeURIComponent(orderNumber)+"&select=id,order_number,public_tracking_token,created_at,total,order_status,payment_status,payment_method,ncm_order_id,ncm_tracking_id,ncm_status,ncm_last_sync_at&limit=1");
     if(!orderResponse.ok)throw new Error("Unable to load order");
     const orders=await orderResponse.json();
-    if(!orders.length)return json({error:"We couldn't find an order with that number. Please check the tracking link."},404);
+    if(!orders.length||!suppliedToken||suppliedToken.length<24||orders[0].public_tracking_token!==suppliedToken)return json({error:"This tracking link is invalid. Please request a fresh tracking link from Suru Collection."},404);
     const order=orders[0];
     const itemResponse=await db("order_items?order_id=eq."+encodeURIComponent(order.id)+"&select=product_name,product_code,size,color,quantity");
     const items=itemResponse.ok?await itemResponse.json():[];
