@@ -6759,3 +6759,92 @@ a {
   overflow-wrap: anywhere;
   pointer-events: none;
 }
+
+
+/* Guest checkout login prompt and post-order actions */
+.checkout-page .checkout-login-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 7px;
+  margin: 14px 0 20px;
+  padding: 13px 15px;
+  border: 1px solid #eadbd2;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffaf6, #f8eee8);
+  color: #6f5c58;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.checkout-page .checkout-login-prompt a {
+  display: inline;
+  color: #7b2932;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.checkout-page .checkout-login-prompt a:hover {
+  color: #5e2025;
+}
+.checkout-page .order-success-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 11px;
+  width: min(390px, 100%);
+  margin: 24px auto 0;
+}
+.checkout-page .order-success-actions > a {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 999px;
+  text-align: center;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.checkout-page .order-success-actions > a.hero-btn {
+  border: 1px solid var(--maroon, #7b2932);
+  background: var(--maroon, #7b2932);
+  color: #fff;
+  text-decoration: none;
+}
+.checkout-page .order-success-actions > a.hero-btn:hover {
+  background: var(--maroon-dark, #5e2025);
+}
+.checkout-page .order-success-actions > a.text-button {
+  border: 1px solid #e4d3ca;
+  background: #fffaf6;
+  color: #7b2932;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.checkout-page .order-success-actions > a.text-button:hover {
+  border-color: #c9aa99;
+  background: #f8eee8;
+}
+@media (max-width: 600px) {
+  .checkout-page .checkout-login-prompt {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+  }
+  .checkout-page .order-success-actions {
+    width: 100%;
+    gap: 10px;
+  }
+  .checkout-page .order-success-actions > a {
+    min-height: 46px;
+    padding: 12px 14px;
+  }
+}
