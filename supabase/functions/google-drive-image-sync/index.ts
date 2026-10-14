@@ -108,7 +108,7 @@ Deno.serve(async req=>{
             return byName!==0?byName:String(a.id||"").localeCompare(String(b.id||""));
           });
 
-        const existing=await sb.from("product_images").select("id,image_url,sort_order,is_main").eq("product_id",product.id);
+        const existing=await sb.from("product_images").select("id,image_url,alt_text,sort_order,is_main").eq("product_id",product.id);
         if(existing.error)throw existing.error;
 
         const rows=existing.data||[];
