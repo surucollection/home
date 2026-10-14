@@ -19,6 +19,7 @@ export default function ProductCard({product,image,variants=[],displayColour="",
   useEffect(()=>{if(sizes.length===1)setSize(sizes[0]);if(colours.length===1)setColour(colours[0])},[sizes,colours]);
   const selectedOutOfStock=activeVariants.length>0&&(!variant||Number(variant.stock||0)<=0);
   const preorderAvailable=Boolean(product.preorder_enabled);
+  const cardNeedsPreorder=preorderAvailable&&activeVariants.length>0&&activeVariants.every(v=>Number(v.stock||0)<=0);
   const openPicker=async wantBuyNow=>{
     setBuyNow(wantBuyNow);setQty(1);setOpen(true);
     if(loadedVariants.length||variantLoading)return;
@@ -66,8 +67,8 @@ export default function ProductCard({product,image,variants=[],displayColour="",
       <h3><a href={href}>{product.name}</a></h3>
       <div className="product-price">{Number(product.price)>0? <>{money(product.price)}{product.compare_at_price&&<span className="compare-price">{money(product.compare_at_price)}</span>}</> : <span>Price on request</span>}</div>
       {Number(product.price)>0&&<div className="product-card-actions">
-        <button type="button" className="secondary-button" onClick={startAdd}>{added?"Added ✓":"Add to Cart"}</button>
-        <button type="button" className="buy-now-button" onClick={startBuyNow}>Buy Now</button>
+        <button type="button" className="secondary-button" onClick={cardNeedsPreorder?e=>{e.preventDefault();e.stopPropagation();window.location.href="/product.html?code="+encodeURIComponent(product.product_code)+(displayColour?"&color="+encodeURIComponent(displayColour):"")+"&preorder=1":startAdd}>{cardNeedsPreorder?"Pre-order":added?"Added ✓":"Add to Cart"}</button>
+        {!cardNeedsPreorder&&<button type="button" className="buy-now-button" onClick={startBuyNow}>Buy Now</button>}
       </div>}
     </div>
     {open&&<div className="variant-modal-backdrop" onClick={()=>setOpen(false)}>
