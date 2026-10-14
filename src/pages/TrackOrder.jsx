@@ -44,6 +44,7 @@ export default function TrackOrder(){
             <div style={{fontSize:22,fontWeight:800}}>{label(data.order_status)||"Order received"}</div>
             <div style={{fontSize:13,color:"#6f625b",marginTop:5}}>Payment: {label(data.payment_status)||"Pending"}{data.payment_method?" · "+label(data.payment_method):""}</div>
           </div>
+          {data.customer_phone_masked&&<div style={{marginTop:20,padding:16,border:"1px solid #eee4de",borderRadius:10}}><h2 style={{fontSize:16,margin:"0 0 8px"}}>Customer mobile number</h2><p style={{margin:0,lineHeight:1.6}}>{data.customer_phone_masked}</p></div>}
           {fullAddress(data)&&<div style={{marginTop:20,padding:16,border:"1px solid #eee4de",borderRadius:10}}><h2 style={{fontSize:16,margin:"0 0 8px"}}>Delivery address</h2><p style={{margin:0,lineHeight:1.6,whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{fullAddress(data)}</p></div>}
           <div style={{marginTop:24}}>
             <h2 style={{fontSize:18,margin:"0 0 12px"}}>Items ordered</h2>
