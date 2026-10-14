@@ -42,6 +42,15 @@ function copyRuntimeFiles() {
 
       copy(path.join(root, "styles.css"), path.join(out, "styles.css"));
       copy(path.join(root, "assets"), path.join(out, "assets"));
+
+      // GitHub Pages has no rewrite rules for /track/{order-number}; serve the built app via its 404 fallback.
+      const builtIndex = path.join(out, "index.html");
+      if (fs.existsSync(builtIndex)) {
+        const fallback = fs.readFileSync(builtIndex, "utf8")
+          .replaceAll('="./assets/', '="/assets/')
+          .replaceAll("='./assets/", "='/assets/");
+        fs.writeFileSync(path.join(out, "404.html"), fallback);
+      }
     }
   };
 }
