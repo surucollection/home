@@ -37,6 +37,7 @@ export default function TrackOrder(){
             <div style={{fontSize:22,fontWeight:800}}>{label(data.order_status)||"Order received"}</div>
             <div style={{fontSize:13,color:"#6f625b",marginTop:5}}>Payment: {label(data.payment_status)||"Pending"}{data.payment_method?" · "+label(data.payment_method):""}</div>
           </div>
+          {data.shipping_address&&<div style={{marginTop:20,padding:16,border:"1px solid #eee4de",borderRadius:10}}><h2 style={{fontSize:16,margin:"0 0 8px"}}>Delivery address</h2><p style={{margin:0,lineHeight:1.6,whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{data.shipping_address}</p></div>}
           <div style={{marginTop:24}}>
             <h2 style={{fontSize:18,margin:"0 0 12px"}}>Items ordered</h2>
             {data.items?.length?<div style={{border:"1px solid #eee4de",borderRadius:10,overflow:"hidden"}}>{data.items.map((item,index)=><div key={index} style={{display:"flex",justifyContent:"space-between",gap:16,padding:"13px 14px",borderBottom:index===data.items.length-1?"0":"1px solid #eee4de"}}><div><strong>{item.product_name||"Item"}</strong><div style={{fontSize:13,color:"#786960",marginTop:4}}>{[item.product_code,item.size,item.color].filter(Boolean).join(" · ")}{item.quantity?" · Qty "+item.quantity:""}</div></div></div>)}</div>:<p style={{color:"#6f625b"}}>Item details are not available for this order.</p>}
