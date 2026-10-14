@@ -7,10 +7,13 @@ const label=value=>String(value||"").replace(/[_-]+/g," ").replace(/\b\w/g,c=>c.
 
 export default function TrackOrder(){
   const params=new URLSearchParams(location.search);
-  const orderNumber=(params.get("order")||decodeURIComponent(location.pathname.replace(/^\/track\//,"").replace(/\/+$/,""))).trim();
-  const [data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[refreshedAt,setRefreshedAt]=useState(null);
+  const trackPath=location.pathname.replace(/\/+$/,"");
+  const pathOrder=trackPath.startsWith("/track/")?decodeURIComponent(trackPath.slice("/track/".length)):"";
+  const orderNumber=(params.get("order")||pathOrder).trim();
+  const [orderInput,setOrderInput]=useState(orderNumber);
+  const [data,setData]=useState(null),[loading,setLoading]=useState(!!orderNumber),[error,setError]=useState(""),[refreshedAt,setRefreshedAt]=useState(null);
   const load=useCallback(async()=>{
-    if(!orderNumber){setError("The tracking link is missing its order number.");setLoading(false);return}
+    if(!orderNumber){setData(null);setError("");setLoading(false);return}
     setLoading(true);setError("");
     try{
       const response=await fetch(SUPABASE_URL+"/functions/v1/public-order-tracking?order_number="+encodeURIComponent(orderNumber),{headers:{apikey:KEY,Accept:"application/json"}});
@@ -27,8 +30,9 @@ export default function TrackOrder(){
       <section style={{background:"#fff",border:"1px solid #eadfd8",borderRadius:18,padding:"clamp(20px,4vw,34px)",boxShadow:"0 8px 28px rgba(55,36,25,.05)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14,flexWrap:"wrap"}}>
           <div><p style={{margin:"0 0 7px",fontSize:12,letterSpacing:".12em",fontWeight:800,color:"#8b6b5c"}}>SURU COLLECTION</p><h1 style={{fontSize:"clamp(25px,5vw,34px)",margin:"0 0 8px"}}>Track your order</h1><p style={{margin:0,color:"#6f625b"}}>Order number: <strong>{orderNumber||"—"}</strong></p></div>
-          <button type="button" onClick={load} disabled={loading} style={{border:"1px solid #d8c8bd",background:"#fff",borderRadius:9,padding:"10px 14px",fontWeight:700,cursor:loading?"wait":"pointer"}}>{loading?"Refreshing…":"↻ Refresh status"}</button>
+          {orderNumber&&<button type="button" onClick={load} disabled={loading} style={{border:"1px solid #d8c8bd",background:"#fff",borderRadius:9,padding:"10px 14px",fontWeight:700,cursor:loading?"wait":"pointer"}}>{loading?"Refreshing…":"↻ Refresh status"}</button>}
         </div>
+        {!orderNumber&&<form onSubmit={e=>{e.preventDefault();const value=orderInput.trim();if(value)location.href="/track/"+encodeURIComponent(value)}} style={{marginTop:24,display:"grid",gap:12}}><label htmlFor="track-order-number" style={{fontWeight:700}}>Enter your order number</label><input id="track-order-number" value={orderInput} onChange={e=>setOrderInput(e.target.value)} placeholder="e.g. SC-20261014-XXXXX" required style={{width:"100%",boxSizing:"border-box",padding:"14px 12px",border:"1px solid #d8c8bd",borderRadius:9,fontSize:16}}/><button type="submit" style={{border:0,background:"#5e463d",color:"#fff",borderRadius:9,padding:"13px 16px",fontSize:15,fontWeight:800,cursor:"pointer"}}>Track order</button><p style={{margin:0,fontSize:13,color:"#6f625b"}}>You can find your order number in your order confirmation message.</p></form>}
         {loading&&!data&&<p style={{padding:"24px 0",color:"#6f625b"}}>Loading order details and courier status…</p>}
         {error&&<div role="alert" style={{marginTop:22,padding:14,background:"#fff2f0",border:"1px solid #f0c8c2",borderRadius:10,color:"#8d2921"}}>{error}</div>}
         {data&&<>
