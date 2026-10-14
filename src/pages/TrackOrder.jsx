@@ -1,5 +1,7 @@
 import React,{useCallback,useEffect,useState} from "react";
 import { KEY } from "../lib/api.js";
+import Header from "../components/Header.jsx";
+import Footer from "../components/Footer.jsx";
 
 const SUPABASE_URL="https://vkycraymxhkqxgpcpdzw.supabase.co";
 const money=value=>"NPR "+Number(value||0).toLocaleString("en-IN",{maximumFractionDigits:2});
@@ -24,7 +26,7 @@ export default function TrackOrder(){
     finally{setLoading(false)}
   },[orderNumber]);
   useEffect(()=>{load()},[load]);
-  return <main style={{minHeight:"100vh",background:"#f8f5f2",padding:"28px 16px 48px",color:"#28201c",fontFamily:"inherit"}}>
+  return <><Header/><main style={{minHeight:"70vh",background:"#f8f5f2",padding:"28px 16px 48px",color:"#28201c",fontFamily:"inherit"}}>
     <div style={{maxWidth:760,margin:"0 auto"}}>
       <a href="/" style={{display:"inline-block",marginBottom:22,color:"#5e463d",textDecoration:"none",fontWeight:700}}>← Suru Collection</a>
       <section style={{background:"#fff",border:"1px solid #eadfd8",borderRadius:18,padding:"clamp(20px,4vw,34px)",boxShadow:"0 8px 28px rgba(55,36,25,.05)"}}>
@@ -60,5 +62,5 @@ export default function TrackOrder(){
       </section>
       <p style={{textAlign:"center",fontSize:12,color:"#8b7b72",marginTop:18}}>Need help? Contact Suru Collection through the official website.</p>
     </div>
-  </main>
+  </main><Footer/></>
 }
