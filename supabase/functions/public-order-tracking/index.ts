@@ -42,7 +42,7 @@ Deno.serve(async(req)=>{
       let history:any=null;
       for(const base of [NCM_BASE,"https://portal.nepalcanmove.com"]){try{history=await ncm(path,base);break}catch(e){console.warn("NCM tracking endpoint attempt failed",String(e))}}
       if(history){
-        statusHistory=historyList(history).slice().sort((a,b)=>new Date(a.added_time||a.addedTime||a.timestamp||0).getTime()-new Date(b.added_time||b.addedTime||b.timestamp||0).getTime()).slice(-12);
+        statusHistory=historyList(history).slice().sort((a,b)=>new Date(a.added_time||a.addedTime||a.timestamp||0).getTime()-new Date(b.added_time||b.addedTime||b.timestamp||0).getTime()).slice(-12).map((s)=>({status:String(s.status||""),event:String(s.event||""),added_time:s.added_time||s.addedTime||s.timestamp||null}));
         const latest=statusHistory[statusHistory.length-1];
         if(latest?.status||latest?.event)ncmStatus=String(latest.status||latest.event);
       }
