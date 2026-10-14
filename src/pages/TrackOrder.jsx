@@ -29,7 +29,7 @@ export default function TrackOrder(){
   useEffect(()=>{load()},[load]);
   return <><Header/><main style={{minHeight:"70vh",background:"#f8f5f2",padding:"28px 16px 48px",color:"#28201c",fontFamily:"inherit"}}>
     <div style={{maxWidth:760,margin:"0 auto"}}>
-      <a href="/" style={{display:"inline-block",marginBottom:22,color:"#5e463d",textDecoration:"none",fontWeight:700}}>← Suru Collection</a>
+      <button type="button" onClick={()=>{if(window.history.length>1)window.history.back();else location.href="/orders.html"}} style={{display:"inline-block",marginBottom:22,color:"#5e463d",textDecoration:"none",fontWeight:700,background:"transparent",border:0,padding:0,fontSize:16,cursor:"pointer"}}>← Back</button>
       <section style={{background:"#fff",border:"1px solid #eadfd8",borderRadius:18,padding:"clamp(20px,4vw,34px)",boxShadow:"0 8px 28px rgba(55,36,25,.05)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14,flexWrap:"wrap"}}>
           <div><p style={{margin:"0 0 7px",fontSize:12,letterSpacing:".12em",fontWeight:800,color:"#8b6b5c"}}>SURU COLLECTION</p><h1 style={{fontSize:"clamp(25px,5vw,34px)",margin:"0 0 8px"}}>Track your order</h1><p style={{margin:0,color:"#6f625b"}}>Order number: <strong>{orderNumber||"—"}</strong></p></div>
