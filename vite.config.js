@@ -16,7 +16,8 @@ const htmlEntries = [
   "product.html",
   "products.html",
   "policy.html",
-  "register.html"
+  "register.html",
+  "track.html"
 ];
 
 function copyRuntimeFiles() {
