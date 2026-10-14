@@ -17,7 +17,7 @@ import CustomerAddressesPanel from "../components/customer/CustomerAddressesPane
 import { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone } from "../lib/appShared.js";
 
 function Register(){
- const[verifyMethod,setVerifyMethod]=useState("email"),[f,setF]=useState({first_name:"",last_name:"",email:"",password:"",confirm:"",phone:"",address:"",city:"",district:"",province:"",postal_code:""}),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[otp,setOtp]=useState(""),[otpStep,setOtpStep]=useState(false),[registeredPhone,setRegisteredPhone]=useState(""),[pendingUser,setPendingUser]=useState(null);
+ const[verifyMethod,setVerifyMethod]=useState("email"),[f,setF]=useState(()=>{const empty={first_name:"",last_name:"",email:"",password:"",confirm:"",phone:"",address:"",city:"",district:"",province:"",postal_code:""};try{const a=JSON.parse(sessionStorage.getItem("suru-guest-address-draft")||"null");if(!a)return empty;const parts=String(a.name||"").trim().split(/\s+/).filter(Boolean);return{...empty,first_name:parts[0]||"",last_name:parts.slice(1).join(" "),phone:String(a.phone||"").replace(/^\+977/,"").replace(/\D/g,"").slice(-10),address:String(a.address||""),city:String(a.city||""),district:String(a.district||""),province:String(a.province||""),postal_code:String(a.postal_code||"")}}catch{return empty}}),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[otp,setOtp]=useState(""),[otpStep,setOtpStep]=useState(false),[registeredPhone,setRegisteredPhone]=useState(""),[pendingUser,setPendingUser]=useState(null);
  async function googleSignIn(){setBusy(true);setMsg("Redirecting to Google account creation…");const{error}=await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+"/login/?return=%2Faccount%2F"}});if(error){setMsg(error.message||"Google sign-up could not be started.");setBusy(false)}}
  const change=e=>{const{name,value}=e.target;if(name==="province")setF({...f,province:value,district:"",city:""});else if(name==="district")setF({...f,district:value,city:""});else if(name==="phone")setF({...f,phone:value.replace(/\D/g,"").slice(0,10)});else setF({...f,[name]:value});};
  async function createAccount(e){
@@ -55,6 +55,7 @@ function Register(){
    if(profileError){setMsg(profileError.message);setBusy(false);return}
    if(customerId){const{error:addressError}=await supabase.rpc("save_customer_address",{p_address_id:null,p_label:"Home",p_full_name:(f.first_name.trim()+" "+f.last_name.trim()).trim(),p_phone:registeredPhone,p_address:f.address.trim(),p_city:f.city.trim(),p_district:f.district.trim(),p_province:canonicalProvince(f.province),p_postal_code:f.postal_code.trim()||null,p_is_default:true});if(addressError)console.warn("Registration address could not be saved separately:",addressError)}
    setMsg((verifyMethod==="mobile"?"Mobile number":"Email address")+" verified. Your account is ready.");
+   try{sessionStorage.removeItem("suru-guest-address-draft")}catch{}
    await offerPasskeyPrompt(user.id);location.href="account/";
  }
  async function resendOtp(){
