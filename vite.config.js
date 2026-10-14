@@ -57,7 +57,7 @@ function copyRuntimeFiles() {
 }
 
 export default defineConfig({
-  base: "./",
+  base: "/",
   plugins: [react(), copyRuntimeFiles()],
   build: {
     sourcemap: false,
