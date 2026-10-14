@@ -7,12 +7,13 @@ const label=value=>String(value||"").replace(/[_-]+/g," ").replace(/\b\w/g,c=>c.
 
 export default function TrackOrder(){
   const orderNumber=decodeURIComponent(location.pathname.replace(/^\/track\//,"").replace(/\/+$/,"")).trim();
+  const trackingToken=new URLSearchParams(location.hash.replace(/^#/,"")).get("token")||"";
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[refreshedAt,setRefreshedAt]=useState(null);
   const load=useCallback(async()=>{
     if(!orderNumber){setError("The tracking link is missing its order number.");setLoading(false);return}
     setLoading(true);setError("");
     try{
-      const response=await fetch(SUPABASE_URL+"/functions/v1/public-order-tracking?order_number="+encodeURIComponent(orderNumber),{headers:{apikey:KEY,Accept:"application/json"}});
+      const response=await fetch(SUPABASE_URL+"/functions/v1/public-order-tracking?order_number="+encodeURIComponent(orderNumber)+"&token="+encodeURIComponent(trackingToken),{headers:{apikey:KEY,Accept:"application/json"}});
       const result=await response.json().catch(()=>({}));
       if(!response.ok||result.error)throw new Error(result.error||"Unable to load this order. Please check the tracking link.");
       setData(result);setRefreshedAt(new Date());
