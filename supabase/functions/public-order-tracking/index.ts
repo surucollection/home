@@ -19,8 +19,8 @@ async function ncm(path:string,base=NCM_BASE){
 }
 let ncmBranchCache:{expires:number;branches:any[]}={expires:0,branches:[]};
 async function getNcmBranches():Promise<any[]>{
-  if(ncmBranchCache.expires>Date.now()&&ncmBranchCache.branches.length)return ncmBranchCache.branches;
-  const response=await ncm("/api/v2/branches","https://portal.nepalcanmove.com/api").catch(()=>null);
+  if(ncmBranchCache.expires>Date.now())return ncmBranchCache.branches;
+  const response=await ncm("/v2/branches","https://portal.nepalcanmove.com/api").catch(()=>null);
   const raw=Array.isArray(response)?response:(response?.results||response?.branches||[]);
   const branches=raw.map((b:any)=>({code:String(b.code||""),name:String(b.name||""),phone:String(b.phone||""),address:String(b.address||"")})).filter((b:any)=>b.name);
   ncmBranchCache={expires:Date.now()+5*60*1000,branches};
