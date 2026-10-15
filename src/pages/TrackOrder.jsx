@@ -7,6 +7,23 @@ const SUPABASE_URL="https://vkycraymxhkqxgpcpdzw.supabase.co";
 const money=value=>"NPR "+Number(value||0).toLocaleString("en-IN",{maximumFractionDigits:2});
 const label=value=>String(value||"").replace(/[_-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 const fullAddress=data=>[data?.shipping_address,[data?.city,data?.district,data?.province].filter(Boolean).join(", "),data?.postal_code? "Postal code: "+data.postal_code:""].filter(Boolean).join("\n");
+const trackingUrl=number=>typeof window!=="undefined"?"https://suru.com.np/track/"+encodeURIComponent(number):"";
+const orderMessage=data=>{
+  const lines=["*Suru Collection — Order Details*","Order: "+(data.order_number||""),"Customer: "+(data.customer_name||"Customer"),"Order status: "+(label(data.order_status)||"Order received"),"Payment: "+(label(data.payment_status)||"Pending")+(data.payment_method?" ("+label(data.payment_method)+")":"")];
+  if(fullAddress(data))lines.push("Delivery address: "+fullAddress(data).replace(/\n/g,", "));
+  lines.push("","*Items*");
+  (data.items||[]).forEach(item=>lines.push("• "+(item.product_name||"Item")+(item.product_code?" ["+item.product_code+"]":"")+(item.size?" · Size "+item.size:"")+(item.color?" · "+item.color:"")+" × "+(item.quantity||1)));
+  lines.push("","Total amount: "+money(data.total));
+  if(String(data.payment_method||"").toLowerCase()==="cod"){
+    lines.push("Advance paid: "+money(data.cod_advance_paid),"Remaining COD due on delivery: "+money(data.cod_balance_due));
+  }else if(Number(data.cod_advance_paid||0)>0){
+    lines.push("Advance paid: "+money(data.cod_advance_paid));
+  }
+  if(data.ncm_tracking_id)lines.push("NCM tracking number: "+data.ncm_tracking_id);
+  if(data.ncm_status)lines.push("Courier status: "+data.ncm_status);
+  lines.push("Track order: "+trackingUrl(data.order_number),"Thank you for shopping with Suru Collection!");
+  return lines.join("\n");
+};
 
 export default function TrackOrder(){
   const params=new URLSearchParams(location.search);
@@ -49,7 +66,14 @@ export default function TrackOrder(){
           <div style={{marginTop:24}}>
             <h2 style={{fontSize:18,margin:"0 0 12px"}}>Items ordered</h2>
             {data.items?.length?<div style={{border:"1px solid #eee4de",borderRadius:10,overflow:"hidden"}}>{data.items.map((item,index)=><div key={index} style={{display:"flex",justifyContent:"space-between",gap:16,padding:"13px 14px",borderBottom:index===data.items.length-1?"0":"1px solid #eee4de"}}><div><strong>{item.product_name||"Item"}</strong><div style={{fontSize:13,color:"#786960",marginTop:4}}>{[item.product_code,item.size,item.color].filter(Boolean).join(" · ")}{item.quantity?" · Qty "+item.quantity:""}</div></div></div>)}</div>:<p style={{color:"#6f625b"}}>Item details are not available for this order.</p>}
-            <div style={{display:"flex",justifyContent:"space-between",gap:12,padding:"15px 2px",fontSize:17,fontWeight:800}}><span>Order total</span><span>{money(data.total)}</span></div>
+            <div style={{marginTop:12,padding:14,background:"#faf5f1",border:"1px solid #eee1d8",borderRadius:10,display:"grid",gap:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:12}}><span>Subtotal</span><strong>{money(data.subtotal)}</strong></div>
+              {Number(data.discount_amount||0)>0&&<div style={{display:"flex",justifyContent:"space-between",gap:12}}><span>Discount</span><strong>−{money(data.discount_amount)}</strong></div>}
+              {Number(data.shipping_fee||0)>0&&<div style={{display:"flex",justifyContent:"space-between",gap:12}}><span>Delivery charge</span><strong>{money(data.shipping_fee)}</strong></div>}
+              <div style={{display:"flex",justifyContent:"space-between",gap:12,paddingTop:9,borderTop:"1px solid #e5d6cc",fontSize:17,fontWeight:800}}><span>Total amount</span><span>{money(data.total)}</span></div>
+              {String(data.payment_method||"").toLowerCase()==="cod"&&<><div style={{display:"flex",justifyContent:"space-between",gap:12}}><span>Advance paid</span><strong>{money(data.cod_advance_paid)}</strong></div><div style={{display:"flex",justifyContent:"space-between",gap:12,color:"#8b3e2f",fontWeight:800}}><span>COD due on delivery</span><span>{money(data.cod_balance_due)}</span></div></>}
+            </div>
+            <button type="button" onClick={async()=>{const message=orderMessage(data);try{await navigator.clipboard.writeText(message);alert("Order details copied. You can paste them into WhatsApp.")}catch{window.prompt("Copy order details:",message)}}} style={{marginTop:12,width:"100%",border:0,background:"#5e463d",color:"#fff",borderRadius:9,padding:"12px 16px",fontSize:15,fontWeight:800,cursor:"pointer"}}>Copy order details</button>
           </div>
           <div style={{marginTop:8,borderTop:"1px solid #eee4de",paddingTop:22}}>
             <h2 style={{fontSize:18,margin:"0 0 12px"}}>Courier tracking</h2>
