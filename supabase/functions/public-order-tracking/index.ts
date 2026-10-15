@@ -44,7 +44,7 @@ Deno.serve(async(req)=>{
     const url=new URL(req.url);
     const orderNumber=String(url.searchParams.get("order_number")||"").trim();
     if(!/^SC-[A-Za-z0-9-]{6,48}$/i.test(orderNumber))return json({error:"Invalid order number or tracking link."},400);
-    const orderResponse=await db("orders?order_number=eq."+encodeURIComponent(orderNumber)+"&select=id,customer_id,order_number,created_at,total,order_status,payment_status,payment_method,customer_name,shipping_address,city,district,province,postal_code,ncm_order_id,ncm_tracking_id,ncm_status,ncm_last_sync_at,ncm_destination_branch&limit=1");
+    const orderResponse=await db("orders?order_number=eq."+encodeURIComponent(orderNumber)+"&select=id,customer_id,order_number,created_at,total,order_status,payment_status,payment_method,customer_name,shipping_address,city,district,province,postal_code,ncm_order_id,ncm_tracking_id,ncm_status,ncm_last_sync_at,ncm_destination_branch,cod_advance_required,cod_advance_paid,cod_balance_due,manual_payment_amount,subtotal,shipping_fee,discount_amount&limit=1");
     if(!orderResponse.ok)throw new Error("Unable to load order");
     const orders=await orderResponse.json();
     if(!orders.length)return json({error:"We could not find an order with that number. Please check the tracking link."},404);
@@ -77,7 +77,7 @@ Deno.serve(async(req)=>{
         const found=walk(detail);if(found)trackingId=found;
       }catch{/* Use cached tracking ID if NCM details are temporarily unavailable. */}
     }
-    return json({order_number:order.order_number,created_at:order.created_at,total:order.total,order_status:order.order_status,payment_status:order.payment_status,payment_method:order.payment_method,customer_name:order.customer_name,customer_phone_masked:customerPhoneMasked,shipping_address:order.shipping_address,city:order.city,district:order.district,province:order.province,postal_code:order.postal_code,items,ncm_order_id:order.ncm_order_id,ncm_tracking_id:trackingId,ncm_status:ncmStatus,ncm_destination_branch:ncmDestinationBranch,ncm_destination_branch_phone:ncmDestinationBranchPhone,status_history:statusHistory,ncm_checked_at:new Date().toISOString()});
+    return json({order_number:order.order_number,created_at:order.created_at,total:order.total,subtotal:order.subtotal,shipping_fee:order.shipping_fee,discount_amount:order.discount_amount,cod_advance_required:Number(order.cod_advance_required||0),cod_advance_paid:Number(order.cod_advance_paid||0),manual_payment_amount:Number(order.manual_payment_amount||0),cod_balance_due:Math.max(0,Number(order.cod_balance_due??(Number(order.total||0)-Number(order.cod_advance_paid||0)-Number(order.manual_payment_amount||0)))),order_status:order.order_status,payment_status:order.payment_status,payment_method:order.payment_method,customer_name:order.customer_name,customer_phone_masked:customerPhoneMasked,shipping_address:order.shipping_address,city:order.city,district:order.district,province:order.province,postal_code:order.postal_code,items,ncm_order_id:order.ncm_order_id,ncm_tracking_id:trackingId,ncm_status:ncmStatus,ncm_destination_branch:ncmDestinationBranch,ncm_destination_branch_phone:ncmDestinationBranchPhone,status_history:statusHistory,ncm_checked_at:new Date().toISOString()});
   }catch(error){
     console.error("Public order tracking error",error);
     return json({error:"Tracking is temporarily unavailable. Please try again shortly."},500);
