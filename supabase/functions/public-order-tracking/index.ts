@@ -44,7 +44,7 @@ Deno.serve(async(req)=>{
     const url=new URL(req.url);
     const orderNumber=String(url.searchParams.get("order_number")||"").trim();
     if(!/^SC-[A-Za-z0-9-]{6,48}$/i.test(orderNumber))return json({error:"Invalid order number or tracking link."},400);
-    const orderResponse=await db("orders?order_number=eq."+encodeURIComponent(orderNumber)+"&select=id,customer_id,order_number,created_at,total,order_status,payment_status,payment_method,customer_name,shipping_address,city,district,province,postal_code,ncm_order_id,ncm_tracking_id,ncm_status,ncm_last_sync_at&limit=1");
+    const orderResponse=await db("orders?order_number=eq."+encodeURIComponent(orderNumber)+"&select=id,customer_id,order_number,created_at,total,order_status,payment_status,payment_method,customer_name,shipping_address,city,district,province,postal_code,ncm_order_id,ncm_tracking_id,ncm_status,ncm_last_sync_at,ncm_destination_branch&limit=1");
     if(!orderResponse.ok)throw new Error("Unable to load order");
     const orders=await orderResponse.json();
     if(!orders.length)return json({error:"We could not find an order with that number. Please check the tracking link."},404);
