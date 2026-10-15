@@ -17,6 +17,21 @@ async function ncm(path:string,base=NCM_BASE){
   if(!r.ok)throw new Error("NCM status unavailable ("+r.status+")");
   return body;
 }
+let ncmBranchCache:{expires:number;branches:any[]}={expires:0,branches:[]};
+async function getNcmBranches():Promise<any[]>{
+  if(ncmBranchCache.expires>Date.now()&&ncmBranchCache.branches.length)return ncmBranchCache.branches;
+  const response=await ncm("/api/v2/branches","https://portal.nepalcanmove.com/api").catch(()=>null);
+  const raw=Array.isArray(response)?response:(response?.results||response?.branches||[]);
+  const branches=raw.map((b:any)=>({code:String(b.code||""),name:String(b.name||""),phone:String(b.phone||""),address:String(b.address||"")})).filter((b:any)=>b.name);
+  ncmBranchCache={expires:Date.now()+5*60*1000,branches};
+  return branches;
+}
+function matchNcmBranch(branches:any[],destination:string){
+  const normalize=(v:string)=>String(v||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const target=normalize(destination);
+  if(!target)return null;
+  return branches.find((b:any)=>normalize(b.code)===target)||branches.find((b:any)=>normalize(b.name)===target)||null;
+}
 function historyList(value:any):any[]{
   if(Array.isArray(value))return value;
   for(const key of ["results","data","history"])if(Array.isArray(value?.[key]))return value[key];
@@ -45,7 +60,8 @@ Deno.serve(async(req)=>{
         if(digits.length>=2)customerPhoneMasked="********"+digits.slice(-2);
       }
     }
-    let ncmStatus=order.ncm_status||"",trackingId=order.ncm_tracking_id||"",statusHistory:any[]=[];
+    let ncmStatus=order.ncm_status||"",trackingId=order.ncm_tracking_id||"",statusHistory:any[]=[],ncmDestinationBranch=String(order.ncm_destination_branch||""),ncmDestinationBranchPhone="";
+    if(ncmDestinationBranch){try{const branches=await getNcmBranches();const branch=matchNcmBranch(branches,ncmDestinationBranch);if(branch){ncmDestinationBranch=branch.name||ncmDestinationBranch;ncmDestinationBranchPhone=String(branch.phone||"").trim()}}catch(e){console.warn("NCM branch contact lookup unavailable",String(e))}}
     if(order.ncm_order_id&&!/^(cancelled|canceled|delivered|returned)$/i.test(String(ncmStatus).trim())){
       const path="/api/v1/order/status?id="+encodeURIComponent(order.ncm_order_id);
       let history:any=null;
@@ -61,7 +77,7 @@ Deno.serve(async(req)=>{
         const found=walk(detail);if(found)trackingId=found;
       }catch{/* Use cached tracking ID if NCM details are temporarily unavailable. */}
     }
-    return json({order_number:order.order_number,created_at:order.created_at,total:order.total,order_status:order.order_status,payment_status:order.payment_status,payment_method:order.payment_method,customer_name:order.customer_name,customer_phone_masked:customerPhoneMasked,shipping_address:order.shipping_address,city:order.city,district:order.district,province:order.province,postal_code:order.postal_code,items,ncm_order_id:order.ncm_order_id,ncm_tracking_id:trackingId,ncm_status:ncmStatus,status_history:statusHistory,ncm_checked_at:new Date().toISOString()});
+    return json({order_number:order.order_number,created_at:order.created_at,total:order.total,order_status:order.order_status,payment_status:order.payment_status,payment_method:order.payment_method,customer_name:order.customer_name,customer_phone_masked:customerPhoneMasked,shipping_address:order.shipping_address,city:order.city,district:order.district,province:order.province,postal_code:order.postal_code,items,ncm_order_id:order.ncm_order_id,ncm_tracking_id:trackingId,ncm_status:ncmStatus,ncm_destination_branch:ncmDestinationBranch,ncm_destination_branch_phone:ncmDestinationBranchPhone,status_history:statusHistory,ncm_checked_at:new Date().toISOString()});
   }catch(error){
     console.error("Public order tracking error",error);
     return json({error:"Tracking is temporarily unavailable. Please try again shortly."},500);
