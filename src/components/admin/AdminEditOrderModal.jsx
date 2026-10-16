@@ -106,6 +106,34 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
       ?"Inventory for this order has already been released. This order cannot be edited through this workflow."
       :"";
 
+  const removeOrderItem=async item=>{
+    if(!statusEditable){setError(blockedMessage);return}
+    if(!reason.trim()||reason.trim().length<3){setError("Enter a reason for removing this product (at least 3 characters).");return}
+    if(item.is_preorder){setError("Pre-order items cannot be removed through this stocked-order workflow.");return}
+    if(items.length<=1){setError("An order must contain at least one product. Cancel the order instead if it should have no items.");return}
+    const confirmed=window.confirm(
+      "Remove "+item.product_name+" ("+[item.size,item.color].filter(Boolean).join(" · ")+", qty "+item.quantity+") from order "+order.order_number+"?\n\nIts stock will be returned, order totals and the active invoice will be recalculated. This does not automatically refund any payment. Unsaved size/colour or discount changes will not be saved."
+    );
+    if(!confirmed)return;
+    setError("");
+    setSaving(true);
+    try{
+      const {data,error:removeError}=await supabase.rpc("admin_remove_order_item",{
+        p_order_id:order.id,
+        p_order_item_id:item.id,
+        p_reason:reason.trim()
+      });
+      if(removeError)throw removeError;
+      if(!data?.success)throw new Error(data?.message||"The product could not be removed.");
+      if(onUpdated)await onUpdated();
+      onClose();
+    }catch(e){
+      setError(e?.message||"Unable to remove this product from the order.");
+    }finally{
+      setSaving(false);
+    }
+  };
+
   const submit=async event=>{
     event.preventDefault();
     setError("");
@@ -212,6 +240,9 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
               <div className="admin-edit-order-current">
                 <span>Current option</span>
                 <strong>{[item.size,item.color].filter(Boolean).join(" · ")||"Standard"}</strong>
+              </div>
+              <div style={{display:"flex",justifyContent:"flex-end",marginTop:8}}>
+                <button className="secondary" type="button" disabled={!statusEditable||saving||items.length<=1||item.is_preorder} onClick={()=>removeOrderItem(item)}>Remove product</button>
               </div>
               {itemBlocked?<p className="small-note">{item.variantError|| (item.is_preorder?"Pre-order items are not supported by this stocked-order size-change workflow.":"No active size/colour options are available.")}</p>:<>
                 <label className="field">New size / colour
