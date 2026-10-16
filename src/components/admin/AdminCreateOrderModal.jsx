@@ -557,7 +557,7 @@ Thank you for ordering from Suru Collection.`;
       const base64=brandedImage.split(",")[1];
       const bytes=Uint8Array.from(atob(base64),x=>x.charCodeAt(0));
       const file=new File([bytes],`Suru-Payment-${created?.order_number||"order"}.png`,{type:"image/png"});
-      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]})){
+      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
         await navigator.share({title:"Suru Collection payment QR",files:[file]});
       }else{
         const link=document.createElement("a");
