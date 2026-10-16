@@ -43,7 +43,7 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
         .order("created_at",{ascending:true});
       if(itemsError)throw itemsError;
       const [{data:products,error:productsError},{data:allVariants,error:allVariantsError}]=await Promise.all([
-        supabase.from("products").select("id,product_code,name,price,is_active").eq("is_active",true).order("name",{ascending:true}),
+        supabase.from("products").select("id,product_code,name,price,is_active").eq("is_active",true).order("product_code",{ascending:true}).order("name",{ascending:true}),
         supabase.from("product_sizes").select("id,product_id,size,color,stock,is_active").eq("is_active",true).order("size",{ascending:true}).order("color",{ascending:true})
       ]);
       if(productsError)throw productsError;
