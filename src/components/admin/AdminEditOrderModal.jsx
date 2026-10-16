@@ -18,6 +18,10 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState("");
+  const [catalogProducts,setCatalogProducts]=useState([]);
+  const [catalogVariants,setCatalogVariants]=useState([]);
+  const [addLines,setAddLines]=useState([{key:1,productId:"",variantId:"",quantity:"1"}]);
+  const [nextLineKey,setNextLineKey]=useState(2);
 
   useEffect(()=>{
     if(!order)return;
@@ -28,6 +32,8 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     setReason("");
     setExtraDiscount(String(order?.manual_discount_amount??0));
     setError("");
+    setAddLines([{key:1,productId:"",variantId:"",quantity:"1"}]);
+    setNextLineKey(2);
     setLoading(true);
     (async()=>{
       const {data:rows,error:itemsError}=await supabase
@@ -36,6 +42,15 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
         .eq("order_id",order.id)
         .order("created_at",{ascending:true});
       if(itemsError)throw itemsError;
+      const [{data:products,error:productsError},{data:allVariants,error:allVariantsError}]=await Promise.all([
+        supabase.from("products").select("id,product_code,name,price,is_active").eq("is_active",true).order("name",{ascending:true}),
+        supabase.from("product_sizes").select("id,product_id,size,color,stock,is_active").eq("is_active",true).order("size",{ascending:true}).order("color",{ascending:true})
+      ]);
+      if(productsError)throw productsError;
+      if(allVariantsError)throw allVariantsError;
+      if(!active)return;
+      setCatalogProducts(products||[]);
+      setCatalogVariants(allVariants||[]);
       const orderItems=rows||[];
       const results=await Promise.all(orderItems.map(async item=>{
         if(!item.product_id)return {item,variants:[],error:"Product record is no longer available."};
@@ -62,7 +77,16 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
 
   const discountBase=Math.max(0,Number(order?.subtotal||0)-Math.max(0,Number(order?.discount||0)-Number(order?.manual_discount_amount||0)));
   const effectiveExtraDiscount=Math.min(Math.max(0,Number(extraDiscount)||0),discountBase);
-  const previewTotal=Math.max(0,Number(order?.subtotal||0)-Math.max(0,Number(order?.discount||0)-Number(order?.manual_discount_amount||0))-effectiveExtraDiscount)+Math.max(0,Number(order?.shipping_fee||0));
+  const addedItems=useMemo(()=>addLines.filter(line=>line.productId&&line.variantId&&Number(line.quantity)>0).map(line=>{
+    const product=catalogProducts.find(p=>p.id===line.productId);
+    const variant=catalogVariants.find(v=>v.id===line.variantId&&v.product_id===line.productId);
+    return {...line,product,variant,quantity:Math.floor(Number(line.quantity)||0),lineTotal:Math.round(Number(product?.price||0))*Math.floor(Number(line.quantity)||0)};
+  }),[addLines,catalogProducts,catalogVariants]);
+  const addedSubtotal=addedItems.reduce((sum,line)=>sum+line.lineTotal,0);
+  const subtotalPreview=Number(order?.subtotal||0)+addedSubtotal;
+  const previewDiscountBase=Math.max(0,Number(order?.discount||0)-Number(order?.manual_discount_amount||0));
+  const effectiveExtraDiscount=Math.min(Math.max(0,Number(extraDiscount)||0),Math.max(0,subtotalPreview-previewDiscountBase));
+  const previewTotal=Math.max(0,subtotalPreview-previewDiscountBase-effectiveExtraDiscount)+Math.max(0,Number(order?.shipping_fee||0));
   const discountChanged=Math.round(effectiveExtraDiscount)!==Math.round(Number(order?.manual_discount_amount||0));
 
   const changedItems=useMemo(()=>items.filter(item=>{
@@ -89,8 +113,11 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     setError("");
     if(!statusEditable){setError(blockedMessage);return}
     if(!reason.trim()||reason.trim().length<3){setError("Please enter a reason for the change (at least 3 characters).");return}
-    if(!changedItems.length&&!discountChanged){setError("Change the size/colour or enter an extra discount before saving.");return}
-    if(changedItems.length>1){setError("For safety, change one order item per save. Save this change, then reopen the order to edit another item.");return}
+    if(!changedItems.length&&!discountChanged&&!addedItems.length){setError("Change a size/colour, add a product, or enter an extra discount before saving.");return}
+    if(changedItems.length>1){setError("For safety, change one existing item per save. Added products can be included with that change.");return}
+    if(addLines.some(line=>(line.productId||line.variantId)&&(!line.productId||!line.variantId||!Number.isInteger(Number(line.quantity))||Number(line.quantity)<1||Number(line.quantity)>100))){setError("Complete each added product row and use a quantity from 1 to 100.");return}
+    const unavailableAdd=addedItems.find(line=>!line.product||!line.variant||Number(line.variant.stock||0)<line.quantity);
+    if(unavailableAdd){setError("A selected product option is no longer available in the requested quantity. Refresh the order and try again.");return}
     const invalid=changedItems.find(item=>{
       const variants=variantsByItem[item.id]||[];
       const chosen=variants.find(v=>v.id===drafts[item.id]);
@@ -107,7 +134,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     if(activeNcm&&!window.confirm(
       "An NCM shipment already exists for this order. Saving will update the order and its active invoice, but will NOT modify or cancel the existing NCM shipment. NCM may continue to show the original package details.\n\nTo send NCM the new size, cancel the current NCM shipment first and create a replacement after saving. Continue without changing the shipment?"
     ))return;
-    if(!window.confirm("Save the order changes for "+order.order_number+"? The selected size/colour and/or extra discount will be saved, and the active invoice totals will be updated. Payment history and the order number will be preserved."))return;
+    if(!window.confirm("Save the order changes for "+order.order_number+"? Added products will be reserved from stock, order totals and the active invoice will be updated, and payment history and the order number will be preserved."))return;
 
     setSaving(true);
     try{
@@ -119,7 +146,15 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
           reason:reason.trim()
         });
       }
-      if(discountChanged){
+      if(addedItems.length){
+        const {error:addError}=await supabase.rpc("admin_add_products_to_order",{
+          p_order_id:order.id,
+          p_items:addedItems.map(line=>({product_id:line.productId,variant_id:line.variantId,quantity:line.quantity})),
+          p_manual_discount_amount:effectiveExtraDiscount,
+          p_reason:reason.trim()
+        });
+        if(addError)throw addError;
+      }else if(discountChanged){
         const {error:discountError}=await supabase.rpc("admin_update_order_extra_discount",{
           p_order_id:order.id,
           p_manual_discount_amount:effectiveExtraDiscount,
@@ -198,8 +233,44 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
           })}
         </div>
         <section className="admin-edit-order-notice">
+          <strong>Add products to this order</strong>
+          <p>Select an active product, its size/colour, and quantity. Stock will be checked and reserved when you save.</p>
+          <div className="admin-edit-order-items">
+            {addLines.map((line,index)=>{
+              const product=catalogProducts.find(p=>p.id===line.productId);
+              const variants=catalogVariants.filter(v=>v.product_id===line.productId);
+              const variant=catalogVariants.find(v=>v.id===line.variantId&&v.product_id===line.productId);
+              return <article className="admin-edit-order-item" key={line.key}>
+                <div className="admin-edit-order-item-head">
+                  <strong>New product {index+1}</strong>
+                  {line.productId&&<small>{money(product?.price||0)} each</small>}
+                </div>
+                <label className="field">Product
+                  <select value={line.productId} disabled={!statusEditable||saving} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,productId:e.target.value,variantId:""}:x))}>
+                    <option value="">Select product</option>
+                    {catalogProducts.map(p=><option key={p.id} value={p.id}>{p.product_code} · {p.name} — {money(p.price)}</option>)}
+                  </select>
+                </label>
+                <label className="field">Size / colour
+                  <select value={line.variantId} disabled={!statusEditable||saving||!line.productId} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,variantId:e.target.value}:x))}>
+                    <option value="">Select available option</option>
+                    {variants.map(v=><option key={v.id} value={v.id} disabled={Number(v.stock||0)<1}>{optionLabel(v)}</option>)}
+                  </select>
+                </label>
+                <label className="field">Quantity
+                  <input type="number" min="1" max="100" step="1" value={line.quantity} disabled={!statusEditable||saving} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,quantity:e.target.value}:x))}/>
+                </label>
+                {variant&&<p className="small-note">Line total: {money(Math.round(Number(product?.price||0))*Math.max(0,Math.floor(Number(line.quantity)||0)))} · {Math.max(0,Number(variant.stock||0))} currently available</p>}
+                {addLines.length>1&&<button className="secondary" type="button" disabled={saving} onClick={()=>setAddLines(prev=>prev.filter(x=>x.key!==line.key))}>Remove row</button>}
+              </article>;
+            })}
+          </div>
+          <button className="secondary" type="button" disabled={!statusEditable||saving} onClick={()=>{setAddLines(prev=>[...prev,{key:nextLineKey,productId:"",variantId:"",quantity:"1"}]);setNextLineKey(v=>v+1)}}>+ Add another product</button>
+          <p><strong>Added products subtotal: {money(addedSubtotal)}</strong></p>
+        </section>
+        <section className="admin-edit-order-notice">
           <strong>Order price summary</strong>
-          <p>Current subtotal: {money(order.subtotal)} · Current discount: {money(order.discount)} · Delivery: {money(order.shipping_fee)}</p>
+          <p>Current subtotal: {money(order.subtotal)} · Added products: {money(addedSubtotal)} · Current discount: {money(order.discount)} · Delivery: {money(order.shipping_fee)}</p>
           <label className="field">Extra Discount Amount
             <input type="number" min="0" step="1" value={extraDiscount} onChange={e=>setExtraDiscount(e.target.value)} disabled={!statusEditable||saving}/>
           </label>
@@ -212,7 +283,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
         {error&&<div className="message error" role="alert">{error}</div>}
         <div className="admin-edit-order-footer">
           <button className="secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button>
-          <button className="primary" type="submit" disabled={saving||loading}>
+          <button className="primary" type="submit" disabled={saving||loading||!statusEditable}>
             {saving?"Saving…":"Save Order Changes"}
           </button>
         </div>
