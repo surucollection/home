@@ -48,10 +48,10 @@ export async function createBrandedPaymentQr({qrImage,orderNumber,reference,amou
   ctx.fillStyle = "#741d3b";
   ctx.font = "600 42px \"Trebuchet MS\", Arial, sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText("Suru Collection",178,82);
+  ctx.fillText("Suru Collection",205,82);
   ctx.fillStyle = "#6d5b61";
   ctx.font = "24px Arial, sans-serif";
-  ctx.fillText("Fonepay payment",180,120);
+  ctx.fillText("Fonepay payment",205,120);
 
   ctx.fillStyle = "#f8eff2";
   roundRect(ctx,38,158,824,130,22);
@@ -70,7 +70,7 @@ export async function createBrandedPaymentQr({qrImage,orderNumber,reference,amou
   roundRect(ctx,80,318,740,560,24,false,true);
   const qrSize = 500;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(qr,200,338,qrSize,qrSize);
+  ctx.drawImage(qr,200,348,qrSize,qrSize);
   ctx.imageSmoothingEnabled = true;
   ctx.fillStyle = "#6d5b61";
   ctx.font = "22px Arial, sans-serif";
