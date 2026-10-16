@@ -13,12 +13,12 @@ export async function createBrandedPaymentQr({qrImage,orderNumber,reference,amou
   try {
     const logo = await loadImage("/assets/suru-logo-official.png");
     // Preserve the source logo's aspect ratio; never stretch the artwork.
-    const maxLogoWidth = 116;
-    const maxLogoHeight = 100;
+    const maxLogoWidth = 138;
+    const maxLogoHeight = 112;
     const scale = Math.min(maxLogoWidth / logo.naturalWidth, maxLogoHeight / logo.naturalHeight);
     const logoWidth = logo.naturalWidth * scale;
     const logoHeight = logo.naturalHeight * scale;
-    ctx.drawImage(logo, 44 + (maxLogoWidth - logoWidth) / 2, 38 + (maxLogoHeight - logoHeight) / 2, logoWidth, logoHeight);
+    ctx.drawImage(logo, 36 + (maxLogoWidth - logoWidth) / 2, 32 + (maxLogoHeight - logoHeight) / 2, logoWidth, logoHeight);
   } catch {}
   ctx.fillStyle = "#741d3b";
   ctx.font = "bold 42px Arial, sans-serif";
