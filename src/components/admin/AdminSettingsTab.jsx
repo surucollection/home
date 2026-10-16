@@ -47,16 +47,6 @@ export default function AdminSettingsTab({
 
     <div className="card admin-settings-card">
       <div className="page-title">
-        <div><h3>Tracking Link</h3><p>Set the URL used by the tracking popup. If the portal cannot load inside the popup, customers and staff can open it directly.</p></div>
-        <button className="primary" type="button" onClick={()=>document.getElementById("ncm-tracking-settings-form")?.requestSubmit()}>Save Tracking Link</button>
-      </div>
-      <form id="ncm-tracking-settings-form" className="admin-form" onSubmit={saveNcmTrackingUrl}>
-        <label>Tracking URL<input type="url" required value={ncmTrackingUrl||""} onChange={e=>setNcmTrackingUrl(e.target.value)} placeholder="https://portal.nepalcanmove.com/track/"/><small className="form-note">Use the full HTTPS URL. Changes apply to future tracking popups.</small></label>
-      </form>
-    </div>
-
-    <div className="card admin-settings-card">
-      <div className="page-title">
         <div><h3>Product Pricing & Delivery</h3><p>Manage the global markup, packaging charge and default delivery estimate in one place.</p></div>
         <button className="primary" type="button" onClick={()=>setPricingPopupOpen(true)}>Manage Product Pricing</button>
       </div>
