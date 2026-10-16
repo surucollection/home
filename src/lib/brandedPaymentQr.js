@@ -12,13 +12,38 @@ export async function createBrandedPaymentQr({qrImage,orderNumber,reference,amou
   ctx.fillRect(0,0,canvas.width,16);
   try {
     const logo = await loadImage("/assets/suru-logo-official.png");
-    // Preserve the source logo's aspect ratio; never stretch the artwork.
-    const maxLogoWidth = 158;
-    const maxLogoHeight = 128;
-    const scale = Math.min(maxLogoWidth / logo.naturalWidth, maxLogoHeight / logo.naturalHeight);
-    const logoWidth = logo.naturalWidth * scale;
-    const logoHeight = logo.naturalHeight * scale;
-    ctx.drawImage(logo, 26 + (maxLogoWidth - logoWidth) / 2, 24 + (maxLogoHeight - logoHeight) / 2, logoWidth, logoHeight);
+    // Trim transparent/white padding around the supplied logo so the visible
+    // brand artwork grows, while preserving its original aspect ratio.
+    const trimCanvas = document.createElement("canvas");
+    trimCanvas.width = logo.naturalWidth;
+    trimCanvas.height = logo.naturalHeight;
+    const trimCtx = trimCanvas.getContext("2d", { willReadFrequently: true });
+    trimCtx.drawImage(logo, 0, 0);
+    const pixels = trimCtx.getImageData(0, 0, trimCanvas.width, trimCanvas.height);
+    let minX = trimCanvas.width, minY = trimCanvas.height, maxX = -1, maxY = -1;
+    for (let y = 0; y < trimCanvas.height; y++) {
+      for (let x = 0; x < trimCanvas.width; x++) {
+        const i = (y * trimCanvas.width + x) * 4;
+        const alpha = pixels.data[i + 3];
+        const isVisible = alpha > 24 && (pixels.data[i] < 248 || pixels.data[i + 1] < 248 || pixels.data[i + 2] < 248);
+        if (isVisible) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    const sx = maxX >= minX ? minX : 0;
+    const sy = maxY >= minY ? minY : 0;
+    const sw = maxX >= minX ? maxX - minX + 1 : logo.naturalWidth;
+    const sh = maxY >= minY ? maxY - minY + 1 : logo.naturalHeight;
+    const maxLogoWidth = 166;
+    const maxLogoHeight = 136;
+    const scale = Math.min(maxLogoWidth / sw, maxLogoHeight / sh);
+    const logoWidth = sw * scale;
+    const logoHeight = sh * scale;
+    ctx.drawImage(logo, sx, sy, sw, sh, 22 + (maxLogoWidth - logoWidth) / 2, 20 + (maxLogoHeight - logoHeight) / 2, logoWidth, logoHeight);
   } catch {}
   ctx.fillStyle = "#741d3b";
   ctx.font = "600 42px \"Trebuchet MS\", Arial, sans-serif";
