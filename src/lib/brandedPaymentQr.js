@@ -21,9 +21,9 @@ export async function createBrandedPaymentQr({qrImage,orderNumber,reference,amou
     ctx.drawImage(logo, 36 + (maxLogoWidth - logoWidth) / 2, 32 + (maxLogoHeight - logoHeight) / 2, logoWidth, logoHeight);
   } catch {}
   ctx.fillStyle = "#741d3b";
-  ctx.font = "bold 42px Arial, sans-serif";
+  ctx.font = "italic 48px \"Brush Script MT\", \"Segoe Script\", cursive";
   ctx.textAlign = "left";
-  ctx.fillText("SURU COLLECTION",178,82);
+  ctx.fillText("Suru Collection",178,82);
   ctx.fillStyle = "#6d5b61";
   ctx.font = "24px Arial, sans-serif";
   ctx.fillText("Fonepay payment",180,120);
