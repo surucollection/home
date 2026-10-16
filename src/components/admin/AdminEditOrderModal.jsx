@@ -75,8 +75,6 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
     return()=>{active=false};
   },[order?.id]);
 
-  const discountBase=Math.max(0,Number(order?.subtotal||0)-Math.max(0,Number(order?.discount||0)-Number(order?.manual_discount_amount||0)));
-  const effectiveExtraDiscount=Math.min(Math.max(0,Number(extraDiscount)||0),discountBase);
   const addedItems=useMemo(()=>addLines.filter(line=>line.productId&&line.variantId&&Number(line.quantity)>0).map(line=>{
     const product=catalogProducts.find(p=>p.id===line.productId);
     const variant=catalogVariants.find(v=>v.id===line.variantId&&v.product_id===line.productId);
