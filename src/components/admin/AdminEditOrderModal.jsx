@@ -9,7 +9,7 @@ function optionLabel(variant){
   return details+" — "+Math.max(0,Number(variant.stock||0))+" available";
 }
 
-export default function AdminEditOrderModal({order,onClose,onSave}){
+export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
   const [items,setItems]=useState([]);
   const [variantsByItem,setVariantsByItem]=useState({});
   const [drafts,setDrafts]=useState({});
@@ -160,6 +160,7 @@ export default function AdminEditOrderModal({order,onClose,onSave}){
         });
         if(discountError)throw discountError;
       }
+      if(onUpdated)await onUpdated();
       onClose();
     }catch(e){
       setError(e?.message||"Unable to save the order change.");
