@@ -21,7 +21,7 @@ export async function createBrandedPaymentQr({qrImage,orderNumber,reference,amou
     ctx.drawImage(logo, 36 + (maxLogoWidth - logoWidth) / 2, 32 + (maxLogoHeight - logoHeight) / 2, logoWidth, logoHeight);
   } catch {}
   ctx.fillStyle = "#741d3b";
-  ctx.font = "italic 48px \"Brush Script MT\", \"Segoe Script\", cursive";
+  ctx.font = "600 42px \"Trebuchet MS\", Arial, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("Suru Collection",178,82);
   ctx.fillStyle = "#6d5b61";
