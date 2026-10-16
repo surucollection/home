@@ -551,18 +551,18 @@ Thank you for ordering from Suru Collection.`;
       ? `Suru Collection — Order #${created?.order_number}\n\nPlease pay the delivery charges/advance of NPR ${amount} to confirm your order.\n\n${paymentOptions}\n\nRemaining amount: NPR ${money(remainingValue)} (payable on delivery).\nReference: ${paymentQr.reference||"—"}`
       : `Suru Collection — Order #${created?.order_number}\n\nPlease pay NPR ${amount} to confirm your order.\n\n${paymentOptions}\nReference: ${paymentQr.reference||"—"}`;
     try{
-      const response=await fetch(paymentQr.qrImage);
-      const blob=await response.blob();
-      const file=new File([blob],`Suru-Fonepay-${created?.order_number||"payment"}.png`,{type:"image/png"});
+      const base64=paymentQr.qrImage.split(",")[1];
+      const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+      const file=new File([bytes],`Suru-Fonepay-${created?.order_number||"payment"}.png`,{type:"image/png"});
       if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-        await navigator.share({title:"Suru Collection Fonepay payment",text:textMessage,files:[file]});
+        await navigator.share({title:"Suru Collection payment instructions",text:textMessage,files:[file]});
       }else{
         await navigator.clipboard.writeText(textMessage);
         setCopied(true);
-        setQrError("Payment instructions copied. Save or share the QR image above separately.");
+        setQrError("Payment instructions copied. Save the QR image and attach it when messaging the customer.");
       }
     }catch(e){
-      if(e?.name!=="AbortError")setQrError("Unable to open the share sheet. You can save the QR image and send it to the customer manually.");
+      if(e?.name!=="AbortError")setQrError("Unable to open sharing. Copy the payment instructions or save the QR image and send both to the customer.");
     }
   };
 
