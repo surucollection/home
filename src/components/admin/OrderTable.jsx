@@ -2,6 +2,7 @@ import React,{useState,useEffect,useRef} from "react";
 import { money,supabase } from "../../lib/api.js";
 import QRCode from "qrcode";
 import AdminEditOrderModal from "./AdminEditOrderModal.jsx";
+import {createBrandedPaymentQr} from "../../lib/brandedPaymentQr.js";
 
 const ADMIN_INVOICE_ACTIONS_VERSION="2026.09.29.5";
 
@@ -172,25 +173,32 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
     finally{setFonepayLoading(false);}
   };
   const shareCodAdvanceQr=async()=>{
-    if(!fonepayQr?.qrImage||!fonepayOrder)return;
-    const amountValue=Math.max(0,Number(fonepayQr.amount||0));
-    const amount=money(amountValue);
-    const alreadyPaid=Math.max(0,Number(fonepayOrder.cod_advance_paid||0));
-    const remainingValue=Math.max(0,Number(fonepayOrder.total||0)-alreadyPaid-amountValue);
-    const textMessage=`Suru Collection — Order #${fonepayOrder.order_number}\n\nPlease pay the delivery charges/advance of NPR ${amount} to confirm your order.\n\nYou can pay using any supported payment app, such as eSewa, Khalti, Fonepay, or any bank mobile banking app. Simply scan the attached QR code.\n\nRemaining amount: NPR ${money(remainingValue)} (payable on delivery).\nReference: ${fonepayQr.reference||"—"}`;
+    if(!fonepayQr?.qrImage||!fonepayOrder||fonepayLoading)return;
+    setFonepayLoading(true);setFonepayError("");
     try{
-      const base64=fonepayQr.qrImage.split(",")[1];
-      const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
-      const file=new File([bytes],`Suru-Fonepay-${fonepayOrder.order_number||"payment"}.png`,{type:"image/png"});
+      const amountValue=Math.max(0,Number(fonepayQr.amount||0));
+      const brandedImage=await createBrandedPaymentQr({
+        qrImage:fonepayQr.qrImage,
+        orderNumber:fonepayOrder.order_number,
+        reference:fonepayQr.reference,
+        amount:money(amountValue),
+        purpose:"COD delivery advance"
+      });
+      const base64=brandedImage.split(",")[1];
+      const bytes=Uint8Array.from(atob(base64),x=>x.charCodeAt(0));
+      const file=new File([bytes],`Suru-Payment-${fonepayOrder.order_number||"order"}.png`,{type:"image/png"});
       if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-        await navigator.share({title:"Suru Collection payment instructions",text:textMessage,files:[file]});
+        await navigator.share({title:"Suru Collection payment QR",files:[file]});
       }else{
-        await navigator.clipboard.writeText(textMessage);
-        setFonepayError("Payment instructions copied. Save the QR image and attach it when messaging the customer.");
+        const link=document.createElement("a");
+        link.href=brandedImage;
+        link.download=`Suru-Payment-${fonepayOrder.order_number||"order"}.png`;
+        document.body.appendChild(link);link.click();link.remove();
+        setFonepayError("Branded QR image saved. Attach the image directly in your message to the customer.");
       }
     }catch(e){
-      if(e?.name!=="AbortError")setFonepayError("Unable to open sharing. Copy the payment instructions or save the QR image and send both to the customer.");
-    }
+      if(e?.name!=="AbortError")setFonepayError(e?.message||"Unable to prepare or share the branded QR image.");
+    }finally{setFonepayLoading(false);}
   };
 
   const checkCodAdvancePayment=async()=>{
