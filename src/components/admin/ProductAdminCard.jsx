@@ -9,6 +9,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const[driveFolderUrl,setDriveFolderUrl]=useState("");
   const[driveBusy,setDriveBusy]=useState(false);
   const[driveMessage,setDriveMessage]=useState("");
+  const[saveMessage,setSaveMessage]=useState("");
 
   useEffect(()=>setE({...p}),[p]);
   useEffect(()=>{
@@ -30,7 +31,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const updateImage=(index,patch)=>setImages(prev=>prev.map((x,i)=>i===index?{...x,...patch}:x));
   const addImage=()=>setImages(prev=>[...prev,{id:null,image_url:"",alt_text:p.name||"",color:"",is_main:false}]);
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
-  const close=()=>setEditing(null);
+  const close=()=>{setSaveMessage("");setEditing(null)};
 
   return <div className="product-admin-card">
     <div className="product-admin-summary">
@@ -51,9 +52,10 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       subtitle={p.product_code+" · "+p.name}
       bodyClassName="admin-product-modal-body"
       maxWidth="1000px"
-      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>saveProduct(e,images)} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div>}
+      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>{setSaveMessage("");saveProduct(e,images,setSaveMessage)}} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div>}
     >
       <div className="admin-form admin-product-compact-form">
+        {saveMessage&&<div className="message" role="status" style={{marginBottom:12,whiteSpace:"normal"}}>{saveMessage}</div>}
         <div className="admin-product-row admin-product-row-code-name">
           <label className="product-code-field">Product Code<input maxLength="8" value={e.product_code??""} onChange={x=>setE({...e,product_code:x.target.value})}/></label>
           <label>Product Name<input value={e.name??""} onChange={x=>setE({...e,name:x.target.value})}/></label>
