@@ -81,6 +81,18 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       :["pending","cancelled"];
   };
   const prettyLabel=k=>String(k||"").replace(/_/g," ").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/\b\w/g,x=>x.toUpperCase());
+  const formatNcmTimestamp=value=>{
+    if(value===null||value===undefined||value==="")return "—";
+    const date=new Date(value);
+    if(!Number.isFinite(date.getTime()))return String(value);
+    try{
+      const formatted=new Intl.DateTimeFormat("en-GB",{
+        timeZone:"Asia/Kathmandu",day:"2-digit",month:"short",year:"numeric",
+        hour:"numeric",minute:"2-digit",hour12:true
+      }).format(date);
+      return formatted.replace(/,/,",") + " NPT";
+    }catch{return String(value);}
+  };
   const fullShippingAddress=o=>[o?.shipping_address,[o?.city,o?.district,o?.province].filter(Boolean).join(", "),o?.postal_code? "Postal code: "+o.postal_code:""].filter(Boolean).join("\n");
   const displayValue=v=>{
     if(v===null||v===undefined||v==="")return "—";
@@ -254,13 +266,13 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
     if(action==="status_history"){
       const list=Array.isArray(value)?value:(Array.isArray(value?.results)?value.results:Array.isArray(value?.data)?value.data:Array.isArray(value?.history)?value.history:[]);
       if(!list.length)return <div className="ncm-empty">No status history found.</div>;
-      return <div className="ncm-history-list">{list.map((item,i)=><div className="ncm-history-item" key={i}><div className="ncm-history-status">{displayValue(item.status||item.event||item.last_delivery_status)}</div><div className="ncm-history-meta">{displayValue(item.added_time||item.addedTime||item.timestamp||item.created_at||"")} {item.comment&&" • "+item.comment}</div></div>)}</div>;
+      return <div className="ncm-history-list">{list.map((item,i)=><div className="ncm-history-item" key={i}><div className="ncm-history-status">{displayValue(item.status||item.event||item.last_delivery_status)}</div><div className="ncm-history-meta">{formatNcmTimestamp(item.added_time||item.addedTime||item.timestamp||item.created_at||"")} {item.comment&&" • "+item.comment}</div></div>)}</div>;
     }
 
     if(action==="comments"){
       const list=Array.isArray(value)?value:(Array.isArray(value?.results)?value.results:Array.isArray(value?.data)?value.data:Array.isArray(value?.comments)?value.comments:[]);
       if(!list.length)return <div className="ncm-empty">No comments found.</div>;
-      return <div className="ncm-comments-list">{list.map((item,i)=><div className="ncm-comment-item" key={i}><div>{displayValue(item.comments||item.comment||item.text||item.message)}</div><small>{displayValue(item.added_time||item.created_at||item.timestamp||"")}</small></div>)}</div>;
+      return <div className="ncm-comments-list">{list.map((item,i)=><div className="ncm-comment-item" key={i}><div>{displayValue(item.comments||item.comment||item.text||item.message)}</div><small>{formatNcmTimestamp(item.added_time||item.created_at||item.timestamp||"")}</small></div>)}</div>;
     }
 
     return <div className="ncm-success">{displayValue(value?.message||"NCM action completed successfully.")}</div>;
