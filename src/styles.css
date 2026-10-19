@@ -1591,3 +1591,14 @@
  .admin-page .admin-edit-order-size-row .admin-edit-order-remove-inline{padding:6px 7px!important;font-size:10px!important}
  .admin-page .admin-edit-order-size-row .field select{font-size:12px!important;padding:7px 5px!important}
 }
+
+
+/* Force the size dropdown and Remove product action to share one row. */
+.admin-page .admin-edit-order-size-row{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:flex-end!important;gap:7px!important;width:100%;min-width:0}
+.admin-page .admin-edit-order-size-row>.field{display:block!important;flex:1 1 0!important;width:0!important;min-width:0!important}
+.admin-page .admin-edit-order-size-row>.field select{width:100%!important;min-width:0!important;box-sizing:border-box}
+.admin-page .admin-edit-order-size-row>.admin-edit-order-remove-inline{display:inline-flex!important;flex:0 0 auto!important;align-self:flex-end!important;white-space:nowrap!important;margin:0 0 0!important}
+@media(max-width:560px){
+ .admin-page .admin-edit-order-size-row{gap:5px!important}
+ .admin-page .admin-edit-order-size-row>.admin-edit-order-remove-inline{padding:7px 8px!important;font-size:10px!important}
+}
