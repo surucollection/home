@@ -1602,3 +1602,14 @@
  .admin-page .admin-edit-order-size-row{gap:5px!important}
  .admin-page .admin-edit-order-size-row>.admin-edit-order-remove-inline{padding:7px 8px!important;font-size:10px!important}
 }
+
+
+/* Match the size selector height exactly to the adjacent Remove product button. */
+.admin-page .admin-edit-order-size-row{align-items:stretch!important}
+.admin-page .admin-edit-order-size-row>.field{display:flex!important;flex-direction:column!important;justify-content:flex-end!important}
+.admin-page .admin-edit-order-size-row>.field select{height:38px!important;min-height:38px!important;box-sizing:border-box!important;padding-top:0!important;padding-bottom:0!important;line-height:36px!important}
+.admin-page .admin-edit-order-size-row>.admin-edit-order-remove-inline{height:38px!important;min-height:38px!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding-top:0!important;padding-bottom:0!important;line-height:1!important}
+@media(max-width:560px){
+ .admin-page .admin-edit-order-size-row>.field select{height:34px!important;min-height:34px!important;line-height:32px!important}
+ .admin-page .admin-edit-order-size-row>.admin-edit-order-remove-inline{height:34px!important;min-height:34px!important}
+}
