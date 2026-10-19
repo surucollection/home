@@ -23,6 +23,8 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
   const [addLines,setAddLines]=useState([{key:1,productId:"",variantId:"",quantity:"1"}]);
   const [nextLineKey,setNextLineKey]=useState(2);
   const [expandedAddLine,setExpandedAddLine]=useState(null);
+  const [deletePrompt,setDeletePrompt]=useState(false);
+  const [deletePin,setDeletePin]=useState("");
 
   useEffect(()=>{
     if(!order)return;
@@ -36,6 +38,8 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
     setAddLines([{key:1,productId:"",variantId:"",quantity:"1"}]);
     setNextLineKey(2);
     setExpandedAddLine(null);
+    setDeletePrompt(false);
+    setDeletePin("");
     setLoading(true);
     (async()=>{
       const {data:rows,error:itemsError}=await supabase
@@ -102,11 +106,30 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
   const activeNcm=!!order.ncm_order_id&&!ncmShipmentCancelled;
   const invoiceActive=!!(order.invoice_number&&order.invoice_data)&&String(order.invoice_status||"active").toLowerCase()!=="cancelled";
   const invoiceCancelled=String(order.invoice_status||"").toLowerCase()==="cancelled";
+  const invoiceGenerated=!!(order.invoice_number||order.invoice_data||order.invoice_issued_at||order.invoice_visible_at||order.invoice_cancelled_at)||invoiceCancelled;
   const blockedMessage=!statusAllowed
     ?"Size changes are available for pending, confirmed, processing, and packed orders. A shipped order can only be edited after NCM confirms shipment cancellation; delivered orders require the exchange workflow."
     :order.inventory_released_at
       ?"Inventory for this order has already been released. This order cannot be edited through this workflow."
       :"";
+
+  const deleteOrder=async()=>{
+    if(invoiceActive||invoiceCancelled){setError("Orders with generated invoices cannot be deleted.");return}
+    if(!deletePin.trim()){setError("Enter the deletion PIN.");return}
+    if(!window.confirm("PERMANENTLY DELETE order "+order.order_number+" and its NCM shipment history? This cannot be undone."))return;
+    setError("");
+    setSaving(true);
+    try{
+      const {data,error:deleteError}=await supabase.functions.invoke("delete-order",{body:{order_id:order.id,pin:deletePin}});
+      if(deleteError)throw deleteError;
+      if(data?.error)throw new Error(data.error);
+      if(!data?.success)throw new Error("The order could not be deleted.");
+      if(onUpdated)await onUpdated();
+      onClose();
+    }catch(e){
+      setError(e?.message||"Unable to delete this order.");
+    }finally{setSaving(false)}
+  };
 
   const removeOrderItem=async item=>{
     if(!statusEditable){setError(blockedMessage);return}
