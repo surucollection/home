@@ -22,6 +22,7 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
   const [catalogVariants,setCatalogVariants]=useState([]);
   const [addLines,setAddLines]=useState([{key:1,productId:"",variantId:"",quantity:"1"}]);
   const [nextLineKey,setNextLineKey]=useState(2);
+  const [expandedAddLine,setExpandedAddLine]=useState(1);
 
   useEffect(()=>{
     if(!order)return;
@@ -34,6 +35,7 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
     setError("");
     setAddLines([{key:1,productId:"",variantId:"",quantity:"1"}]);
     setNextLineKey(2);
+    setExpandedAddLine(1);
     setLoading(true);
     (async()=>{
       const {data:rows,error:itemsError}=await supabase
@@ -220,7 +222,6 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
         <p>Its archived copy will remain unchanged. This edit will not reactivate or rewrite a cancelled invoice.</p>
       </div>:<div className="admin-edit-order-notice" role="note">
         <strong>No active invoice found.</strong>
-        <p>The order will be updated. An invoice generated later will use the updated item details.</p>
       </div>}
 
       {blockedMessage&&<div className="message error" role="alert">{blockedMessage}</div>}
@@ -264,38 +265,43 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
         </div>
         <section className="admin-edit-order-notice">
           <strong>Add products to this order</strong>
-          <p>Select an active product, its size/colour, and quantity. Stock will be checked and reserved when you save.</p>
           <div className="admin-edit-order-items">
             {addLines.map((line,index)=>{
               const product=catalogProducts.find(p=>p.id===line.productId);
               const variants=catalogVariants.filter(v=>v.product_id===line.productId);
               const variant=catalogVariants.find(v=>v.id===line.variantId&&v.product_id===line.productId);
-              return <article className="admin-edit-order-item" key={line.key}>
-                <div className="admin-edit-order-item-head">
-                  <strong>New product {index+1}</strong>
-                  {line.productId&&<small>{money(product?.price||0)} each</small>}
+              const expanded=expandedAddLine===line.key;
+              const summary=[product?.name,variant?[variant.size,variant.color].filter(Boolean).join(" · "):null,line.productId?"Qty "+(line.quantity||"1"):null].filter(Boolean).join(" · ");
+              return <article className={"admin-edit-order-item admin-edit-order-added-item"+(expanded?" is-expanded":" is-collapsed")} key={line.key}>
+                <div className="admin-edit-order-item-head admin-edit-order-added-head">
+                  <button className="admin-edit-order-add-toggle" type="button" aria-expanded={expanded} disabled={saving} onClick={()=>setExpandedAddLine(current=>current===line.key?null:line.key)}>
+                    <span className="admin-edit-order-add-toggle-copy"><strong>New product {index+1}</strong><small>{expanded?(line.productId?money(product?.price||0)+" each":"Select product details"):(summary||"Tap to add product details")}</small></span>
+                    <span className="admin-edit-order-add-toggle-state">{expanded?"Collapse":"Edit"}</span>
+                  </button>
+                  {addLines.length>1&&<button className="secondary" type="button" disabled={saving} onClick={()=>{setAddLines(prev=>prev.filter(x=>x.key!==line.key));if(expandedAddLine===line.key)setExpandedAddLine(null)}}>Remove</button>}
                 </div>
-                <label className="field">Product
-                  <select value={line.productId} disabled={!statusEditable||saving} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,productId:e.target.value,variantId:""}:x))}>
-                    <option value="">Select product</option>
-                    {catalogProducts.map(p=><option key={p.id} value={p.id}>{p.product_code} · {p.name} — {money(p.price)}</option>)}
-                  </select>
-                </label>
-                <label className="field">Size / colour
-                  <select value={line.variantId} disabled={!statusEditable||saving||!line.productId} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,variantId:e.target.value}:x))}>
-                    <option value="">Select available option</option>
-                    {variants.map(v=><option key={v.id} value={v.id} disabled={Number(v.stock||0)<1}>{optionLabel(v)}</option>)}
-                  </select>
-                </label>
-                <label className="field">Quantity
-                  <input type="number" min="1" max="100" step="1" value={line.quantity} disabled={!statusEditable||saving} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,quantity:e.target.value}:x))}/>
-                </label>
-                {variant&&<p className="small-note">Line total: {money(Math.round(Number(product?.price||0))*Math.max(0,Math.floor(Number(line.quantity)||0)))} · {Math.max(0,Number(variant.stock||0))} currently available</p>}
-                {addLines.length>1&&<button className="secondary" type="button" disabled={saving} onClick={()=>setAddLines(prev=>prev.filter(x=>x.key!==line.key))}>Remove row</button>}
+                {expanded&&<div className="admin-edit-order-add-fields">
+                  <label className="field">Product
+                    <select value={line.productId} disabled={!statusEditable||saving} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,productId:e.target.value,variantId:""}:x))}>
+                      <option value="">Select product</option>
+                      {catalogProducts.map(p=><option key={p.id} value={p.id}>{p.product_code} · {p.name} — {money(p.price)}</option>)}
+                    </select>
+                  </label>
+                  <label className="field">Size / colour
+                    <select value={line.variantId} disabled={!statusEditable||saving||!line.productId} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,variantId:e.target.value}:x))}>
+                      <option value="">Select available option</option>
+                      {variants.map(v=><option key={v.id} value={v.id} disabled={Number(v.stock||0)<1}>{optionLabel(v)}</option>)}
+                    </select>
+                  </label>
+                  <label className="field">Quantity
+                    <input type="number" min="1" max="100" step="1" value={line.quantity} disabled={!statusEditable||saving} onChange={e=>setAddLines(prev=>prev.map(x=>x.key===line.key?{...x,quantity:e.target.value}:x))}/>
+                  </label>
+                  {variant&&<p className="small-note">Line total: {money(Math.round(Number(product?.price||0))*Math.max(0,Math.floor(Number(line.quantity)||0)))} · {Math.max(0,Number(variant.stock||0))} currently available</p>}
+                </div>}
               </article>;
             })}
           </div>
-          <button className="secondary" type="button" disabled={!statusEditable||saving} onClick={()=>{setAddLines(prev=>[...prev,{key:nextLineKey,productId:"",variantId:"",quantity:"1"}]);setNextLineKey(v=>v+1)}}>+ Add another product</button>
+          <button className="secondary" type="button" disabled={!statusEditable||saving} onClick={()=>{const key=nextLineKey;setAddLines(prev=>[...prev,{key,productId:"",variantId:"",quantity:"1"}]);setNextLineKey(v=>v+1);setExpandedAddLine(key)}}>+ Add another product</button>
           <p><strong>Added products subtotal: {money(addedSubtotal)}</strong></p>
         </section>
         <section className="admin-edit-order-notice">
