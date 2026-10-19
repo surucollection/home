@@ -1580,3 +1580,14 @@
   .admin-page .admin-edit-order-footer button{padding:7px 10px!important;min-height:34px;font-size:12px}
   .admin-page .admin-edit-order-modal .admin-form>section{margin-top:5px!important;margin-bottom:5px!important}
 }
+
+
+/* Keep existing item size selector and remove action on one line. */
+.admin-page .admin-edit-order-size-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:7px}
+.admin-page .admin-edit-order-size-row .field{min-width:0;margin:0!important}
+.admin-page .admin-edit-order-size-row .admin-edit-order-remove-inline{white-space:nowrap;align-self:end;margin-bottom:0}
+@media(max-width:560px){
+ .admin-page .admin-edit-order-size-row{grid-template-columns:minmax(0,1fr) auto;gap:5px}
+ .admin-page .admin-edit-order-size-row .admin-edit-order-remove-inline{padding:6px 7px!important;font-size:10px!important}
+ .admin-page .admin-edit-order-size-row .field select{font-size:12px!important;padding:7px 5px!important}
+}
