@@ -22,7 +22,7 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
   const [catalogVariants,setCatalogVariants]=useState([]);
   const [addLines,setAddLines]=useState([{key:1,productId:"",variantId:"",quantity:"1"}]);
   const [nextLineKey,setNextLineKey]=useState(2);
-  const [expandedAddLine,setExpandedAddLine]=useState(1);
+  const [expandedAddLine,setExpandedAddLine]=useState(null);
 
   useEffect(()=>{
     if(!order)return;
@@ -35,7 +35,7 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
     setError("");
     setAddLines([{key:1,productId:"",variantId:"",quantity:"1"}]);
     setNextLineKey(2);
-    setExpandedAddLine(1);
+    setExpandedAddLine(null);
     setLoading(true);
     (async()=>{
       const {data:rows,error:itemsError}=await supabase
@@ -242,11 +242,8 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
                 <span>Current option</span>
                 <strong>{[item.size,item.color].filter(Boolean).join(" · ")||"Standard"}</strong>
               </div>
-              <div style={{display:"flex",justifyContent:"flex-end",marginTop:8}}>
-                <button className="secondary" type="button" disabled={!statusEditable||saving||items.length<=1||item.is_preorder} onClick={()=>removeOrderItem(item)}>Remove product</button>
-              </div>
               {itemBlocked?<p className="small-note">{item.variantError|| (item.is_preorder?"Pre-order items are not supported by this stocked-order size-change workflow.":"No active size/colour options are available.")}</p>:<>
-                <label className="field">New size / colour
+                <div className="admin-edit-order-size-row"><label className="field">New size / colour
                   <select value={drafts[item.id]||""} onChange={e=>setDrafts(prev=>({...prev,[item.id]:e.target.value}))} disabled={!statusEditable||saving} required>
                     <option value="" disabled>Select an option</option>
                     {variants.map(v=>{
@@ -257,7 +254,7 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
                       return <option key={v.id} value={v.id} disabled={blocked}>{optionLabel(v)}{blocked?" — Not enough stock":""}</option>;
                     })}
                   </select>
-                </label>
+                </label><button className="secondary admin-edit-order-remove-inline" type="button" disabled={!statusEditable||saving||items.length<=1||item.is_preorder} onClick={()=>removeOrderItem(item)}>Remove product</button></div>
                 {hasLineChange&&<p className="admin-edit-order-stock-hint">After saving, {item.quantity} item(s) will be released from the previous option and reserved from the new option.</p>}
               </>}
             </article>;
@@ -274,10 +271,7 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
               const summary=[product?.name,variant?[variant.size,variant.color].filter(Boolean).join(" · "):null,line.productId?"Qty "+(line.quantity||"1"):null].filter(Boolean).join(" · ");
               return <article className={"admin-edit-order-item admin-edit-order-added-item"+(expanded?" is-expanded":" is-collapsed")} key={line.key}>
                 <div className="admin-edit-order-item-head admin-edit-order-added-head">
-                  <button className="admin-edit-order-add-toggle" type="button" aria-expanded={expanded} disabled={saving} onClick={()=>setExpandedAddLine(current=>current===line.key?null:line.key)}>
-                    <span className="admin-edit-order-add-toggle-copy"><strong>New product {index+1}</strong><small>{expanded?(line.productId?money(product?.price||0)+" each":"Select product details"):(summary||"Tap to add product details")}</small></span>
-                    <span className="admin-edit-order-add-toggle-state">{expanded?"Collapse":"Edit"}</span>
-                  </button>
+                  <div className="admin-edit-order-add-toggle-copy"><strong>New product {index+1}</strong><small>{expanded?(line.productId?money(product?.price||0)+" each":"Select product details"):(summary||"Tap “Add another product” to open this form")}</small></div>
                   {addLines.length>1&&<button className="secondary" type="button" disabled={saving} onClick={()=>{setAddLines(prev=>prev.filter(x=>x.key!==line.key));if(expandedAddLine===line.key)setExpandedAddLine(null)}}>Remove</button>}
                 </div>
                 {expanded&&<div className="admin-edit-order-add-fields">
