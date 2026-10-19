@@ -334,11 +334,13 @@ export default function AdminEditOrderModal({order,onClose,onSave,onUpdated}){
           <textarea rows="2" maxLength={500} minLength={3} value={reason} onChange={e=>setReason(e.target.value)} required placeholder="e.g. Customer requested a size exchange"/>
         </label>
         {error&&<div className="message error" role="alert">{error}</div>}
-        <div className="admin-edit-order-footer">
-          <button className="secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button>
+        {!invoiceGenerated&&deletePrompt&&<div className="admin-edit-order-delete-pin" style={{display:"flex",gap:8,alignItems:"end",flexWrap:"wrap",marginTop:12}}><label className="field" style={{flex:"1 1 180px"}}>Deletion PIN<input type="password" autoComplete="current-password" value={deletePin} onChange={e=>setDeletePin(e.target.value)} disabled={saving} placeholder="Enter Supabase secret PIN" /></label><button className="primary" type="button" disabled={saving||!deletePin.trim()} onClick={deleteOrder}>{saving?"Deleting…":"Confirm Delete"}</button><button className="secondary" type="button" disabled={saving} onClick={()=>{setDeletePrompt(false);setDeletePin("")}}>Cancel</button></div>}
+        <div className="admin-edit-order-footer" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <div>{!invoiceGenerated&&<button className="secondary" style={{color:"#b42318",borderColor:"#b42318"}} type="button" disabled={saving||loading} onClick={()=>{setError("");setDeletePrompt(true);setDeletePin("")}}>Delete Order</button>}</div>
+          <div style={{display:"flex",gap:8}}><button className="secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button>
           <button className="primary" type="submit" disabled={saving||loading||!statusEditable}>
             {saving?"Saving…":"Save Order Changes"}
-          </button>
+          </button></div>
         </div>
       </form>}
     </section>
