@@ -97,8 +97,8 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     if(!force&&branchManual)return;
     const province=canonicalProvince(draft.province);
     const district=ncmNorm(draft.district),municipality=ncmNorm(draft.city),addressText=ncmNorm(draft.address);
-    const provinceBranches=branches.filter(b=>!ncmNorm(b.province_name)||ncmWordMatch(b.province_name,province));
-    const districtBranches=provinceBranches.filter(b=>!ncmNorm(b.district_name)||ncmWordMatch(b.district_name,draft.district));
+    const provinceBranches=branches.filter(b=>ncmNorm(b.province_name)&&ncmWordMatch(b.province_name,province));
+    const districtBranches=provinceBranches.filter(b=>ncmNorm(b.district_name)&&ncmWordMatch(b.district_name,draft.district));
     const municipalityBranches=districtBranches.filter(b=>ncmNorm(b.municipality)===municipality||ncmWordMatch(b.municipality,draft.city));
     const areaMatches=municipalityBranches.filter(b=>ncmFieldTokens(b.areas_covered).some(area=>area&&addressText.includes(area)));
     const names=rows=>rows.map(branch=>({branch,name:cleanText(branch.name||branch.branch_name||branch.title||branch.branch)})).filter(x=>x.name);
