@@ -457,7 +457,7 @@ Deno.serve(async (req) => {
       return json({ success: true, order: updated, ncm: response });
     }
 
-    if (["details","status_history","comments","add_comment","cancel_order","return","exchange","redirect"].includes(action)) {
+    if (["details","status_history","comments","add_comment","cancel_order","return","exchange","replacement","redirect"].includes(action)) {
       const body = requestBody;
       const userToken = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
       if (!userToken) throw new Error("Unauthorized");
@@ -539,7 +539,7 @@ Deno.serve(async (req) => {
         const updated = await updateOrder(order.id, { return_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
         return json({ response, order: updated, return_delivery_deduction: deduction });
       }
-      if (action === "exchange") {
+      if (action === "exchange" || action === "replacement") {
         const response = await callNcmCandidates("/api/v2/vendor/order/exchange-create", {
           method: "POST",
           body: JSON.stringify({ pk: Number(order.ncm_order_id) }),
