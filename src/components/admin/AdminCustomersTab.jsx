@@ -21,9 +21,11 @@ export default function AdminCustomersTab({
  customerSearch,setCustomerSearch,customerStatus,setCustomerStatus,
  filteredCustomers,customerDetails,toggleCustomer,selectedCustomer,
  customerEditing,setCustomerEditing,resetCustomerPassword,customerSaving,
- saveCustomer,setSelectedCustomer
+ saveCustomer,setSelectedCustomer,onDeleteCustomer,customerDeleting
 }){
- const close=()=>setSelectedCustomer(null);
+ const close=()=>{setDeletePrompt(false);setDeletePin("");setSelectedCustomer(null);};
+ const[deletePrompt,setDeletePrompt]=useState(false);
+ const[deletePin,setDeletePin]=useState("");
  const[addressEditing,setAddressEditing]=useState(null);
  const[addressDraft,setAddressDraft]=useState({});
  const[addressSaving,setAddressSaving]=useState(false),[addressMessage,setAddressMessage]=useState("");
@@ -73,7 +75,7 @@ export default function AdminCustomersTab({
    <AdminModal open={!!selectedCustomer&&addressEditing!=="new"} onClose={close} title={selectedCustomer?.name||"Customer"} subtitle="Customer profile, saved addresses and order history" bodyClassName="admin-customer-modal-body" maxWidth="980px"
      footer={customerEditing
        ? <div className="admin-customer-modal-footer-content"><button type="button" className="secondary" onClick={()=>setCustomerEditing(false)} disabled={customerSaving||addressSaving}>Cancel</button><button type="button" className={selectedCustomer?.is_active?"danger":"primary"} onClick={()=>toggleCustomer(selectedCustomer)} disabled={customerSaving||addressSaving}>{selectedCustomer?.is_active?"Deactivate Customer":"Activate Customer"}</button><button type="button" className="primary" onClick={saveCustomer} disabled={customerSaving||addressSaving}>{customerSaving?"Saving…":"Save Customer Details"}</button></div>
-       : <div className="admin-customer-modal-footer-content"><button type="button" className="secondary" onClick={()=>setCustomerEditing(true)}>Edit Details</button><button type="button" className={selectedCustomer?.is_active?"danger":"primary"} onClick={()=>toggleCustomer(selectedCustomer)} disabled={customerSaving||addressSaving}>{selectedCustomer?.is_active?"Deactivate Customer":"Activate Customer"}</button><button type="button" className="secondary" onClick={resetCustomerPassword} disabled={customerSaving||addressSaving||!selectedCustomer?.auth_user_id}>Send Magic Link</button><button type="button" className="primary" onClick={close}>Close</button></div>}>
+       : <div className="admin-customer-modal-footer-content"><div style={{marginRight:"auto",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><button type="button" className="danger" onClick={()=>{setDeletePrompt(v=>!v);setDeletePin("");}} disabled={customerSaving||addressSaving||customerDeleting}>{deletePrompt?"Cancel Delete":"Delete Customer"}</button>{deletePrompt&&<><input aria-label="Admin PIN" type="password" inputMode="numeric" autoComplete="off" placeholder="Admin PIN" value={deletePin} onChange={e=>setDeletePin(e.target.value)} style={{width:130}} disabled={customerDeleting}/><button type="button" className="danger" onClick={()=>onDeleteCustomer(deletePin)} disabled={customerDeleting||!deletePin}>{customerDeleting?"Deleting…":"Confirm Delete"}</button></>}</div><button type="button" className="secondary" onClick={()=>setCustomerEditing(true)} disabled={deletePrompt}>Edit Details</button><button type="button" className={selectedCustomer?.is_active?"danger":"primary"} onClick={()=>toggleCustomer(selectedCustomer)} disabled={customerSaving||addressSaving||deletePrompt}>{selectedCustomer?.is_active?"Deactivate Customer":"Activate Customer"}</button><button type="button" className="secondary" onClick={resetCustomerPassword} disabled={customerSaving||addressSaving||!selectedCustomer?.auth_user_id||deletePrompt}>Send Magic Link</button><button type="button" className="primary" onClick={close} disabled={customerDeleting}>Close</button></div>}>
      {selectedCustomer&&<div>
        {customerEditing
          ? <div className="admin-form customer-edit-form admin-customer-compact-form">
