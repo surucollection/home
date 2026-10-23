@@ -159,8 +159,8 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       let inventoryMessage="";
       if(action==="replacement"){
         const {data:inventoryData,error:inventoryError}=await supabase.rpc("create_replacement_inventory",{p_order_id:o.id,p_replacement_product_id:payload.replacement_product_id});
-        if(inventoryError)throw new Error("Replacement NCM shipment #"+(data?.replacement_ncm_order_id||"created; ID not returned")+" was created, but inventory reservation failed: "+inventoryError.message+". Check NCM before retrying to avoid a duplicate shipment.");
-        if(inventoryData?.success)inventoryMessage=" Replacement NCM shipment ID: "+(data?.replacement_ncm_order_id||"see NCM response")+". Package: "+(data?.replacement_package||"selected product")+". Replacement stock deducted: "+inventoryData.quantity+" unit(s). Original shipment ID remains unchanged; process its return separately in NCM.";
+        if(inventoryError)throw new Error("NCM exchange forward shipment #"+(data?.replacement_ncm_order_id||"created; ID not returned")+" was created, but inventory reservation failed: "+inventoryError.message+". Check NCM before retrying to avoid a duplicate shipment.");
+        if(inventoryData?.success)inventoryMessage=" NCM forward shipment ID: "+(data?.replacement_ncm_order_id||"see NCM response")+". Package: "+(data?.replacement_package||"selected product")+". Replacement stock deducted: "+inventoryData.quantity+" unit(s). Original NCM shipment ID remains unchanged; NCM exchange should provide a separate return shipment ID.";
       }
       const value=data?.ncm||data?.history||data?.comments||data?.response||data;
       if(["details","status_history","comments"].includes(action))openResult(action,value,o);
