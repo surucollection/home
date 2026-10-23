@@ -151,19 +151,29 @@ function resolveNcmBranch(branches, {province="", district="", city="", address=
   // across ALL branches in the selected district. Do not require the branch's
   // municipality metadata to equal the customer's selected municipality: a branch
   // in another municipality may serve the address area (e.g. Baseni, Chitwan).
-  const areaMatches=districtRows.filter(b=>{
+  const areaMatches=provinceRows.filter(b=>{
     if(!a)return false;
-    return ncmFieldTokens(b.areas_covered).some(area=>{
+    const branchDistrict=ncmNorm(b.district_name);
+    const districtKnownAndDifferent=branchDistrict&&!hasMatch(b.district_name,district);
+    const coversAddress=ncmFieldTokens(b.areas_covered).some(area=>{
       if(!area)return false;
-      // Match address components such as "11 - Baseni" against an area named "Baseni".
-      return a===area||(" "+a+" ").includes(" "+area+" ")||ncmWordMatch(a,area);
+      // Compare the locality entered in the address (e.g. "Baseni") to NCM
+      // coverage entries, including entries formatted like "11 - Baseni".
+      const locality=ncmNorm(area.replace(/^\\s*\\d+\\s*[-:]\\s*/, ""));
+      return a===area||a===locality||(" "+a+" ").includes(" "+locality+" ")||ncmWordMatch(a,locality);
     });
+    // Prefer matching branches whose district metadata agrees. However, if NCM's
+    // district metadata is missing/inconsistent, an explicit coverage match is
+    // stronger evidence that this branch serves the address.
+    return coversAddress&&(!districtKnownAndDifferent||coversAddress);
   });
   // The dropdown should allow any NCM branch in the selected district,
   // not only branches whose municipality metadata exactly matches the customer's
   // municipality. Keep the district-scoped list available even when a likely
   // branch is auto-selected, so staff can choose another valid district branch.
-  const districtCandidates=named(districtRows.length?districtRows:provinceRows);
+  // Show district branches plus any branch that explicitly covers the address
+  // locality, even if NCM's branch district metadata is inconsistent.
+  const districtCandidates=named([...districtRows,...areaMatches].filter((b,i,arr)=>arr.findIndex(x=>String(x.pk??x.code??x.name)===String(b.pk??b.code??b.name))===i));
   const areaCandidates=named(areaMatches);
   if(areaCandidates.length===1)return {branch:areaCandidates[0].name,candidates:districtCandidates,message:"Branch auto-matched by address area. You can also choose another NCM branch in the same district."};
   if(areaCandidates.length>1)return {branch:"",candidates:districtCandidates.length?districtCandidates:areaCandidates,message:"Multiple branches cover this area. Choose the correct NCM branch from the district list."};
