@@ -131,6 +131,35 @@ function matchNcmBranch(branches,city,district,location=null,province=""){
   // No safe textual match: never guess from geocode alone.
   return "";
 }
+// Resolve one NCM branch using the user's full location, in strict geographic order.
+function resolveNcmBranch(branches, {province="", district="", city="", address=""}={}){
+  const p=ncmNorm(province),d=ncmNorm(district),c=ncmNorm(String(city||"").split(",")[0]),a=ncmNorm(address);
+  const empty={branch:"",candidates:[],message:""};
+  if(!p||!d||!c||!Array.isArray(branches)||!branches.length)return empty;
+  const hasMatch=(field,target)=>!ncmNorm(field)||ncmWordMatch(field,target);
+  // Apply each level in order. Missing NCM metadata is tolerated only when later
+  // municipality/area data independently supports the branch.
+  const provinceRows=branches.filter(b=>hasMatch(b.province_name,province));
+  const districtRows=provinceRows.filter(b=>hasMatch(b.district_name,district));
+  const municipalityRows=districtRows.filter(b=>{
+    const municipality=ncmNorm(b.municipality||b.municipality_name);
+    if(municipality)return municipality===c||ncmWordMatch(municipality,c);
+    return ncmFieldTokens(b.areas_covered).some(area=>area===c||ncmWordMatch(area,c)||ncmWordMatch(c,area));
+  });
+  const named=rows=>rows.map(branch=>({branch,name:String(branch.name||branch.branch_name||branch.title||branch.branch||"").trim()})).filter(x=>x.name);
+  const areaMatches=municipalityRows.filter(b=>{
+    if(!a)return false;
+    return ncmFieldTokens(b.areas_covered).some(area=>area&&(a.includes(area)||ncmWordMatch(a,area)));
+  });
+  const areaCandidates=named(areaMatches);
+  if(areaCandidates.length===1)return {branch:areaCandidates[0].name,candidates:[],message:"NCM branch matched to the address area."};
+  if(areaCandidates.length>1)return {branch:"",candidates:areaCandidates,message:"Multiple NCM branches cover this address area. Please select the correct branch."};
+  const municipalityCandidates=named(municipalityRows);
+  if(municipalityCandidates.length===1)return {branch:municipalityCandidates[0].name,candidates:[],message:"Only one NCM branch serves this municipality; selected automatically."};
+  if(municipalityCandidates.length>1)return {branch:"",candidates:municipalityCandidates,message:"No exact area match was found. Please select an NCM branch for this municipality."};
+  const fallback=named(districtRows.length?districtRows:provinceRows);
+  return {branch:"",candidates:fallback,message:fallback.length?"No branch was matched to this municipality. Please choose from the available branches in this district/province.":"No NCM branch matches the selected province and district. Please check the address or select a branch manually."};
+}
 const cats=[["cat-sarees.jpg","Sarees","Elegant drapes for every occasion."],["cat-lehengas.jpg","Lehengas","Festive looks with timeless charm."],["cat-suits.jpg","Suits","Classic ethnic styles for every day."],["cat-gowns.jpg","Gowns","Graceful styles for special moments."],["cat-kurtis.jpg","Kurtis","Beautiful comfort for everyday elegance."],["cat-dupatta.jpg","Dupattas","Finishing touches that complete the look."],["cat-kids-wear.jpg","Kids Wear","Charming traditional styles for little ones."],["cat-accessories.jpg","Accessories","Details that add a little more sparkle."]];
 const NEPAL_PROVINCES=[
  {name:"Koshi Province",districts:["Taplejung","Sankhuwasabha","Solukhumbu","Okhaldhunga","Khotang","Bhojpur","Dhankuta","Tehrathum","Panchthar","Ilam","Jhapa","Morang","Sunsari","Udayapur"]},
@@ -195,4 +224,4 @@ function normalizeNepalPhone(value){
  return "+977"+raw;
 }
 
-export { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone };
+export { SIZE_ORDER,sizeRank,getNcmBranches,ncmNorm,ncmCoords,ncmDistanceKm,ncmFieldTokens,ncmWordMatch,matchNcmBranch,resolveNcmBranch,cats,NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,offerPasskeyPrompt,normalizeNepalPhone };
