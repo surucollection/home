@@ -540,9 +540,17 @@ Deno.serve(async (req) => {
         return json({ response, order: updated, return_delivery_deduction: deduction });
       }
       if (action === "exchange" || action === "replacement") {
+        const exchangePayload:Record<string,unknown> = { pk: Number(order.ncm_order_id) };
+        // Pass the selected replacement product through when the admin has chosen one.
+        // NCM may ignore unsupported product fields; its response is returned to the UI.
+        if (body.replacement_product_id) {
+          exchangePayload.replacement_product_id = body.replacement_product_id;
+          exchangePayload.replacement_product_name = String(body.replacement_product_name || "");
+          exchangePayload.replacement_product = body.replacement_product;
+        }
         const response = await callNcmCandidates("/api/v2/vendor/order/exchange-create", {
           method: "POST",
-          body: JSON.stringify({ pk: Number(order.ncm_order_id) }),
+          body: JSON.stringify(exchangePayload),
         });
         const deduction = Number(order.shipping_fee || 0) > 0 ? 0 : Math.max(0, Number(order.ncm_delivery_charge || 0));
         const updated = await updateOrder(order.id, { replacement_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
