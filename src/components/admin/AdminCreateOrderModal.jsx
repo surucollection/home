@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import AdminModal from "./AdminModal.jsx";
 import {supabase,money} from "../../lib/api.js";
 import {createBrandedPaymentQr} from "../../lib/brandedPaymentQr.js";
-import {NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,getNcmBranches,matchNcmBranch,normalizeNepalPhone} from "../../lib/appShared.js";
+import {NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,getNcmBranches,ncmNorm,ncmFieldTokens,ncmWordMatch,normalizeNepalPhone} from "../../lib/appShared.js";
 
 const SOURCE_OPTIONS=[
   ["whatsapp","WhatsApp"],
@@ -60,6 +60,8 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [customerNote,setCustomerNote]=useState("");
   const [branches,setBranches]=useState([]);
   const [branchManual,setBranchManual]=useState(false);
+  const [branchCandidates,setBranchCandidates]=useState([]);
+  const [branchMatchMessage,setBranchMatchMessage]=useState("");
   const [loading,setLoading]=useState(false);
   const [saving,setSaving]=useState(false);
   const [ncmRateLoading,setNcmRateLoading]=useState(false);
@@ -94,11 +96,29 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const applyBranchMatch=(draft,force=false)=>{
     if(!force&&branchManual)return;
     const province=canonicalProvince(draft.province);
-    const matched=matchNcmBranch(branches,draft.city,draft.district,null,province);
-    if(matched){
-      setAddressDraft(prev=>({...prev,province:province||prev.province,ncm_destination_branch:matched}));
-      setBranchManual(false);
+    const district=ncmNorm(draft.district),municipality=ncmNorm(draft.city),addressText=ncmNorm(draft.address);
+    const provinceBranches=branches.filter(b=>!ncmNorm(b.province_name)||ncmWordMatch(b.province_name,province));
+    const districtBranches=provinceBranches.filter(b=>!ncmNorm(b.district_name)||ncmWordMatch(b.district_name,draft.district));
+    const municipalityBranches=districtBranches.filter(b=>ncmNorm(b.municipality)===municipality||ncmWordMatch(b.municipality,draft.city));
+    const areaMatches=municipalityBranches.filter(b=>ncmFieldTokens(b.areas_covered).some(area=>area&&addressText.includes(area)));
+    const names=rows=>rows.map(branch=>({branch,name:cleanText(branch.name||branch.branch_name||branch.title||branch.branch)})).filter(x=>x.name);
+    let candidates=names(areaMatches),message="";
+    if(candidates.length===1){
+      setAddressDraft(prev=>({...prev,province:province||prev.province,ncm_destination_branch:candidates[0].name}));
+      setBranchCandidates([]);setBranchMatchMessage("Automatically selected using the address area covered by NCM.");setBranchManual(false);return;
     }
+    if(candidates.length>1)message="More than one NCM branch covers this area. Select the correct branch.";
+    else{
+      candidates=names(municipalityBranches);
+      if(candidates.length===1){
+        setAddressDraft(prev=>({...prev,province:province||prev.province,ncm_destination_branch:candidates[0].name}));
+        setBranchCandidates([]);setBranchMatchMessage("Only one NCM branch serves this municipality; selected automatically.");setBranchManual(false);return;
+      }
+      if(candidates.length>1)message="No exact area match was found. Select an NCM branch for this municipality.";
+    }
+    setAddressDraft(prev=>({...prev,province:province||prev.province,ncm_destination_branch:""}));
+    setBranchCandidates(candidates);setBranchMatchMessage(message);setBranchManual(false);
+    if(!province||!district||!municipality){setBranchCandidates([]);setBranchMatchMessage("");}
   };
 
   const loadCustomers=async()=>{
@@ -663,12 +683,13 @@ Thank you for ordering from Suru Collection.`;
                       <label>Mobile *<input value={addressDraft.phone} onChange={e=>updateAddressDraft({phone:e.target.value})} inputMode="tel"/></label>
                       <label>Postal Code<input value={addressDraft.postal_code} onChange={e=>updateAddressDraft({postal_code:e.target.value})}/></label>
                     </div>
-                    <label className="admin-create-order-full-field">Address *<textarea value={addressDraft.address} onChange={e=>updateAddressDraft({address:e.target.value})} rows="2"/></label>
+                    <label className="admin-create-order-full-field">Address *<textarea value={addressDraft.address} onChange={e=>{const value=e.target.value;updateAddressDraft({address:value});setTimeout(()=>applyBranchMatch({...addressDraft,address:value},true),0)}} rows="2"/></label>
                     <div className="admin-create-order-grid admin-create-order-grid-4">
-                      <label>Province *<select value={canonicalProvince(addressDraft.province)} onChange={e=>{const v=e.target.value;updateAddressDraft({province:v,district:"",city:""});setTimeout(()=>applyBranchMatch({...addressDraft,province:v,district:""}),0)}}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
-                      <label>District *<select value={addressDraft.district} onChange={e=>{const v=e.target.value;updateAddressDraft({district:v,city:""});setTimeout(()=>applyBranchMatch({...addressDraft,district:v,city:""}),0)}} disabled={!addressDraft.province}><option value="">Select district</option>{provinceDistricts(canonicalProvince(addressDraft.province)).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
-                      <label>City / Municipality *<select value={addressDraft.city||""} onChange={e=>{const v=e.target.value;updateAddressDraft({city:v});setTimeout(()=>applyBranchMatch({...addressDraft,city:v}),0)}} disabled={!addressDraft.district}><option value="">{addressDraft.district?"Select Municipality":"Select District First"}</option>{municipalityOptions(addressDraft.province,addressDraft.district).map(x=><option key={x} value={x}>{x}</option>)}{addressDraft.city&&!municipalityOptions(addressDraft.province,addressDraft.district).includes(addressDraft.city)&&<option value={addressDraft.city}>Existing: {addressDraft.city}</option>}</select></label>
-                      <label>NCM Destination Branch<select value={addressDraft.ncm_destination_branch} onChange={e=>updateAddressDraft({ncm_destination_branch:e.target.value})}><option value="">Select branch</option>{branches.map((b,i)=><option key={i} value={b?.name||b?.branch_name||b?.title||b?.branch||""}>{b?.name||b?.branch_name||b?.title||b?.branch||"Unnamed branch"}</option>)}</select></label>
+                      <label>Province *<select value={canonicalProvince(addressDraft.province)} onChange={e=>{const v=e.target.value;updateAddressDraft({province:v,district:"",city:"",ncm_destination_branch:""});setTimeout(()=>applyBranchMatch({...addressDraft,province:v,district:"",city:"",ncm_destination_branch:""},true),0)}}><option value="">Select province</option>{NEPAL_PROVINCES.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
+                      <label>District *<select value={addressDraft.district} onChange={e=>{const v=e.target.value;updateAddressDraft({district:v,city:"",ncm_destination_branch:""});setTimeout(()=>applyBranchMatch({...addressDraft,district:v,city:"",ncm_destination_branch:""},true),0)}} disabled={!addressDraft.province}><option value="">Select district</option>{provinceDistricts(canonicalProvince(addressDraft.province)).map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+                      <label>City / Municipality *<select value={addressDraft.city||""} onChange={e=>{const v=e.target.value;updateAddressDraft({city:v,ncm_destination_branch:""});setTimeout(()=>applyBranchMatch({...addressDraft,city:v,ncm_destination_branch:""},true),0)}} disabled={!addressDraft.district}><option value="">{addressDraft.district?"Select Municipality":"Select District First"}</option>{municipalityOptions(addressDraft.province,addressDraft.district).map(x=><option key={x} value={x}>{x}</option>)}{addressDraft.city&&!municipalityOptions(addressDraft.province,addressDraft.district).includes(addressDraft.city)&&<option value={addressDraft.city}>Existing: {addressDraft.city}</option>}</select></label>
+                      <label>NCM Destination Branch<select value={addressDraft.ncm_destination_branch} onChange={e=>{updateAddressDraft({ncm_destination_branch:e.target.value});setBranchCandidates([]);setBranchMatchMessage("");}}><option value="">Select branch</option>{(branchCandidates.length?branchCandidates.map(x=>x.branch):branches).map((b,i)=><option key={i} value={b?.name||b?.branch_name||b?.title||b?.branch||""}>{b?.name||b?.branch_name||b?.title||b?.branch||"Unnamed branch"}</option>)}</select></label>
+                      {branchMatchMessage&&<small className="small-note">{branchMatchMessage}</small>}
                     </div>
                     {addressMode==="new"&&<label className="admin-create-order-check"><input type="checkbox" checked={!!addressDraft.is_default} onChange={e=>updateAddressDraft({is_default:e.target.checked})}/> Save this as the customer's default address</label>}
                     {!branches.length&&<small className="small-note">NCM branch list could not be loaded. COD orders require a destination branch.</small>}
