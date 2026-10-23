@@ -147,7 +147,11 @@ function resolveNcmBranch(branches, {province="", district="", city="", address=
     return ncmFieldTokens(b.areas_covered).some(area=>area===c||ncmWordMatch(area,c)||ncmWordMatch(c,area));
   });
   const named=rows=>rows.map(branch=>({branch,name:String(branch.name||branch.branch_name||branch.title||branch.branch||"").trim()})).filter(x=>x.name);
-  const areaMatches=municipalityRows.filter(b=>{
+  // Match the street/locality written in the address against NCM's Areas Covered
+  // across ALL branches in the selected district. Do not require the branch's
+  // municipality metadata to equal the customer's selected municipality: a branch
+  // in another municipality may serve the address area (e.g. Baseni, Chitwan).
+  const areaMatches=districtRows.filter(b=>{
     if(!a)return false;
     return ncmFieldTokens(b.areas_covered).some(area=>{
       if(!area)return false;
