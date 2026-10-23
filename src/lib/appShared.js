@@ -4,7 +4,7 @@ import { supabase } from "./api.js";
 const SIZE_ORDER=["XXS","XS","S","M","L","XL","XXL","XXXL"];
 const sizeRank=v=>{const n=String(v||"").trim().toUpperCase();const i=SIZE_ORDER.indexOf(n);return i<0?SIZE_ORDER.length:i};
 const NCM_BRANCH_CACHE={items:null,promise:null,expires:0};
-const NCM_BRANCH_STORAGE_KEY="suru:ncm-branches:v1";
+const NCM_BRANCH_STORAGE_KEY="suru:ncm-branches:v2";
 const NCM_BRANCH_CACHE_MS=15*60*1000;
 async function getNcmBranches(){
   if(NCM_BRANCH_CACHE.items?.length&&Date.now()<NCM_BRANCH_CACHE.expires)return NCM_BRANCH_CACHE.items;
