@@ -539,22 +539,74 @@ Deno.serve(async (req) => {
         const updated = await updateOrder(order.id, { return_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
         return json({ response, order: updated, return_delivery_deduction: deduction });
       }
-      if (action === "exchange" || action === "replacement") {
-        const exchangePayload:Record<string,unknown> = { pk: Number(order.ncm_order_id) };
-        // Pass the selected replacement product through when the admin has chosen one.
-        // NCM may ignore unsupported product fields; its response is returned to the UI.
-        if (body.replacement_product_id) {
-          exchangePayload.replacement_product_id = body.replacement_product_id;
-          exchangePayload.replacement_product_name = String(body.replacement_product_name || "");
-          exchangePayload.replacement_product = body.replacement_product;
-        }
+      if (action === "exchange") {
         const response = await callNcmCandidates("/api/v2/vendor/order/exchange-create", {
           method: "POST",
-          body: JSON.stringify(exchangePayload),
+          body: JSON.stringify({ pk: Number(order.ncm_order_id) }),
         });
         const deduction = Number(order.shipping_fee || 0) > 0 ? 0 : Math.max(0, Number(order.ncm_delivery_charge || 0));
         const updated = await updateOrder(order.id, { replacement_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
         return json({ response, order: updated, replacement_delivery_deduction: deduction });
+      }
+      if (action === "replacement") {
+        // NCM's documented exchange-create operation accepts the original order ID,
+        // not a replacement product payload. Create a separate outbound shipment so
+        // the selected item is explicitly recorded in NCM's supported package field.
+        const product = body.replacement_product && typeof body.replacement_product === "object" ? body.replacement_product : {};
+        const productName = String(body.replacement_product_name || product.name || product.product_name || product.title || "").trim();
+        const productCode = String(product.code || product.product_code || product.sku || "").trim();
+        if (!productName) throw new Error("Select a replacement product with a valid name");
+        const sourceBranch = String(order.ncm_source_branch || "").trim();
+        const destinationBranch = String(order.ncm_destination_branch || "").trim();
+        if (!sourceBranch || !destinationBranch) throw new Error("The original order is missing its NCM source or destination branch. Update the branch details before creating a replacement shipment.");
+        const customerPhone = String(order.customer_phone || "").replace(/\\D/g, "").slice(-10);
+        if (!/^9\\d{9}$/.test(customerPhone)) throw new Error("Customer phone number is invalid for NCM");
+        const packageText = "Suru Collection replacement: " + productName +
+          (productCode ? " [" + productCode + "]" : "") +
+          (body.replacement_size ? ", Size: " + String(body.replacement_size) : "") +
+          (body.replacement_color ? ", Colour: " + String(body.replacement_color) : "") +
+          " × " + String(body.quantity || 1) +
+          " | Original order: " + String(order.order_number || order.id);
+        const vrefId = (String(order.order_number || order.id) + "-RPL").replace(/[^A-Za-z0-9_-]/g, "").slice(-15);
+        const payload = {
+          name: String(order.customer_name || "").slice(0, 100),
+          phone: customerPhone,
+          phone2: "",
+          cod_charge: "0",
+          address: [order.shipping_address, order.city, order.district, order.province, order.postal_code].filter(Boolean).join(", ").slice(0, 500),
+          fbranch: sourceBranch,
+          branch: destinationBranch,
+          package: packageText.slice(0, 1000),
+          vref_id: vrefId,
+          instruction: "Replacement for Suru Collection order " + String(order.order_number || order.id),
+          delivery_type: normalizeNcmDeliveryType(String(order.ncm_delivery_type || "Door2Door")),
+          weight: "1",
+        };
+        let response: any;
+        const errors: string[] = [];
+        for (const [base, path] of [[NCM_BASE, "/api/v1/order/create"], ["https://portal.nepalcanmove.com", "/api/v1/order/create"]]) {
+          try {
+            response = await ncmJson(path, { method: "POST", body: JSON.stringify(payload) }, base);
+            break;
+          } catch (e) {
+            errors.push(base + path + ": " + (e instanceof Error ? e.message : String(e)));
+          }
+        }
+        if (!response) throw new Error("Replacement shipment creation failed. " + errors.join(" | "));
+        const replacementNcmOrderId = Number(response?.orderid ?? response?.orderId ?? response?.id);
+        if (!Number.isFinite(replacementNcmOrderId)) throw new Error("NCM did not return a replacement shipment ID: " + JSON.stringify(response));
+        const deduction = Number(order.shipping_fee || 0) > 0 ? 0 : Math.max(0, Number(order.ncm_delivery_charge || 0));
+        const updated = await updateOrder(order.id, { replacement_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
+        return json({
+          success: true,
+          action: "replacement",
+          response,
+          replacement_ncm_order_id: replacementNcmOrderId,
+          replacement_package: payload.package,
+          order: updated,
+          replacement_delivery_deduction: deduction,
+          message: "A separate replacement shipment was created. The original NCM shipment ID was left unchanged. Process the original shipment return separately in NCM.",
+        });
       }
       if (action === "redirect") {
         const name = String(body.name || "").trim();
