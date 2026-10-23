@@ -195,9 +195,10 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
       province,
       postal_code:selectedAddress.postal_code||"",
       is_default:!!selectedAddress.is_default,
-      ncm_destination_branch:selectedCustomer?.ncm_destination_branch||matchNcmBranch(branches,selectedAddress.city,selectedAddress.district,null,province)||""
+      ncm_destination_branch:""
     });
-    setBranchManual(!!selectedCustomer?.ncm_destination_branch);
+    setBranchManual(false);
+    setTimeout(()=>applyBranchMatch({...selectedAddress,province,address:selectedAddress.address||"",ncm_destination_branch:""},true),0);
   },[selectedAddress,selectedCustomer,branches.length]);
 
   const selectExistingCustomer=async customer=>{
