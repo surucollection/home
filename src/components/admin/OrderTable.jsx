@@ -9,6 +9,10 @@ const ADMIN_INVOICE_ACTIONS_VERSION="2026.09.29.5";
 export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,onInvoice,onCancelInvoice,onCreateShipment,onManualPayment,onSelfDelivery,onReturnOrder,onEditOrder,onRefresh,branches=[],getNcmBranchName=b=>String(b?.name||b?.branch_name||b?.title||b?.branch||"").trim(),loadNcmBranches,ncmBusy=false,ncmBranchMessage="",ncmSyncMessage="",compact=false}){
   const [busy,setBusy]=useState("");
   const [editingOrder,setEditingOrder]=useState(null);
+  const [replacementOrder,setReplacementOrder]=useState(null);
+  const [replacementProducts,setReplacementProducts]=useState([]);
+  const [replacementProductId,setReplacementProductId]=useState("");
+  const [replacementLoading,setReplacementLoading]=useState(false);
   const [resultModal,setResultModal]=useState(null);
   const [paymentOrder,setPaymentOrder]=useState(null);
   const [trackingPopup,setTrackingPopup]=useState("");
@@ -109,7 +113,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
     setResultModal({action,value,order:o});
   };
 
-  const runNcm=async(o,action)=>{
+  const runNcm=async(o,action,extraPayload={})=>{
     if(!onNcmAction)return;
     const currentStatus=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();
     const storeStatus=String(o.order_status||"").toLowerCase().replace(/[_-]+/g," ").trim();
@@ -130,7 +134,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       return;
     }
     if(["return","exchange","replacement"].includes(action)&&!confirm(action==="return"?"Return this NCM shipment?":"Create an NCM replacement/exchange through Nepal Can Move?"))return;
-    const payload={};
+    const payload={...extraPayload};
 
     if(action==="add_comment"){
       payload.comment=prompt("Enter NCM comment:","")||"";
@@ -249,7 +253,6 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
     ["add_comment","Add Comment"],
     ["cancel_order","Cancel NCM Order"],
     ["return","Return Shipment"],
-    ["replacement","Replacement (NCM Exchange API)"],
     ["redirect","Redirect Shipment"],
     ["branch_contacts","NCM Branch Contacts"]
   ];
@@ -305,7 +308,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
                 <td className="order-total-cell"><span>{money(o.total)}</span>{Number(o.manual_payment_amount||0)>0&&<small style={{display:"block",whiteSpace:"normal",overflowWrap:"anywhere"}}>Received: {money(o.manual_payment_amount)}<br/>Balance: {money(Math.max(0,Number(o.total||0)-(String(o.payment_method||"").toLowerCase()==="cod"?Number(o.cod_advance_paid||0):0)-Number(o.manual_payment_amount||0)))}</small>}{o.payment_method==="cod"&&<small>Advance: {money(o.cod_advance_paid||0)} / {money(o.cod_advance_required||0)}<br/>COD Due: {money(Math.max(0,Number(o.total||0)-Number(o.cod_advance_paid||0)-Number(o.manual_payment_amount||0)))}</small>}</td>
                 <td>
                   {onStatus?<div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-start"}}>
-                    <select value={o.order_status||"pending"} onChange={e=>onStatus(o.id,e.target.value)}>{allowedOrderStatuses(o).map(s=><option key={s} value={s}>{s}</option>)}</select>
+                    <select value={o.order_status||"pending"} onChange={async e=>{const next=e.target.value;if(next==="replacement"){setReplacementOrder(o);setReplacementProductId("");setReplacementProducts([]);setReplacementLoading(true);try{const r=await supabase.from("products").select("*").order("name");if(r.error)throw r.error;setReplacementProducts(r.data||[]);}catch(err){setResultModal({action:"error",value:{message:"Unable to load products for replacement: "+(err?.message||"Unknown error")},order:o});setReplacementOrder(null);}finally{setReplacementLoading(false);}return;}onStatus(o.id,next);}}>{allowedOrderStatuses(o).map(s=><option key={s} value={s}>{s}</option>)}{String(o.order_status||"").toLowerCase()==="delivered"&&o.ncm_order_id&&<option value="replacement">Replacement (NCM Exchange)</option>}</select>
                     
                     {o.cancellation_status==="requested"&&<div className="cancellation-review"><small>Cancellation request{o.cancellation_reason?": "+o.cancellation_reason:""}</small><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:6}}>{onCancellation&&<><button className="secondary" onClick={()=>onCancellation(o,"accept_cancellation")}>Accept</button><button className="danger" onClick={()=>onCancellation(o,"reject_cancellation")}>Reject</button></>}</div></div>}
                     {o.cancellation_status==="rejected"&&<small>Cancellation request rejected</small>}
@@ -359,6 +362,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
         </div>})()}
       </div></div>}
 
+      {replacementOrder&&<div className="modal-backdrop" onClick={()=>!busy&&!replacementLoading&&setReplacementOrder(null)}><div className="modal-card" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><div className="page-title"><div><h3>Replace Product</h3><p>Order {replacementOrder.order_number} · NCM #{replacementOrder.ncm_order_id}</p></div><button className="secondary" type="button" onClick={()=>setReplacementOrder(null)} disabled={replacementLoading||!!busy}>Close</button></div><p>Select the replacement product.</p>{replacementLoading?<p>Loading products…</p>:<div className="admin-form"><label>Replacement product<select value={replacementProductId} onChange={e=>setReplacementProductId(e.target.value)}><option value="">Choose product</option>{replacementProducts.map(p=><option key={p.id||p.product_id||p.sku} value={p.id||p.product_id||p.sku}>{p.name||p.product_name||p.title||p.sku||"Product"}{p.price!=null?" — "+money(p.price):""}</option>)}</select></label><div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:16}}><button className="secondary" type="button" onClick={()=>setReplacementOrder(null)} disabled={!!busy}>Cancel</button><button className="primary" type="button" disabled={!replacementProductId||!!busy} onClick={async()=>{const p=replacementProducts.find(x=>String(x.id||x.product_id||x.sku)===String(replacementProductId));if(!p)return;if(!confirm("Create NCM exchange for "+(p.name||p.product_name||p.title||p.sku)+"?"))return;setReplacementOrder(null);await runNcm(replacementOrder,"replacement",{replacement_product_id:p.id||p.product_id||p.sku,replacement_product_name:p.name||p.product_name||p.title||"",replacement_product:p});}}>Create NCM Exchange</button></div></div>}</div></div>}
       {resultModal&&<div className="modal-backdrop ncm-result-backdrop" onClick={e=>{if(e.target===e.currentTarget)setResultModal(null)}}>
         <div className="modal-card ncm-result-modal" role="dialog" aria-modal="true">
           <div className="ncm-result-header">
