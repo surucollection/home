@@ -64,6 +64,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [saving,setSaving]=useState(false);
   const [ncmRateLoading,setNcmRateLoading]=useState(false);
   const [ncmAdvance,setNcmAdvance]=useState(null);
+  const [ncmRateBranch,setNcmRateBranch]=useState("");
   const [codAdvanceOverride,setCodAdvanceOverride]=useState("");
   const [error,setError]=useState("");
   const [created,setCreated]=useState(null);
@@ -323,10 +324,12 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   useEffect(()=>{
     if(!open||paymentMethod!=="cod"||!ncmDestinationBranch){
       setNcmAdvance(null);
+      setNcmRateBranch("");
       return;
     }
     let active=true;
     setNcmAdvance(null);
+    setNcmRateBranch("");
     setNcmRateLoading(true);
     supabase.functions.invoke("ncm-rate",{
       body:{destinationBranch:ncmDestinationBranch}
@@ -335,10 +338,12 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
       if(rateError)throw rateError;
       if(!data?.ok)throw Error(data?.error||"Unable to fetch NCM delivery charge.");
       setNcmAdvance(Number(data.advanceDeliveryCharge||0));
+      setNcmRateBranch(ncmDestinationBranch);
       setCodAdvanceOverride(String(Number(data.advanceDeliveryCharge||0)));
     }).catch(e=>{
       if(active){
         setNcmAdvance(null);
+        setNcmRateBranch("");
         setError(e?.message||"Unable to fetch NCM delivery charge.");
       }
     }).finally(()=>{
@@ -457,17 +462,13 @@ Thank you for ordering from Suru Collection.`;
     setSaving(true);
     try{
       if(paymentMethod==="cod"){
-        if(!cleanText(addressDraft.ncm_destination_branch)){
+        const selectedBranch=cleanText(addressDraft.ncm_destination_branch);
+        if(!selectedBranch){
           throw Error("Select an NCM destination branch for COD orders.");
         }
-        setNcmRateLoading(true);
-        const {data:ncmRate,error:ncmRateError}=await supabase.functions.invoke("ncm-rate",{
-          body:{destinationBranch:addressDraft.ncm_destination_branch}
-        });
-        if(ncmRateError)throw ncmRateError;
-        if(!ncmRate?.ok)throw Error(ncmRate?.error||"Unable to refresh the NCM delivery charge.");
-        setNcmAdvance(Number(ncmRate.advanceDeliveryCharge||0));
-        setNcmRateLoading(false);
+        if(ncmRateLoading||ncmAdvance===null||ncmRateBranch!==selectedBranch){
+          throw Error("The NCM delivery charge is still loading or out of date. Wait for the selected branch rate to finish loading before creating the order.");
+        }
       }
       const payload={
         name,
