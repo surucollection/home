@@ -155,14 +155,18 @@ function resolveNcmBranch(branches, {province="", district="", city="", address=
       return a===area||(" "+a+" ").includes(" "+area+" ")||ncmWordMatch(a,area);
     });
   });
+  // The dropdown should allow any NCM branch in the selected district,
+  // not only branches whose municipality metadata exactly matches the customer's
+  // municipality. Keep the district-scoped list available even when a likely
+  // branch is auto-selected, so staff can choose another valid district branch.
+  const districtCandidates=named(districtRows.length?districtRows:provinceRows);
   const areaCandidates=named(areaMatches);
-  if(areaCandidates.length===1)return {branch:areaCandidates[0].name,candidates:[],message:"NCM branch matched to the address area."};
-  if(areaCandidates.length>1)return {branch:"",candidates:areaCandidates,message:"Multiple NCM branches cover this address area. Please select the correct branch."};
+  if(areaCandidates.length===1)return {branch:areaCandidates[0].name,candidates:districtCandidates,message:"Branch auto-matched by address area. You can also choose another NCM branch in the same district."};
+  if(areaCandidates.length>1)return {branch:"",candidates:districtCandidates.length?districtCandidates:areaCandidates,message:"Multiple branches cover this area. Choose the correct NCM branch from the district list."};
   const municipalityCandidates=named(municipalityRows);
-  if(municipalityCandidates.length===1)return {branch:municipalityCandidates[0].name,candidates:[],message:"Only one NCM branch serves this municipality; selected automatically."};
-  if(municipalityCandidates.length>1)return {branch:"",candidates:municipalityCandidates,message:"No exact area match was found. Please select an NCM branch for this municipality."};
-  const fallback=named(districtRows.length?districtRows:provinceRows);
-  return {branch:"",candidates:fallback,message:fallback.length?"No branch was matched to this municipality. Please choose from the available branches in this district/province.":"No NCM branch matches the selected province and district. Please check the address or select a branch manually."};
+  if(municipalityCandidates.length===1)return {branch:municipalityCandidates[0].name,candidates:districtCandidates,message:"Branch auto-selected for this municipality. You can choose any other NCM branch in the same district."};
+  if(municipalityCandidates.length>1)return {branch:"",candidates:districtCandidates.length?districtCandidates:municipalityCandidates,message:"No exact area match was found. You may select any NCM branch in the same district, including branches serving nearby municipalities."};
+  return {branch:"",candidates:districtCandidates,message:districtCandidates.length?"No exact municipality match was found. Choose any NCM branch in the selected district.":"No NCM branch matches the selected province and district. Please check the address or select a branch manually."};
 }
 const cats=[["cat-sarees.jpg","Sarees","Elegant drapes for every occasion."],["cat-lehengas.jpg","Lehengas","Festive looks with timeless charm."],["cat-suits.jpg","Suits","Classic ethnic styles for every day."],["cat-gowns.jpg","Gowns","Graceful styles for special moments."],["cat-kurtis.jpg","Kurtis","Beautiful comfort for everyday elegance."],["cat-dupatta.jpg","Dupattas","Finishing touches that complete the look."],["cat-kids-wear.jpg","Kids Wear","Charming traditional styles for little ones."],["cat-accessories.jpg","Accessories","Details that add a little more sparkle."]];
 const NEPAL_PROVINCES=[
