@@ -339,7 +339,14 @@ Deno.serve(async (req) => {
       if (trackingId && trackingId !== String(order.ncm_order_id)) {
         patch.ncm_tracking_id = trackingId;
       }
-      if (mapped && mapped !== "cancelled") patch.order_status = mapped; // Cancelling a shipment alone must not cancel the store order.
+      // NCM's "Pickup Order Created" / "Processing" status describes the courier shipment,
+      // not the store's packing workflow. Do not downgrade a store order already marked
+      // packed back to processing during sync; keep packed until NCM reports real transit
+      // or delivery progress.
+      const currentStoreStatus = String(order.order_status || "").toLowerCase().trim();
+      if (mapped && mapped !== "cancelled" && !(currentStoreStatus === "packed" && mapped === "processing")) {
+        patch.order_status = mapped;
+      } // Cancelling a shipment alone must not cancel the store order.
       const updated = await updateOrder(order.id, patch, userToken);
       return json({ order: updated, history });
     }
