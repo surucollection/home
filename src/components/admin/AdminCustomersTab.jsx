@@ -29,7 +29,7 @@ export default function AdminCustomersTab({
  const[addressEditing,setAddressEditing]=useState(null);
  const[addressDraft,setAddressDraft]=useState({});
  const[addressSaving,setAddressSaving]=useState(false),[addressMessage,setAddressMessage]=useState("");
- const editAddress=a=>{setAddressMessage("");setAddressEditing(a.id);setAddressDraft({...a,phone:a.phone||""});};
+ const editAddress=a=>{setAddressMessage("");setAddressEditing(a.id);const rawProvince=String(a.province||"").trim();const province=NEPAL_PROVINCES.find(p=>p.toLowerCase()===rawProvince.toLowerCase())||NEPAL_PROVINCES.find(p=>(p+" Province").toLowerCase()===rawProvince.toLowerCase())||rawProvince;setAddressDraft({...a,province,district:String(a.district||"").trim(),city:String(a.city||"").trim(),phone:a.phone||""});};
  const addAddress=()=>{setAddressMessage("");setAddressEditing("new");setAddressDraft({label:"",full_name:selectedCustomer?.name||"",phone:selectedCustomer?.phone||"",address:"",city:"",district:"",province:"",postal_code:"",is_default:!(selectedCustomer?.addresses||[]).length});};
  const cancelAddressEdit=()=>{setAddressEditing(null);setAddressDraft({});};
  const saveAddress=async()=>{
