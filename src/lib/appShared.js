@@ -136,9 +136,9 @@ function resolveNcmBranch(branches, {province="", district="", city="", address=
   const p=ncmNorm(province),d=ncmNorm(district),c=ncmNorm(String(city||"").split(",")[0]),a=ncmNorm(address);
   const empty={branch:"",candidates:[],message:""};
   if(!p||!d||!c||!Array.isArray(branches)||!branches.length)return empty;
-  const hasMatch=(field,target)=>!ncmNorm(field)||ncmWordMatch(field,target);
-  // Apply each level in order. Missing NCM metadata is tolerated only when later
-  // municipality/area data independently supports the branch.
+  const geoNorm=v=>ncmNorm(v).replace(/\\bprovince\\b/g,"").replace(/\\bdistrict\\b/g,"").replace(/\\bmetropolitan city\\b/g,"").replace(/\\bmetropolitan\\b/g,"").replace(/\\bmunicipality\\b/g,"").replace(/\\bcity\\b/g,"").replace(/\\s+/g," ").trim();
+  const hasMatch=(field,target)=>!ncmNorm(field)||geoNorm(field)===geoNorm(target)||ncmWordMatch(field,target)||ncmWordMatch(target,field);
+  // Apply geographic hierarchy first; allow common official-name suffix differences.
   const provinceRows=branches.filter(b=>hasMatch(b.province_name,province));
   const districtRows=provinceRows.filter(b=>hasMatch(b.district_name,district));
   const municipalityRows=districtRows.filter(b=>{
@@ -149,7 +149,11 @@ function resolveNcmBranch(branches, {province="", district="", city="", address=
   const named=rows=>rows.map(branch=>({branch,name:String(branch.name||branch.branch_name||branch.title||branch.branch||"").trim()})).filter(x=>x.name);
   const areaMatches=municipalityRows.filter(b=>{
     if(!a)return false;
-    return ncmFieldTokens(b.areas_covered).some(area=>area&&(a.includes(area)||ncmWordMatch(a,area)));
+    return ncmFieldTokens(b.areas_covered).some(area=>{
+      if(!area)return false;
+      // Match address components such as "11 - Baseni" against an area named "Baseni".
+      return a===area||(" "+a+" ").includes(" "+area+" ")||ncmWordMatch(a,area);
+    });
   });
   const areaCandidates=named(areaMatches);
   if(areaCandidates.length===1)return {branch:areaCandidates[0].name,candidates:[],message:"NCM branch matched to the address area."};
