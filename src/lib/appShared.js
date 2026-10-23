@@ -159,7 +159,7 @@ function resolveNcmBranch(branches, {province="", district="", city="", address=
       if(!area)return false;
       // Compare the locality entered in the address (e.g. "Baseni") to NCM
       // coverage entries, including entries formatted like "11 - Baseni".
-      const locality=ncmNorm(area.replace(/^\\s*\\d+\\s*[-:]\\s*/, ""));
+      const locality=ncmNorm(area.replace(/^\s*\d+\s*[-:]\s*/, ""));
       return a===area||a===locality||(" "+a+" ").includes(" "+locality+" ")||ncmWordMatch(a,locality);
     });
     // Prefer matching branches whose district metadata agrees. However, if NCM's
