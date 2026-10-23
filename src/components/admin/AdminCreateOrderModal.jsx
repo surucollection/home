@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import AdminModal from "./AdminModal.jsx";
 import {supabase,money} from "../../lib/api.js";
 import {createBrandedPaymentQr} from "../../lib/brandedPaymentQr.js";
-import {NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,getNcmBranches,ncmNorm,ncmFieldTokens,ncmWordMatch,normalizeNepalPhone} from "../../lib/appShared.js";
+import {NEPAL_PROVINCES,provinceDistricts,municipalityOptions,canonicalProvince,getNcmBranches,resolveNcmBranch,normalizeNepalPhone} from "../../lib/appShared.js";
 
 const SOURCE_OPTIONS=[
   ["whatsapp","WhatsApp"],
@@ -95,30 +95,16 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
 
   const applyBranchMatch=(draft,force=false)=>{
     if(!force&&branchManual)return;
-    const province=canonicalProvince(draft.province);
-    const district=ncmNorm(draft.district),municipality=ncmNorm(draft.city),addressText=ncmNorm(draft.address);
-    const provinceBranches=branches.filter(b=>ncmNorm(b.province_name)&&ncmWordMatch(b.province_name,province));
-    const districtBranches=provinceBranches.filter(b=>ncmNorm(b.district_name)&&ncmWordMatch(b.district_name,draft.district));
-    const municipalityBranches=districtBranches.filter(b=>ncmNorm(b.municipality)===municipality||ncmWordMatch(b.municipality,draft.city));
-    const areaMatches=municipalityBranches.filter(b=>ncmFieldTokens(b.areas_covered).some(area=>area&&addressText.includes(area)));
-    const names=rows=>rows.map(branch=>({branch,name:cleanText(branch.name||branch.branch_name||branch.title||branch.branch)})).filter(x=>x.name);
-    let candidates=names(areaMatches),message="";
-    if(candidates.length===1){
-      setAddressDraft(prev=>({...prev,province:province||prev.province,ncm_destination_branch:candidates[0].name}));
-      setBranchCandidates([]);setBranchMatchMessage("Automatically selected using the address area covered by NCM.");setBranchManual(false);return;
-    }
-    if(candidates.length>1)message="More than one NCM branch covers this area. Select the correct branch.";
-    else{
-      candidates=names(municipalityBranches);
-      if(candidates.length===1){
-        setAddressDraft(prev=>({...prev,province:province||prev.province,ncm_destination_branch:candidates[0].name}));
-        setBranchCandidates([]);setBranchMatchMessage("Only one NCM branch serves this municipality; selected automatically.");setBranchManual(false);return;
-      }
-      if(candidates.length>1)message="No exact area match was found. Select an NCM branch for this municipality.";
-    }
-    setAddressDraft(prev=>({...prev,province:province||prev.province,ncm_destination_branch:""}));
-    setBranchCandidates(candidates);setBranchMatchMessage(message);setBranchManual(false);
-    if(!province||!district||!municipality){setBranchCandidates([]);setBranchMatchMessage("");}
+    const result=resolveNcmBranch(branches,{
+      province:canonicalProvince(draft.province),
+      district:draft.district,
+      city:draft.city,
+      address:draft.address
+    });
+    setAddressDraft(prev=>({...prev,province:canonicalProvince(draft.province)||prev.province,ncm_destination_branch:result.branch}));
+    setBranchCandidates(result.candidates||[]);
+    setBranchMatchMessage(result.message||"");
+    setBranchManual(false);
   };
 
   const loadCustomers=async()=>{
