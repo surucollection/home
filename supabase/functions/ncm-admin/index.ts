@@ -360,7 +360,7 @@ Deno.serve(async (req) => {
       const previousNcmCancelled = /(cancelled|canceled)/i.test(String(order.ncm_status || "").trim());
       if (hasPreviousNcmShipment) {
         // Creating a shipment is an explicit admin action. Keep the previous
-        // NCM record for audit, but allow a replacement even if the older shipment
+        // NCM record for audit, but allow an exchange even if the older shipment
         // is still active. Editing the order alone never reaches this create path.
         await archiveCancelledNcmShipment({
           ...order,
@@ -524,7 +524,7 @@ Deno.serve(async (req) => {
             order: updated,
             cancellation_requested: true,
             cancellation_confirmed: false,
-            message: "NCM cancellation requested and shipment marked Cancelled locally. If needed, a replacement shipment can be created after editing the order."
+            message: "NCM cancellation requested and shipment marked Cancelled locally. If needed, an exchange can be created after editing the order."
           });
         }
         return json({ response });
@@ -539,18 +539,11 @@ Deno.serve(async (req) => {
         const updated = await updateOrder(order.id, { return_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
         return json({ response, order: updated, return_delivery_deduction: deduction });
       }
-      if (action === "exchange") {
-        const response = await callNcmCandidates("/api/v2/vendor/order/exchange-create", {
-          method: "POST",
-          body: JSON.stringify({ pk: Number(order.ncm_order_id) }),
-        });
-        const deduction = Number(order.shipping_fee || 0) > 0 ? 0 : Math.max(0, Number(order.ncm_delivery_charge || 0));
-        const updated = await updateOrder(order.id, { replacement_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
-        return json({ response, order: updated, replacement_delivery_deduction: deduction });
-      }
-      if (action === "replacement") {
-        // Keep NCM's native exchange workflow: it creates the forward/customer order
-        // and the return/vendor order together. NCM documents these as cust_order and ven_order.
+      if (action === "exchange" || action === "replacement") {
+        // Canonical exchange workflow: NCM creates the forward/customer order and
+        // return/vendor order together. "replacement" remains accepted only for
+        // compatibility with admin bundles that have not refreshed yet.
+        const legacyAction = action === "replacement";
         const response = await callNcmCandidates("/api/v2/vendor/order/exchange-create", {
           method: "POST",
           body: JSON.stringify({ pk: Number(order.ncm_order_id) }),
@@ -570,19 +563,25 @@ Deno.serve(async (req) => {
         };
         const forwardId = findId(response?.cust_order ?? response?.data?.cust_order ?? response?.response?.cust_order);
         const returnId = findId(response?.ven_order ?? response?.data?.ven_order ?? response?.response?.ven_order);
+        const exchangeProductName = String(body.exchange_product_name || body.exchange_product?.name || body.exchange_product?.product_name || "");
         const deduction = Number(order.shipping_fee || 0) > 0 ? 0 : Math.max(0, Number(order.ncm_delivery_charge || 0));
-        const updated = await updateOrder(order.id, { replacement_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
+        const updated = await updateOrder(order.id, { exchange_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
         return json({
           success: true,
-          action: "replacement",
+          action: "exchange",
           response,
           original_ncm_order_id: Number(order.ncm_order_id),
-          replacement_ncm_order_id: forwardId,
+          exchange_ncm_order_id: forwardId,
           return_ncm_order_id: returnId,
-          replacement_product_name: String(body.replacement_product_name || body.replacement_product?.name || body.replacement_product?.product_name || ""),
+          exchange_product_name: exchangeProductName,
           order: updated,
-          replacement_delivery_deduction: deduction,
+          exchange_delivery_deduction: deduction,
           message: "NCM exchange created. Forward and return shipment IDs are extracted when NCM includes them in its response.",
+          ...(legacyAction ? {
+            replacement_ncm_order_id: forwardId,
+            replacement_product_name: exchangeProductName,
+            replacement_delivery_deduction: deduction
+          } : {})
         });
       }
       if (action === "redirect") {
