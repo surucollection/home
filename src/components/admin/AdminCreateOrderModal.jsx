@@ -468,14 +468,21 @@ Thank you for ordering from Suru Collection.`;
     }
     setSaving(true);
     try{
+      let codAdvanceForOrder=effectiveCodAdvance;
       if(paymentMethod==="cod"){
         const selectedBranch=cleanText(addressDraft.ncm_destination_branch);
         if(!selectedBranch){
           throw Error("Select an NCM destination branch for COD orders.");
         }
-        if(ncmRateLoading||ncmAdvance===null||ncmRateBranch!==selectedBranch){
-          throw Error("The NCM delivery charge is still loading or out of date. Wait for the selected branch rate to finish loading before creating the order.");
+        const {data:rateData,error:rateError}=await supabase.functions.invoke("ncm-rate",{body:{destinationBranch:selectedBranch}});
+        if(rateError)throw rateError;
+        if(!rateData?.ok||!Number.isFinite(Number(rateData.advanceDeliveryCharge))){
+          throw Error(rateData?.error||"NCM could not return a fresh delivery charge for this branch.");
         }
+        codAdvanceForOrder=Number(rateData.advanceDeliveryCharge);
+        setNcmAdvance(codAdvanceForOrder);
+        setNcmRateBranch(selectedBranch);
+        setCodAdvanceOverride(String(codAdvanceForOrder));
       }
       const payload={
         name,
@@ -489,7 +496,7 @@ Thank you for ordering from Suru Collection.`;
         province:canonicalProvince(addressDraft.province),
         postal_code:cleanText(addressDraft.postal_code)||null,
         ncm_destination_branch:cleanText(addressDraft.ncm_destination_branch)||null,
-        cod_advance_override:paymentMethod==="cod"?effectiveCodAdvance:null,
+        cod_advance_override:paymentMethod==="cod"?codAdvanceForOrder:null,
         manual_discount_amount:effectiveManualDiscount
       };
       const args={
