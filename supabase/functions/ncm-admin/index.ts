@@ -548,7 +548,7 @@ Deno.serve(async (req) => {
         const findId = (v: any): number | null => {
           if (v === null || v === undefined) return null;
           if (typeof v === "number" && Number.isFinite(v)) return v;
-          if (typeof v === "string" && /^\\d+$/.test(v.trim())) return Number(v);
+          if (typeof v === "string" && /^\d+$/.test(v.trim())) return Number(v);
           if (typeof v !== "object") return null;
           for (const key of ["orderid","order_id","orderId","id","pk","cust_order","ven_order"]) {
             if (v[key] !== undefined && v[key] !== v) {
