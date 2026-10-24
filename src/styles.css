@@ -1426,6 +1426,45 @@
 }
 
 
+
+
+/* Exchange rows: keep Copy Order Details and Exchange status vertically stacked in the narrow Status column. */
+.admin-orders-table .order-action-row-track-exchange{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.admin-orders-table .order-action-row-track-exchange>button{
+  display:block!important;
+  flex:0 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  box-sizing:border-box!important;
+  text-align:center!important;
+}
+.admin-orders-table .order-action-row-track-exchange>label{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+.admin-orders-table .order-action-row-track-exchange select{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+
 /* Compact admin Orders table so the Actions column is reachable with less scrolling */
 .admin-orders-table{table-layout:fixed}
 .admin-orders-table th,.admin-orders-table td{overflow-wrap:anywhere;word-break:normal}
