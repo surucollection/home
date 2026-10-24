@@ -457,7 +457,7 @@ Deno.serve(async (req) => {
       return json({ success: true, order: updated, ncm: response });
     }
 
-    if (["details","status_history","comments","add_comment","cancel_order","return","exchange","replacement","redirect"].includes(action)) {
+    if (["details","status_history","comments","add_comment","cancel_order","return","redirect","exchange"].includes(action)) {
       const body = requestBody;
       const userToken = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
       if (!userToken) throw new Error("Unauthorized");
@@ -539,11 +539,8 @@ Deno.serve(async (req) => {
         const updated = await updateOrder(order.id, { return_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
         return json({ response, order: updated, return_delivery_deduction: deduction });
       }
-      if (action === "exchange" || action === "replacement") {
-        // Canonical exchange workflow: NCM creates the forward/customer order and
-        // return/vendor order together. "replacement" remains accepted only for
-        // compatibility with admin bundles that have not refreshed yet.
-        const legacyAction = action === "replacement";
+      if (action === "exchange") {
+        // NCM creates the forward/customer order and return/vendor order together.
         const response = await callNcmCandidates("/api/v2/vendor/order/exchange-create", {
           method: "POST",
           body: JSON.stringify({ pk: Number(order.ncm_order_id) }),
@@ -576,12 +573,7 @@ Deno.serve(async (req) => {
           exchange_product_name: exchangeProductName,
           order: updated,
           exchange_delivery_deduction: deduction,
-          message: "NCM exchange created. Forward and return shipment IDs are extracted when NCM includes them in its response.",
-          ...(legacyAction ? {
-            replacement_ncm_order_id: forwardId,
-            replacement_product_name: exchangeProductName,
-            replacement_delivery_deduction: deduction
-          } : {})
+          message: "NCM exchange created. Forward and return shipment IDs are extracted when NCM includes them in its response."
         });
       }
       if (action === "redirect") {
