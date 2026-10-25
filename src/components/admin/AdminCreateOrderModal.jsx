@@ -33,7 +33,8 @@ const emptyLine=()=>({
   size:"",
   color:"",
   qty:"1",
-  isPreorder:false
+  isPreorder:false,
+  customPrice:""
 });
 
 const cleanText=v=>String(v??"").trim();
@@ -347,7 +348,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   };
   const lineTotal=line=>{
     const p=lineProduct(line);
-    return p?Math.round(Number(p.price||0)*Math.max(1,Number(line.qty||1))):0;
+    return p?Math.round(Number(line.customPrice!==""&&line.customPrice!=null?line.customPrice:p.price||0)*Math.max(1,Number(line.qty||1))):0;
   };
   const subtotal=useMemo(()=>lines.reduce((sum,l)=>sum+lineTotal(l),0),[lines,activeProducts]);
   const estimatedPreorderDiscount=useMemo(()=>lines.reduce((sum,l)=>{
@@ -540,7 +541,8 @@ Thank you for ordering from Suru Collection.`;
           size:cleanText(l.variant.size)||null,
           color:cleanText(l.variant.color)||null,
           qty:l.qty,
-          is_preorder:!!l.isPreorder
+          is_preorder:!!l.isPreorder,
+          unit_price:Number(l.customPrice!==""&&l.customPrice!=null?l.customPrice:l.product.price||0)
         })),
         p_payment_method:paymentMethod,
         p_customer_note:cleanText(customerNote)||null,
@@ -559,6 +561,12 @@ Thank you for ordering from Suru Collection.`;
       if(data.order_id){
         const {error:discountSaveError}=await supabase.from("orders").update({manual_discount_amount:effectiveManualDiscount}).eq("id",data.order_id);
         if(discountSaveError)throw Error("Order was created, but its extra discount record could not be saved: "+discountSaveError.message);
+        const customPrices=cleanLines.map(l=>({code:l.product.product_code,size:cleanText(l.variant.size)||null,color:cleanText(l.variant.color)||null,unit_price:Number(l.customPrice!==""&&l.customPrice!=null?l.customPrice:l.product.price||0)}));
+        if(customPrices.some((x,idx)=>Math.abs(x.unit_price-Number(cleanLines[idx].product.price||0))>0.001)){
+          const {data:priceData,error:priceError}=await supabase.rpc("admin_adjust_created_order_item_prices",{p_order_id:data.order_id,p_items:customPrices});
+          if(priceError)throw Error("Order was created, but custom item prices could not be saved: "+priceError.message);
+          if(!priceData?.success)throw Error("Order was created, but custom item prices were not confirmed.");
+        }
       }
       const result={...data,confirmation:buildConfirmation(data)};
       setCreated(result);
@@ -735,7 +743,7 @@ Thank you for ordering from Suru Collection.`;
                       <div className="admin-create-order-grid admin-create-order-grid-4">
                         <label className="admin-create-order-span-2">Product *<select value={line.productId} onChange={e=>updateLine(i,{productId:e.target.value})}><option value="">Select product</option>{activeProducts.map(p=><option key={p.id} value={p.id}>{p.product_code} — {p.name}</option>)}</select></label>
                         <label>Quantity *<input type="number" min="1" max="10000" value={line.qty} onChange={e=>updateLine(i,{qty:e.target.value})}/></label>
-                        <div className="admin-create-order-line-total"><span>Line total</span><b>{money(lineTotal(line))}</b></div>
+                        <label>Unit Price (NPR) *<input type="number" min="0" step="0.01" value={line.customPrice!==""?line.customPrice:String(lineProduct(line)?.price??"")} onChange={e=>updateLine(i,{customPrice:e.target.value})}/></label><div className="admin-create-order-line-total"><span>Line total</span><b>{money(lineTotal(line))}</b></div>
                       </div>
                       {line.productId&&<div className="admin-create-order-grid admin-create-order-grid-4">
                         {sizes.length>0&&<label>Size *<select value={line.size} onChange={e=>updateLine(i,{size:e.target.value})}><option value="">Select size</option>{sizes.map(v=>{const vv=optionVariantsFor(lineProduct(line),line,"size").filter(x=>cleanText(x.size).toUpperCase()===cleanText(v).toUpperCase());return <option key={v} value={v}>{v} — {variantAvailability(vv,lineProduct(line))}</option>})}</select></label>}
