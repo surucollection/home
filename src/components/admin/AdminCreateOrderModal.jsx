@@ -65,6 +65,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [branchMatchMessage,setBranchMatchMessage]=useState("");
   const [loading,setLoading]=useState(false);
   const [saving,setSaving]=useState(false);
+  const [savingCustomer,setSavingCustomer]=useState(false);
   const [ncmRateLoading,setNcmRateLoading]=useState(false);
   const [ncmAdvance,setNcmAdvance]=useState(null);
   const [ncmRateBranch,setNcmRateBranch]=useState("");
@@ -102,7 +103,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
       setError("Enter customer name, phone and complete delivery address before saving.");
       return;
     }
-    setSaving(true);
+    setSavingCustomer(true);
     try{
       const {data,error:e}=await supabase.rpc("admin_save_customer_address",{p_customer:{
         name,phone:normalizeNepalPhone(phone),email:cleanText(customerDraft.email)||null,
@@ -114,17 +115,13 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
       }});
       if(e)throw e;
       if(!data?.success||!data?.customer_id)throw Error("Customer save returned no customer ID.");
-      await loadCustomers();
-      const {data:list,error:listError}=await supabase.rpc("admin_list_customers");
-      if(listError)throw listError;
-      const saved=(list||[]).find(x=>String(x.id)===String(data.customer_id));
-      if(saved){setSelectedCustomer(saved);setMode("existing");setCustomerSearch(saved.phone||saved.name||"");}
-      setAddresses([]);
-      setAddressMode("new");
-      setAddressDraft(prev=>({...prev,full_name:name,phone}));
+      setCustomerDraft(prev=>({...prev,name,phone:normalizeNepalPhone(phone)}));
+      setAddressDraft(prev=>({...prev,full_name:name,phone:normalizeNepalPhone(phone)}));
       setError("Customer and delivery address saved to the database.");
+      // Refresh the customer picker in the background; a refresh failure must not hide a successful save.
+      loadCustomers().catch(()=>{});
     }catch(e){setError(e?.message||"Unable to save customer details.");}
-    finally{setSaving(false);}
+    finally{setSavingCustomer(false);}
   };
 
   const applyBranchMatch=(draft,force=false)=>{
@@ -689,7 +686,7 @@ Thank you for ordering from Suru Collection.`;
             ? <div className="card"><p>Loading customers, products and delivery branches…</p></div>
             : <>
               <section className="admin-create-order-section">
-                <div className="admin-create-order-section-title"><div><h4>1. Customer</h4><p>No website account is required for a new customer.</p></div><div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,justifyContent:"flex-end"}}><button type="button" className="secondary" onClick={saveCustomerToDatabase} disabled={saving}>{saving?"Saving…":"Save Customer"}</button><div className="admin-create-order-toggle"><button type="button" className={mode==="existing"?"active":""} onClick={()=>{setMode("existing");setError("")}}>Existing Customer</button><button type="button" className={mode==="new"?"active":""} onClick={startNewCustomer}>New Customer</button></div></div></div>
+                <div className="admin-create-order-section-title"><div><h4>1. Customer</h4><p>No website account is required for a new customer.</p></div><div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,justifyContent:"flex-end"}}><button type="button" className="secondary" onClick={saveCustomerToDatabase} disabled={savingCustomer}>{savingCustomer?"Saving…":"Save Customer"}</button><div className="admin-create-order-toggle"><button type="button" className={mode==="existing"?"active":""} onClick={()=>{setMode("existing");setError("")}}>Existing Customer</button><button type="button" className={mode==="new"?"active":""} onClick={startNewCustomer}>New Customer</button></div></div></div>
                 {mode==="existing"
                   ? <>
                       <div className="admin-create-order-customer-search"><input value={customerSearch} onChange={e=>{setCustomerSearch(e.target.value);setSelectedCustomer(null)}} placeholder="Search name, phone or email"/>{selectedCustomer&&<span className="admin-create-order-selected-customer">{selectedCustomer.name||"Customer"} · {selectedCustomer.phone||"No phone"}</span>}</div>
