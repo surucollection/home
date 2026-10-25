@@ -74,9 +74,6 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [paymentQr,setPaymentQr]=useState(null);
   const [qrLoading,setQrLoading]=useState(false);
   const [qrError,setQrError]=useState("");
-  const [customerDraftSaved,setCustomerDraftSaved]=useState(false);
-  const [customerDraftMessage,setCustomerDraftMessage]=useState("");
-  const CUSTOMER_DRAFT_KEY="suru_admin_create_order_customer_draft_v1";
 
   const activeProducts=useMemo(()=>products.filter(p=>p.is_active!==false),[products]);
   const filteredCustomers=useMemo(()=>{
@@ -96,36 +93,37 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     if(Object.prototype.hasOwnProperty.call(patch,"ncm_destination_branch"))setBranchManual(true);
   };
 
-  const saveCustomerDetailsDraft=()=>{
+  const saveCustomerToDatabase=async()=>{
+    setError("");
+    const name=cleanText(customerDraft.name)||cleanText(addressDraft.full_name);
+    const phone=cleanText(customerDraft.phone)||cleanText(addressDraft.phone);
+    if(!name||!phone||!cleanText(addressDraft.address)||!cleanText(addressDraft.city)||!cleanText(addressDraft.district)||!cleanText(addressDraft.province)){
+      setError("Enter customer name, phone and complete delivery address before saving.");
+      return;
+    }
+    setSaving(true);
     try{
-      const draft={customerDraft,addressDraft,mode,addressMode,addressId,selectedCustomer:mode==="existing"&&selectedCustomer?{id:selectedCustomer.id,name:selectedCustomer.name,phone:selectedCustomer.phone,email:selectedCustomer.email}:null,savedAt:new Date().toISOString()};
-      localStorage.setItem(CUSTOMER_DRAFT_KEY,JSON.stringify(draft));
-      setCustomerDraftSaved(true);
-      setCustomerDraftMessage("Customer and delivery details saved on this device. You can close this form and restore them later.");
-    }catch(e){setCustomerDraftMessage("Could not save details on this device. Please keep the form open.");}
-  };
-  const restoreCustomerDetailsDraft=()=>{
-    try{
-      const raw=localStorage.getItem(CUSTOMER_DRAFT_KEY);
-      if(!raw){setCustomerDraftMessage("No saved customer details found on this device.");return;}
-      const draft=JSON.parse(raw);
-      if(draft.customerDraft)setCustomerDraft(prev=>({...prev,...draft.customerDraft}));
-      if(draft.addressDraft)setAddressDraft(prev=>({...prev,...draft.addressDraft}));
-      if(draft.mode==="new"||draft.mode==="existing")setMode(draft.mode);
-      if(draft.addressMode==="new"||draft.addressMode==="saved")setAddressMode(draft.addressMode);
-      if(draft.addressId)setAddressId(draft.addressId);
-      if(draft.selectedCustomer?.id){
-        const match=customers.find(x=>String(x.id)===String(draft.selectedCustomer.id));
-        if(match){setSelectedCustomer(match);setMode("existing");}
-      }
-      setCustomerDraftSaved(true);
-      setCustomerDraftMessage("Saved customer and delivery details restored.");
-    }catch(e){setCustomerDraftMessage("Could not restore the saved details.");}
-  };
-  const clearCustomerDetailsDraft=()=>{
-    try{localStorage.removeItem(CUSTOMER_DRAFT_KEY);}catch{}
-    setCustomerDraftSaved(false);
-    setCustomerDraftMessage("Saved customer details cleared from this device.");
+      const {data,error:e}=await supabase.rpc("admin_save_customer_address",{p_customer:{
+        name,phone,email:cleanText(customerDraft.email)||null,
+        first_name:cleanText(customerDraft.first_name)||null,last_name:cleanText(customerDraft.last_name)||null,
+        address:cleanText(addressDraft.address),city:cleanText(addressDraft.city),district:cleanText(addressDraft.district),
+        province:canonicalProvince(addressDraft.province),postal_code:cleanText(addressDraft.postal_code)||null,
+        ncm_destination_branch:cleanText(addressDraft.ncm_destination_branch)||null,
+        label:cleanText(addressDraft.label)||"Home",is_default:!!addressDraft.is_default
+      }});
+      if(e)throw e;
+      if(!data?.success||!data?.customer_id)throw Error("Customer save returned no customer ID.");
+      await loadCustomers();
+      const {data:list,error:listError}=await supabase.rpc("admin_list_customers");
+      if(listError)throw listError;
+      const saved=(list||[]).find(x=>String(x.id)===String(data.customer_id));
+      if(saved){setSelectedCustomer(saved);setMode("existing");setCustomerSearch(saved.phone||saved.name||"");}
+      setAddresses([]);
+      setAddressMode("new");
+      setAddressDraft(prev=>({...prev,full_name:name,phone}));
+      setError("Customer and delivery address saved to the database.");
+    }catch(e){setError(e?.message||"Unable to save customer details.");}
+    finally{setSaving(false);}
   };
 
   const applyBranchMatch=(draft,force=false)=>{
@@ -683,8 +681,7 @@ Thank you for ordering from Suru Collection.`;
             ? <div className="card"><p>Loading customers, products and delivery branches…</p></div>
             : <>
               <section className="admin-create-order-section">
-                <div className="admin-create-order-section-title"><div><h4>1. Customer</h4><p>No website account is required for a new customer.</p></div><div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"flex-end"}}><button type="button" className="secondary" onClick={saveCustomerDetailsDraft}>Save Customer Details</button><button type="button" className="secondary" onClick={restoreCustomerDetailsDraft}>Restore Saved</button>{customerDraftSaved&&<button type="button" className="secondary" onClick={clearCustomerDetailsDraft}>Clear Saved</button>}<div className="admin-create-order-toggle"><button type="button" className={mode==="existing"?"active":""} onClick={()=>{setMode("existing");setError("")}}>Existing Customer</button><button type="button" className={mode==="new"?"active":""} onClick={startNewCustomer}>New Customer</button></div></div></div>
-                {customerDraftMessage&&<p role="status" style={{fontSize:12,margin:"6px 0",color:"var(--brand,#7b173c)"}}>{customerDraftMessage}</p>}
+                <div className="admin-create-order-section-title"><div><h4>1. Customer</h4><p>No website account is required for a new customer.</p></div><div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,justifyContent:"flex-end"}}><button type="button" className="secondary" onClick={saveCustomerToDatabase} disabled={saving}>{saving?"Saving…":"Save Customer"}</button><div className="admin-create-order-toggle"><button type="button" className={mode==="existing"?"active":""} onClick={()=>{setMode("existing");setError("")}}>Existing Customer</button><button type="button" className={mode==="new"?"active":""} onClick={startNewCustomer}>New Customer</button></div></div></div>
                 {mode==="existing"
                   ? <>
                       <div className="admin-create-order-customer-search"><input value={customerSearch} onChange={e=>{setCustomerSearch(e.target.value);setSelectedCustomer(null)}} placeholder="Search name, phone or email"/>{selectedCustomer&&<span className="admin-create-order-selected-customer">{selectedCustomer.name||"Customer"} · {selectedCustomer.phone||"No phone"}</span>}</div>
