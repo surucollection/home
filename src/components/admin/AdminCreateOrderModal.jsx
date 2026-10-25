@@ -105,7 +105,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     setSaving(true);
     try{
       const {data,error:e}=await supabase.rpc("admin_save_customer_address",{p_customer:{
-        name,phone,email:cleanText(customerDraft.email)||null,
+        name,phone:normalizeNepalPhone(phone),email:cleanText(customerDraft.email)||null,
         first_name:cleanText(customerDraft.first_name)||null,last_name:cleanText(customerDraft.last_name)||null,
         address:cleanText(addressDraft.address),city:cleanText(addressDraft.city),district:cleanText(addressDraft.district),
         province:canonicalProvince(addressDraft.province),postal_code:cleanText(addressDraft.postal_code)||null,
