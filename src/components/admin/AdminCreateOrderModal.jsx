@@ -53,6 +53,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const [lines,setLines]=useState([emptyLine()]);
   const [source,setSource]=useState("whatsapp");
   const [paymentMethod,setPaymentMethod]=useState("cod");
+  const [fulfillmentType,setFulfillmentType]=useState("ncm");
   const [amountPaid,setAmountPaid]=useState("0");
   const [paymentReference,setPaymentReference]=useState("");
   const [balanceMethod,setBalanceMethod]=useState("cod");
@@ -178,6 +179,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
     setLines([emptyLine()]);
     setSource("whatsapp");
     setPaymentMethod("cod");
+    setFulfillmentType("ncm");
     setAmountPaid("0");
     setPaymentReference("");
     setBalanceMethod("cod");
@@ -356,11 +358,11 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
   const estimatedTotal=Math.max(0,subtotal-estimatedPreorderDiscount-effectiveManualDiscount);
   const ncmDestinationBranch=cleanText(addressDraft.ncm_destination_branch);
   const effectiveCodAdvance=codAdvanceOverride!==""?Math.max(0,Number(codAdvanceOverride)||0):Number(ncmAdvance||0);
-  const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"?Number(ncmAdvance||0):0);
+  const totalIncludingDelivery=estimatedTotal+(paymentMethod==="cod"&&fulfillmentType==="ncm"?Number(ncmAdvance||0):0);
   const balanceAfterPaid=Math.max(0,totalIncludingDelivery-Math.max(0,Number(amountPaid||0)));
 
   useEffect(()=>{
-    if(!open||paymentMethod!=="cod"||!ncmDestinationBranch){
+    if(!open||paymentMethod!=="cod"||fulfillmentType!=="ncm"||!ncmDestinationBranch){
       setNcmAdvance(null);
       setNcmRateBranch("");
       return;
@@ -388,7 +390,7 @@ export default function AdminCreateOrderModal({open,onClose,onCreated}){
       if(active)setNcmRateLoading(false);
     });
     return()=>{active=false};
-  },[open,paymentMethod,ncmDestinationBranch]);
+  },[open,paymentMethod,fulfillmentType,ncmDestinationBranch]);
 
   const lineEligibility=(line)=>{
     const p=lineProduct(line),v=getLineVariant(line,false),qty=Math.max(1,Number(line.qty||1));
@@ -493,14 +495,14 @@ Thank you for ordering from Suru Collection.`;
     const paid=Math.max(0,Number(amountPaid||0));
     if(!Number.isFinite(paid))return setError("Enter a valid amount paid.");
     if(paid>Math.max(0,totalIncludingDelivery)+1000000)return setError("Amount paid is invalid.");
-    if(paymentMethod==="cod"&&!cleanText(addressDraft.ncm_destination_branch)){
+    if(paymentMethod==="cod"&&fulfillmentType==="ncm"&&!cleanText(addressDraft.ncm_destination_branch)){
       setError("Select an NCM destination branch for COD orders.");
       return;
     }
     setSaving(true);
     try{
-      let codAdvanceForOrder=effectiveCodAdvance;
-      if(paymentMethod==="cod"){
+      let codAdvanceForOrder=fulfillmentType==="ncm"?effectiveCodAdvance:0;
+      if(paymentMethod==="cod"&&fulfillmentType==="ncm"){
         const selectedBranch=cleanText(addressDraft.ncm_destination_branch);
         if(!selectedBranch){
           throw Error("Select an NCM destination branch for COD orders.");
@@ -527,6 +529,7 @@ Thank you for ordering from Suru Collection.`;
         province:canonicalProvince(addressDraft.province),
         postal_code:cleanText(addressDraft.postal_code)||null,
         ncm_destination_branch:cleanText(addressDraft.ncm_destination_branch)||null,
+        fulfillment_type:fulfillmentType,
         cod_advance_override:paymentMethod==="cod"?codAdvanceForOrder:null,
         manual_discount_amount:effectiveManualDiscount
       };
@@ -759,6 +762,7 @@ Thank you for ordering from Suru Collection.`;
                 <div className="admin-create-order-grid admin-create-order-grid-4">
                   <label>Order Source<select value={source} onChange={e=>setSource(e.target.value)}>{SOURCE_OPTIONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
                   <label>Payment Method<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="cod">Cash on Delivery</option><option value="fonepay">Fonepay</option><option value="online">Online</option></select></label>
+                  <label>Delivery Method<select value={fulfillmentType} onChange={e=>setFulfillmentType(e.target.value)}><option value="ncm">NCM Delivery</option><option value="self_delivery">Self Delivery (no NCM charge)</option><option value="store_pickup">Store Pickup (no NCM charge)</option></select></label>
                   {lines.some(l=>l.isPreorder)&&<label>Pre-order Balance<select value={balanceMethod} onChange={e=>setBalanceMethod(e.target.value)}><option value="cod">Cash on Delivery</option><option value="online">Online later</option></select></label>}
                   <label>Amount Paid Now<input type="number" min="0" step="1" value={amountPaid} onChange={e=>setAmountPaid(e.target.value)}/></label>
                 </div>
