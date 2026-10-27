@@ -12,15 +12,19 @@ const corsHeaders = {
 };
 
 function mapStatus(raw: string): string | null {
-  const s = String(raw || "").toLowerCase().replace(/[_-]+/g, " ");
-  if (s.includes("deliver")) return "delivered";
-  if (s.includes("return")) return "returned";
+  const s = String(raw || "").toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
   if (s.includes("cancel")) return "cancelled";
-  if (s.includes("pickup") || s.includes("transit") || s.includes("dispatch") || s.includes("arriv") || s.includes("sent for delivery")) return "shipped";
+  if (s.includes("return")) return "returned";
+  if (/\b(sent for delivery|out for delivery|on delivery|delivery in progress|delivery attempted|attempted delivery|unable to deliver|not delivered|undelivered|delivery failed|failed delivery|pending delivery)\b/.test(s)) return "shipped";
+  if (
+    s === "delivered" ||
+    /\b(successfully delivered|delivered successfully|delivered to (the )?(customer|recipient)|order delivered|shipment delivered|delivery successful)\b/.test(s)
+  ) return "delivered";
+  if (s.includes("deliver") || s.includes("delivery")) return "shipped";
+  if (s.includes("pickup") || s.includes("transit") || s.includes("dispatch") || s.includes("arriv")) return "shipped";
   if (s.includes("process") || s.includes("warehouse") || s.includes("assigned") || s.includes("created")) return "processing";
   return null;
 }
-
 function extractOrderIds(payload: any): number[] {
   const candidates = [
     payload?.orderIds, payload?.order_ids, payload?.orderId, payload?.order_id,
