@@ -150,10 +150,29 @@ function extractNcmTrackingId(value: any): string {
 }
 
 function mapNcmStatus(raw: string): string | null {
-  const s = String(raw || "").toLowerCase().replace(/[_-]+/g, " ");
-  if (s.includes("deliver")) return "delivered";
-  if (s.includes("return")) return "returned";
+  const s = String(raw || "").toLowerCase().replace(/[_-]+/g, " ").replace(/\\s+/g, " ").trim();
+
+  // Terminal exception states take precedence over any other status wording.
   if (s.includes("cancel")) return "cancelled";
+  if (s.includes("return")) return "returned";
+
+  // A shipment that is on its way to the customer has NOT been delivered yet.
+  // NCM uses statuses such as "Sent for Delivery" and "Out for Delivery";
+  // check these before matching delivery-related words.
+  if (/\\b(sent for delivery|out for delivery|on delivery|delivery in progress|delivery attempted|attempted delivery|unable to deliver|not delivered|undelivered|delivery failed|failed delivery|pending delivery)\\b/.test(s)) {
+    return "shipped";
+  }
+
+  // Only clear completion statuses should move a store order to Delivered.
+  if (
+    s === "delivered" ||
+    /\\b(successfully delivered|delivered successfully|delivered to (the )?(customer|recipient)|order delivered|shipment delivered|delivery successful)\\b/.test(s)
+  ) {
+    return "delivered";
+  }
+
+  // Any other delivery-related status is non-final, so never treat it as delivered.
+  if (s.includes("deliver") || s.includes("delivery")) return "shipped";
   if (s.includes("pickup order created") || s.includes("order created") || s.includes("created") || s.includes("process") || s.includes("warehouse") || s.includes("assigned")) return "processing";
   if (s.includes("pickup") || s.includes("transit") || s.includes("dispatch") || s.includes("arriv")) return "shipped";
   return null;
