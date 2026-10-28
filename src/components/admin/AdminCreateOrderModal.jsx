@@ -501,7 +501,9 @@ Thank you for ordering from Suru Collection.`;
     }
     setSaving(true);
     try{
-      let codAdvanceForOrder=fulfillmentType==="ncm"?effectiveCodAdvance:0;
+      // Keep the admin-entered advance override. A fresh NCM quote is for
+      // the delivery charge only; it must not overwrite a manual advance of 0.
+      let codAdvanceForOrder=paymentMethod==="cod"&&fulfillmentType==="ncm"?effectiveCodAdvance:0;
       if(paymentMethod==="cod"&&fulfillmentType==="ncm"){
         const selectedBranch=cleanText(addressDraft.ncm_destination_branch);
         if(!selectedBranch){
@@ -512,10 +514,9 @@ Thank you for ordering from Suru Collection.`;
         if(!rateData?.ok||!Number.isFinite(Number(rateData.advanceDeliveryCharge))){
           throw Error(rateData?.error||"NCM could not return a fresh delivery charge for this branch.");
         }
-        codAdvanceForOrder=Number(rateData.advanceDeliveryCharge);
-        setNcmAdvance(codAdvanceForOrder);
+        // Preserve the fresh delivery quote separately from the advance requirement.
+        setNcmAdvance(Number(rateData.advanceDeliveryCharge));
         setNcmRateBranch(selectedBranch);
-        setCodAdvanceOverride(String(codAdvanceForOrder));
       }
       const payload={
         name,
@@ -670,10 +671,10 @@ Thank you for ordering from Suru Collection.`;
           <h3>Order #{created.order_number} created</h3>
           <p>{created.preorder?"Pre-order advance handling is included.":"The order has been added to the normal order workflow."}</p>
           <div className="admin-create-order-confirmation"><pre>{created.confirmation}</pre></div>
-          {["cod","fonepay"].includes(String(created.payment_method||paymentMethod).toLowerCase())&&<section className="admin-create-order-payment-qr">
+          {(String(created.payment_method||paymentMethod).toLowerCase()==="fonepay"||(String(created.payment_method||paymentMethod).toLowerCase()==="cod"&&Number(created.advance_required||0)>Number(created.amount_paid||0)) )&&<section className="admin-create-order-payment-qr">
             <h4>Fonepay payment</h4>
             <p>{String(created.payment_method||paymentMethod).toLowerCase()==="cod"?"Generate a QR for the COD delivery advance. The customer scans it using their bank app; the remaining order balance is payable on delivery.":"Generate a QR for the full order amount. The customer scans it using their bank app to pay."}</p>
-            {!paymentQr&&(String(created.payment_method||paymentMethod).toLowerCase()!=="cod"||Number(created.advance_required||0)>Number(created.amount_paid||0))&&<button type="button" className="primary" onClick={generatePaymentQr} disabled={qrLoading}>{qrLoading?"Generating QR…":"Generate Fonepay QR"}</button>}{String(created.payment_method||paymentMethod).toLowerCase()==="cod"&&Number(created.advance_required||0)<=Number(created.amount_paid||0)&&<p>No additional advance is required. The remaining payable amount includes the NCM delivery charge.</p>}
+            {!paymentQr&&(String(created.payment_method||paymentMethod).toLowerCase()!=="cod"||Number(created.advance_required||0)>Number(created.amount_paid||0))&&<button type="button" className="primary" onClick={generatePaymentQr} disabled={qrLoading}>{qrLoading?"Generating QR…":"Generate Fonepay QR"}</button>}
             {paymentQr&&<div className="admin-create-order-payment-qr-result">
               <img src={paymentQr.qrImage} alt="Fonepay payment QR" />
               <div><b>Amount: {money(paymentQr.amount||0)}</b><small>Reference: {paymentQr.reference||"—"}</small><small>Customer: scan this QR in their banking app that supports Fonepay.</small></div>
