@@ -2,7 +2,7 @@ import React,{useEffect,useState} from "react";
 import { money, supabase, imageUrl } from "../../lib/api.js";
 import AdminModal from "./AdminModal.jsx";
 
-export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
+export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploadProductImage}){
   const[e,setE]=useState({...p});
   const[images,setImages]=useState([]);
   const[imagesLoading,setImagesLoading]=useState(false);
