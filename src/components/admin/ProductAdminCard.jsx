@@ -10,6 +10,9 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
   const[driveBusy,setDriveBusy]=useState(false);
   const[driveMessage,setDriveMessage]=useState("");
   const[saveMessage,setSaveMessage]=useState("");
+  const[mainKey,setMainKey]=useState("");
+  const[dragIndex,setDragIndex]=useState(null);
+  const[uploading,setUploading]=useState(false);
 
   useEffect(()=>setE({...p}),[p]);
   useEffect(()=>{
@@ -22,14 +25,16 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       const rows=error?[]:(data||[])
         .filter(x=>String(x.image_url||"").trim())
         .filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim()&&String(y.color||"")===String(x.color||""))===i);
-      if(!cancelled)setImages(rows.map(x=>({...x,color:x.color||""})));
+      if(!cancelled){const next=rows.map(x=>({...x,color:x.color||"",clientKey:String(x.id)}));setImages(next);setMainKey(String((next.find(x=>x.is_main)||next[0]||{}).id||""));}
       if(!cancelled)setImagesLoading(false);
     })();
     return()=>{cancelled=true};
   },[p.id]);
 
   const updateImage=(index,patch)=>setImages(prev=>prev.map((x,i)=>i===index?{...x,...patch}:x));
-  const addImage=()=>setImages(prev=>[...prev,{id:null,image_url:"",alt_text:p.name||"",color:"",is_main:false}]);
+  const addImage=()=>setImages(prev=>[...prev,{id:null,clientKey:"new-"+crypto.randomUUID(),image_url:"",alt_text:p.name||"",color:"",is_main:false}]);
+  const moveImage=(from,to)=>setImages(prev=>{if(to<0||to>=prev.length||from===to)return prev;const next=[...prev];const [item]=next.splice(from,1);next.splice(to,0,item);return next;});
+  const uploadAndSave=async()=>{setUploading(true);setSaveMessage("Uploading images…");try{let prepared=images.map(x=>({...x}));for(let i=0;i<prepared.length;i++){const img=prepared[i];if(img.file){const url=await uploadProductImage(p.id,img.file);prepared[i]={...img,image_url:url,file:null};}}setSaveMessage("Saving gallery and image names…");await saveProduct(e,prepared,setSaveMessage,mainKey);}catch(err){setSaveMessage(err?.message||"Image upload failed. Please retry.");}finally{setUploading(false);}};
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
   const close=()=>{setSaveMessage("");setEditing(null)};
 
@@ -52,7 +57,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
       subtitle={p.product_code+" · "+p.name}
       bodyClassName="admin-product-modal-body"
       maxWidth="1000px"
-      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>{setSaveMessage("");saveProduct(e,images,setSaveMessage)}} disabled={imagesLoading||driveBusy}>{imagesLoading?"Loading images…":"Save Product"}</button></div>}
+      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>{setSaveMessage("");uploadAndSave()}} disabled={imagesLoading||driveBusy||uploading}>{imagesLoading?"Loading images…":uploading?"Uploading…":"Save Product"}</button></div>}
     >
       <div className="admin-form admin-product-compact-form">
         {saveMessage&&<div className="message" role="status" style={{marginBottom:12,whiteSpace:"normal"}}>{saveMessage}</div>}
@@ -93,7 +98,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
               if(error){setDriveMessage(error.message||"Unable to fetch the Drive folder.");setDriveBusy(false);return}
               const files=Array.isArray(data?.files)?data.files:[];
               if(!files.length){setDriveMessage(data?.message||"No image files were found in this folder.");setDriveBusy(false);return}
-              setImages(prev=>[...prev,...files.map(file=>({id:null,image_url:file.url,alt_text:file.name||p.name,color:"",is_main:false}))]);
+              setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"drive-"+crypto.randomUUID(),image_url:file.url,alt_text:file.name||p.name,color:"",is_main:false}))]);
               setDriveMessage(files.length+" image"+(files.length===1?"":"s")+" imported.");
               setDriveBusy(false);
             }}>{driveBusy?"Fetching…":"Fetch Images"}</button>
@@ -103,16 +108,23 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct}){
 
         <div className="admin-product-section admin-product-images-section">
           <div className="product-images-toolbar">
-            <div className="admin-product-inline-title"><b>Product Images</b><small>First image is the main image.</small></div>
-            <button type="button" className="secondary" onClick={addImage}>+ Add Image</button>
+            <div className="admin-product-inline-title"><b>Product Images</b><small>Drag to reorder. The selected main image is always named _1; other images follow the displayed order. Existing main image stays selected unless changed.</small></div>
+            <button type="button" className="secondary" onClick={addImage}>+ Add Image URL</button>
           </div>
-
+          <label className="admin-product-upload-label">Upload image files
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={event=>{const files=Array.from(event.target.files||[]);setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"file-"+crypto.randomUUID(),file,previewUrl:URL.createObjectURL(file),image_url:"",alt_text:file.name,color:"",is_main:false}))]);event.target.value="";}}/>
+            <small>JPG, PNG, WebP or AVIF · up to 15 MB each</small>
+          </label>
           <div className="product-image-edit-list">
-            {images.map((img,i)=><div key={img.id||"new-"+i} className="product-image-edit-row">
-              <div className="product-image-thumb">{img.image_url?<img src={imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={x=>{x.currentTarget.style.display="none"}}/>:<span>—</span>}</div>
-              <input aria-label={"Image URL "+(i+1)} value={img.image_url||""} onChange={x=>updateImage(i,{image_url:x.target.value})} placeholder="Image link"/>
-              <input aria-label={"Image colour "+(i+1)} value={img.color||""} onChange={x=>updateImage(i,{color:x.target.value})} placeholder="Colour"/>
-              <button type="button" className="danger product-image-remove" title="Remove image" aria-label={"Remove image "+(i+1)} onClick={()=>setImages(prev=>prev.filter((_,j)=>j!==i))}>×</button>
+            {images.map((img,i)=><div key={img.clientKey||img.id||"new-"+i} className="product-image-edit-row" draggable onDragStart={()=>setDragIndex(i)} onDragOver={event=>event.preventDefault()} onDrop={()=>{if(dragIndex!==null)moveImage(dragIndex,i);setDragIndex(null)}} onDragEnd={()=>setDragIndex(null)} style={{cursor:"grab",border:dragIndex===i?"1px dashed var(--accent, #777)":undefined,alignItems:"center"}}>
+              <span title="Drag to reorder" aria-label="Drag to reorder" style={{fontSize:20,userSelect:"none"}}>⠿</span>
+              <div className="product-image-thumb">{(img.previewUrl||img.image_url)?<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={x=>{x.currentTarget.style.display="none"}}/>:<span>—</span>}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:5,minWidth:0,flex:1}}>
+                <label style={{display:"flex",alignItems:"center",gap:6,fontSize:12}}><input type="radio" name={"main-image-"+p.id} checked={mainKey===(img.clientKey||String(img.id))} onChange={()=>setMainKey(img.clientKey||String(img.id))}/> Main image {mainKey===(img.clientKey||String(img.id))?"(_1)":""}</label>
+                <input aria-label={"Image URL "+(i+1)} value={img.image_url||""} onChange={x=>updateImage(i,{image_url:x.target.value})} placeholder="Image URL (optional for uploaded file)" disabled={!!img.file}/>
+                <input aria-label={"Image colour "+(i+1)} value={img.color||""} onChange={x=>updateImage(i,{color:x.target.value})} placeholder="Colour (optional)"/>
+              </div>
+              <button type="button" className="danger product-image-remove" title="Remove image" aria-label={"Remove image "+(i+1)} onClick={()=>{if(mainKey===(img.clientKey||String(img.id)))setMainKey("");setImages(prev=>prev.filter((_,j)=>j!==i));}}>×</button>
             </div>)}
           </div>
         </div>
