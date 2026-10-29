@@ -8,7 +8,7 @@ export default function AdminProductsTab({showAdd,setShowAdd,addProduct,products
       <label>Description<textarea name="description" rows="4"/></label>
       <div className="form-grid"><label>Initial Variant Size<input name="variantSize" placeholder="Optional, e.g. M"/></label><label>Initial Variant Colour<input name="variantColor" placeholder="Optional"/></label><label>Initial Stock<input name="initialStock" type="number" min="0" defaultValue="0" required/></label></div>
       <p className="form-note">A stock variant is required for checkout. Leave size/colour blank for products sold as one variant.</p>
-      <label>Upload Product Images<input name="imageFiles" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple/><small className="form-note">Choose multiple images. The first uploaded image becomes the main image for a new product. JPG, PNG, WebP or AVIF, up to 15 MB each.</small></label>
+      <label>Upload Product Images<input name="imageFiles" type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" multiple/><small className="form-note">Choose multiple photos and videos. The first photo becomes the main image. JPG, PNG, WebP, AVIF, MP4 or WebM. Photos up to 15 MB; videos up to 100 MB each.</small></label>
       <label>Image URLs (optional)<textarea name="images" rows="3" placeholder="Optional: one existing image URL per line"/></label>
       <div className="check-row"><label><input name="active" type="checkbox" defaultChecked/> Active</label><label><input name="featured" type="checkbox"/> Featured</label></div><button className="primary">Add Product</button>
     </form></div>}
