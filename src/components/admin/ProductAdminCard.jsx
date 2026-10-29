@@ -209,7 +209,8 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
             })}
             {!imagesLoading&&images.length===0&&<p className="form-note">No images yet. Upload multiple files above or choose Add Image to add one file.</p>}
           </div>
-        </div>      </div>
+        </div>
+      </div>
     </AdminModal>
   </div>
 }
