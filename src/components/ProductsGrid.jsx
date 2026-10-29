@@ -65,7 +65,7 @@ export default function ProductsGrid({limit,category,featured=false,excludeFeatu
   return <>
     <div className="product-grid">
       {visible.map((product,index)=>{
-        const images=product.product_images||[];
+        const images=(product.product_images||[]).filter(i=>i.media_type!=="video");
         const image=product.listingImage||images.find(i=>i.is_main)||[...images].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0];
         return <ProductCard
           key={product.id+(product.listingColour?"-"+product.listingColour:"")}
