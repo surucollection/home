@@ -16,7 +16,7 @@ export default function ProductsGrid({limit,category,featured=false,excludeFeatu
     setErr("");
     try{
       const params={
-        select:"id,product_code,name,category,price,compare_at_price,is_active,color,preorder_enabled,product_images(product_id,image_url,alt_text,is_main,sort_order,color),product_sizes(id,size,color,stock,is_active)",
+        select:"id,product_code,name,category,price,compare_at_price,is_active,color,preorder_enabled,product_images(product_id,image_url,alt_text,is_main,sort_order,color,media_type),product_sizes(id,size,color,stock,is_active)",
         is_active:"eq.true",
         "product_sizes.is_active":"eq.true",
         order:"created_at.desc",
@@ -32,7 +32,7 @@ export default function ProductsGrid({limit,category,featured=false,excludeFeatu
       // Expand each product into one listing card per colour variant across every ProductsGrid section.
       const expanded=next.flatMap(product=>{
         const variants=product.product_sizes||[];
-        const images=product.product_images||[];
+        const images=(product.product_images||[]).filter(i=>i.media_type!=="video");
         const colours=[...new Set([...variants.map(v=>String(v.color||"").trim()),...images.map(i=>String(i.color||"").trim())].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
         if(!colours.length)return [{...product,listingColour:"",listingImage:undefined,listingVariants:variants}];
         return colours.map(colour=>{
