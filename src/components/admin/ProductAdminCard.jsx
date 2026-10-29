@@ -190,8 +190,6 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
               return <div key={img.clientKey||img.id||"new-"+i} data-image-index={i} className={"product-image-edit-row"+(dragOverIndex===i?" is-drag-over":"")+(dragIndex===i?" is-drag-source":"")}>
                 <div className="product-image-order-controls">
                   <button type="button" className="product-image-drag-handle" title="Hold and drag to reorder" aria-label={"Drag "+rowLabel+" to reorder"} onPointerDown={event=>beginDrag(event,i)} disabled={uploading}>⠿</button>
-                  <button type="button" className="product-image-move" title="Move image up" aria-label={"Move image "+(i+1)+" up"} disabled={i===0||uploading} onClick={()=>moveImage(i,i-1)}>↑</button>
-                  <button type="button" className="product-image-move" title="Move image down" aria-label={"Move image "+(i+1)+" down"} disabled={i===images.length-1||uploading} onClick={()=>moveImage(i,i+1)}>↓</button>
                 </div>
                 {(img.previewUrl||img.image_url)
                   ? <div className="product-image-thumb"><img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={event=>{event.currentTarget.style.display="none"}}/></div>
