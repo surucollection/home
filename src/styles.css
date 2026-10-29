@@ -1934,3 +1934,14 @@
     height:28px;
   }
 }
+
+
+/* Gallery reorder uses drag handle only */
+.product-image-edit-row{grid-template-columns:30px 48px minmax(0,1fr) 30px}
+.product-image-order-controls{width:30px;min-width:30px;flex:0 0 30px;gap:0}
+.product-image-drag-handle{width:30px;min-width:30px;flex:0 0 30px;height:34px;font-size:20px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+@media(max-width:640px){
+  .product-image-edit-row{grid-template-columns:28px 42px minmax(0,1fr) 25px}
+  .product-image-order-controls{width:28px;min-width:28px;flex:0 0 28px}
+  .product-image-drag-handle{width:28px;min-width:28px;flex-basis:28px;height:34px;font-size:19px}
+}
