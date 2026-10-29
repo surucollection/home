@@ -171,40 +171,45 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
 
         <div className="admin-product-section admin-product-images-section">
           <div className="product-images-toolbar">
-            <div className="admin-product-inline-title"><b>Product Images</b><small>Drag the handle or use the arrows to reorder. The first image for each colour is automatically its main image.</small></div>
-            <button type="button" className="secondary" onClick={addImage}>+ Add Image URL</button>
+            <div className="admin-product-inline-title"><b>Product Images</b><small>Drag or use the arrows to reorder. The first image for each colour becomes its main image.</small></div>
+            <button type="button" className="secondary product-image-add-button" onClick={addImage} disabled={uploading}>+ Add Image</button>
           </div>
           <label className="admin-product-upload-label">Upload image files
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={event=>{const files=Array.from(event.target.files||[]);setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"file-"+crypto.randomUUID(),file,previewUrl:URL.createObjectURL(file),image_url:"",alt_text:file.name,color:"",is_main:false}))]);event.target.value="";}}/>
-            <small>JPG, PNG, WebP or AVIF · up to 15 MB each</small>
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={event=>{
+              const files=Array.from(event.target.files||[]);
+              setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"file-"+crypto.randomUUID(),file,previewUrl:URL.createObjectURL(file),image_url:"",alt_text:file.name,color:"",is_main:false}))]);
+              event.target.value="";
+            }}/>
+            <small>Select multiple images at once · JPG, PNG, WebP or AVIF · up to 15 MB each</small>
           </label>
           {imagesLoading?<p className="form-note">Loading existing images…</p>:null}
           <div className={"product-image-edit-list"+(dragIndex!==null?" is-dragging":"")}>
             {images.map((img,i)=>{
               const isColorMain=isMainForColor(img,i);
-              const groupLabel=String(img.color||"").trim()||"Unspecified colour";
+              const rowLabel="Image "+(i+1)+(isColorMain?" — main image for "+(String(img.color||"").trim()||"unspecified colour"):"");
               return <div key={img.clientKey||img.id||"new-"+i} data-image-index={i} className={"product-image-edit-row"+(dragOverIndex===i?" is-drag-over":"")+(dragIndex===i?" is-drag-source":"")}>
                 <div className="product-image-order-controls">
-                  <button type="button" className="product-image-drag-handle" title="Hold and drag to reorder" aria-label={"Drag image "+(i+1)+" to reorder"} onPointerDown={event=>beginDrag(event,i)}>⠿</button>
-                  <button type="button" className="product-image-move" title="Move image up" aria-label={"Move image "+(i+1)+" up"} disabled={i===0||uploading} onClick={()=>moveImage(i,i-1)}>↑</button>
-                  <button type="button" className="product-image-move" title="Move image down" aria-label={"Move image "+(i+1)+" down"} disabled={i===images.length-1||uploading} onClick={()=>moveImage(i,i+1)}>↓</button>
-                </div>
-                <div className="product-image-thumb">{(img.previewUrl||img.image_url)?<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={x=>{x.currentTarget.style.display="none"}}/>:<span>No image</span>}</div>
-                <div className="product-image-edit-fields">
-                  <div className="product-image-row-meta">
-                    <span className={isColorMain?"product-image-main-badge":"product-image-index"}>{isColorMain?"Main image · "+groupLabel:"Image "+(i+1)}</span>
-                    <span className="product-image-row-number">#{i+1}</span>
+                  <button type="button" className="product-image-drag-handle" title="Hold and drag to reorder" aria-label={"Drag "+rowLabel+" to reorder"} onPointerDown={event=>beginDrag(event,i)} disabled={uploading}>⠿</button>
+                  <div className="product-image-arrows">
+                    <button type="button" className="product-image-move" title="Move image up" aria-label={"Move image "+(i+1)+" up"} disabled={i===0||uploading} onClick={()=>moveImage(i,i-1)}>↑</button>
+                    <button type="button" className="product-image-move" title="Move image down" aria-label={"Move image "+(i+1)+" down"} disabled={i===images.length-1||uploading} onClick={()=>moveImage(i,i+1)}>↓</button>
                   </div>
-                  <input aria-label={"Image URL "+(i+1)} value={img.image_url||""} onChange={x=>updateImage(i,{image_url:x.target.value})} placeholder="Image URL (or upload a file)" disabled={!!img.file}/>
-                  <input aria-label={"Image colour "+(i+1)} value={img.color||""} onChange={x=>updateImage(i,{color:x.target.value})} placeholder="Colour group (optional)"/>
                 </div>
-                <button type="button" className="danger product-image-remove" title="Remove image" aria-label={"Remove image "+(i+1)} onClick={()=>setImages(prev=>prev.filter((_,j)=>j!==i))}>×</button>
+                <div className="product-image-thumb">{(img.previewUrl||img.image_url)?<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={x=>{x.currentTarget.style.display="none"}}/>:<span>Choose image</span>}</div>
+                <div className="product-image-edit-fields">
+                  <input aria-label={"Colour group for image "+(i+1)} value={img.color||""} onChange={event=>updateImage(i,{color:event.target.value})} placeholder="Colour group" disabled={uploading}/>
+                </div>
+                {!img.image_url&&!img.file&&<label className="product-image-single-upload">Choose<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploading} aria-label={"Choose one image for row "+(i+1)} onChange={event=>{
+                  const file=event.target.files?.[0];
+                  if(file)updateImage(i,{file,previewUrl:URL.createObjectURL(file),alt_text:file.name,image_url:""});
+                  event.target.value="";
+                }}/></label>}
+                <button type="button" className="danger product-image-remove" title="Remove image" aria-label={"Remove image "+(i+1)} onClick={()=>setImages(prev=>prev.filter((_,j)=>j!==i))} disabled={uploading}>×</button>
               </div>;
             })}
-            {!imagesLoading&&images.length===0&&<p className="form-note">No images yet. Upload image files or add an image URL.</p>}
+            {!imagesLoading&&images.length===0&&<p className="form-note">No images yet. Upload multiple files above or choose Add Image to add one file.</p>}
           </div>
-        </div>
-      </div>
+        </div>      </div>
     </AdminModal>
   </div>
 }
