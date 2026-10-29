@@ -181,7 +181,7 @@ function Admin(){
   if(!data?.ok||!data?.upload_url||!data?.url)throw new Error(data?.error||"Could not prepare direct upload.");
   let response;
   try{
-    response=await fetch(data.upload_url,{method:"PUT",headers:{"Content-Type":file.type},body:file});
+    response=await fetch(data.upload_url,{method:"PUT",headers:{"Content-Type":file.type,"Cache-Control":"public, max-age=31536000, immutable"},body:file});
   }catch(e){
     throw new Error("Direct upload to Cloudflare R2 failed. Check R2 bucket CORS settings and try again. "+(e?.message||""));
   }
