@@ -1,41 +1,122 @@
-import React,{useEffect,useState} from "react";
+import React,{useEffect,useRef,useState} from "react";
 import { money, supabase, imageUrl } from "../../lib/api.js";
 import AdminModal from "./AdminModal.jsx";
+
+const colorGroupKey = value => String(value || "").trim().toLocaleLowerCase() || "__default__";
 
 export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploadProductImage}){
   const[e,setE]=useState({...p});
   const[images,setImages]=useState([]);
   const[imagesLoading,setImagesLoading]=useState(false);
-  const[driveFolderUrl,setDriveFolderUrl]=useState("");
-  const[driveBusy,setDriveBusy]=useState(false);
-  const[driveMessage,setDriveMessage]=useState("");
   const[saveMessage,setSaveMessage]=useState("");
-  const[mainKey,setMainKey]=useState("");
   const[dragIndex,setDragIndex]=useState(null);
+  const[dragOverIndex,setDragOverIndex]=useState(null);
   const[uploading,setUploading]=useState(false);
+  const dragStateRef=useRef({source:null,target:null,pointerId:null});
 
   useEffect(()=>setE({...p}),[p]);
   useEffect(()=>{
     let cancelled=false;
     (async()=>{
       setImagesLoading(true);
-      const{data,error}=await supabase.from("product_images")
-        .select("id,image_url,alt_text,is_main,sort_order,color")
-        .eq("product_id",p.id).order("sort_order",{ascending:true});
-      const rows=error?[]:(data||[])
-        .filter(x=>String(x.image_url||"").trim())
-        .filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim()&&String(y.color||"")===String(x.color||""))===i);
-      if(!cancelled){const next=rows.map(x=>({...x,color:x.color||"",clientKey:String(x.id)}));setImages(next);setMainKey(String((next.find(x=>x.is_main)||next[0]||{}).id||""));}
-      if(!cancelled)setImagesLoading(false);
+      try{
+        const{data,error}=await supabase.from("product_images")
+          .select("id,image_url,alt_text,is_main,sort_order,color")
+          .eq("product_id",p.id).order("sort_order",{ascending:true});
+        const rows=error?[]:(data||[])
+          .filter(x=>String(x.image_url||"").trim())
+          .filter((x,i,a)=>a.findIndex(y=>String(y.image_url||"").trim()===String(x.image_url||"").trim()&&String(y.color||"")===String(x.color||""))===i);
+        if(!cancelled)setImages(rows.map(x=>({...x,color:x.color||"",clientKey:String(x.id)})));
+      }catch{
+        if(!cancelled)setImages([]);
+      }finally{
+        if(!cancelled)setImagesLoading(false);
+      }
     })();
     return()=>{cancelled=true};
   },[p.id]);
 
   const updateImage=(index,patch)=>setImages(prev=>prev.map((x,i)=>i===index?{...x,...patch}:x));
   const addImage=()=>setImages(prev=>[...prev,{id:null,clientKey:"new-"+crypto.randomUUID(),image_url:"",alt_text:p.name||"",color:"",is_main:false}]);
-  const moveImage=(from,to)=>setImages(prev=>{if(to<0||to>=prev.length||from===to)return prev;const next=[...prev];const [item]=next.splice(from,1);next.splice(to,0,item);return next;});
-  const uploadAndSave=async()=>{setUploading(true);setSaveMessage("Uploading images…");try{let prepared=images.map(x=>({...x}));for(let i=0;i<prepared.length;i++){const img=prepared[i];if(img.file){const url=await uploadProductImage(p.id,img.file);prepared[i]={...img,image_url:url,file:null};}}setSaveMessage("Saving gallery and image names…");await saveProduct(e,prepared,setSaveMessage,mainKey);const{data:rows,error}=await supabase.from("product_images").select("id,image_url,alt_text,is_main,sort_order,color").eq("product_id",p.id).order("sort_order",{ascending:true});if(!error){const next=(rows||[]).map(x=>({...x,color:x.color||"",clientKey:String(x.id)}));setImages(next);setMainKey(String((next.find(x=>x.is_main)||next[0]||{}).id||""));}}catch(err){setSaveMessage(err?.message||"Image upload failed. Please retry.");}finally{setUploading(false);}};
+  const moveImage=(from,to)=>setImages(prev=>{
+    if(from<0||to<0||from>=prev.length||to>=prev.length||from===to)return prev;
+    const next=[...prev];const[item]=next.splice(from,1);next.splice(to,0,item);return next;
+  });
+  const beginDrag=(event,index)=>{
+    if(event.button!==undefined&&event.button!==0)return;
+    event.preventDefault();
+    dragStateRef.current={source:index,target:index,pointerId:event.pointerId};
+    setDragIndex(index);setDragOverIndex(index);
+  };
+  useEffect(()=>{
+    if(dragIndex===null)return;
+    const previousUserSelect=document.body.style.userSelect;
+    document.body.style.userSelect="none";
+    const onMove=event=>{
+      const drag=dragStateRef.current;
+      if(drag.source===null||drag.pointerId!==event.pointerId)return;
+      event.preventDefault();
+      const element=document.elementFromPoint(event.clientX,event.clientY);
+      const row=element?.closest?.("[data-image-index]");
+      if(!row)return;
+      const target=Number(row.getAttribute("data-image-index"));
+      if(Number.isInteger(target)&&target>=0){
+        dragStateRef.current={...dragStateRef.current,target};
+        setDragOverIndex(target);
+      }
+    };
+    const finish=event=>{
+      const drag=dragStateRef.current;
+      if(drag.source===null||drag.pointerId!==event.pointerId)return;
+      if(drag.target!==null&&drag.target!==drag.source)moveImage(drag.source,drag.target);
+      dragStateRef.current={source:null,target:null,pointerId:null};
+      setDragIndex(null);setDragOverIndex(null);
+      document.body.style.userSelect=previousUserSelect;
+    };
+    const cancel=event=>{
+      const drag=dragStateRef.current;
+      if(drag.source===null||drag.pointerId!==event.pointerId)return;
+      dragStateRef.current={source:null,target:null,pointerId:null};
+      setDragIndex(null);setDragOverIndex(null);
+      document.body.style.userSelect=previousUserSelect;
+    };
+    window.addEventListener("pointermove",onMove,{passive:false});
+    window.addEventListener("pointerup",finish);
+    window.addEventListener("pointercancel",cancel);
+    return()=>{
+      window.removeEventListener("pointermove",onMove);
+      window.removeEventListener("pointerup",finish);
+      window.removeEventListener("pointercancel",cancel);
+      document.body.style.userSelect=previousUserSelect;
+    };
+  },[dragIndex]);
+
+  const uploadAndSave=async()=>{
+    setUploading(true);setSaveMessage("Uploading images…");
+    try{
+      const prepared=images.map(x=>({...x}));
+      for(let i=0;i<prepared.length;i++){
+        const img=prepared[i];
+        if(img.file){
+          const url=await uploadProductImage(p.id,img.file);
+          prepared[i]={...img,image_url:url,file:null};
+        }
+      }
+      setSaveMessage("Saving gallery order and colour main images…");
+      await saveProduct(e,prepared,setSaveMessage);
+      const{data:rows,error}=await supabase.from("product_images")
+        .select("id,image_url,alt_text,is_main,sort_order,color")
+        .eq("product_id",p.id).order("sort_order",{ascending:true});
+      if(!error)setImages((rows||[]).map(x=>({...x,color:x.color||"",clientKey:String(x.id)})));
+    }catch(err){
+      setSaveMessage(err?.message||"Image upload failed. Please retry.");
+    }finally{
+      setUploading(false);
+    }
+  };
+
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
+  const isMainForColor=(img,index)=>!images.slice(0,index).some(other=>colorGroupKey(other.color)===colorGroupKey(img.color));
   const close=()=>{setSaveMessage("");setEditing(null)};
 
   return <div className="product-admin-card">
@@ -57,7 +138,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
       subtitle={p.product_code+" · "+p.name}
       bodyClassName="admin-product-modal-body"
       maxWidth="1000px"
-      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>{setSaveMessage("");uploadAndSave()}} disabled={imagesLoading||driveBusy||uploading}>{imagesLoading?"Loading images…":uploading?"Uploading…":"Save Product"}</button></div>}
+      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>{setSaveMessage("");uploadAndSave()}} disabled={imagesLoading||uploading}>{imagesLoading?"Loading images…":uploading?"Uploading…":"Save Product"}</button></div>}
     >
       <div className="admin-form admin-product-compact-form">
         {saveMessage&&<div className="message" role="status" style={{marginBottom:12,whiteSpace:"normal"}}>{saveMessage}</div>}
@@ -88,44 +169,39 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
 
         <label className="admin-product-description-field">Description<textarea rows="2" value={e.description??""} onChange={x=>setE({...e,description:x.target.value})}/></label>
 
-        <div className="admin-product-section admin-product-drive-section">
-          <div className="admin-product-inline-title"><b>Google Drive Image Folder</b><small>Share the folder as “Anyone with the link”.</small></div>
-          <div className="admin-product-drive compact-drive-row">
-            <input value={driveFolderUrl} onChange={x=>{setDriveFolderUrl(x.target.value);setDriveMessage("");}} placeholder="Paste Google Drive folder link" disabled={driveBusy}/>
-            <button type="button" className="secondary" disabled={driveBusy||!driveFolderUrl.trim()} onClick={async()=>{
-              setDriveBusy(true);setDriveMessage("Fetching…");
-              const{data,error}=await supabase.functions.invoke("google-drive-folder",{body:{folder_url:driveFolderUrl.trim()}});
-              if(error){setDriveMessage(error.message||"Unable to fetch the Drive folder.");setDriveBusy(false);return}
-              const files=Array.isArray(data?.files)?data.files:[];
-              if(!files.length){setDriveMessage(data?.message||"No image files were found in this folder.");setDriveBusy(false);return}
-              setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"drive-"+crypto.randomUUID(),image_url:file.url,alt_text:file.name||p.name,color:"",is_main:false}))]);
-              setDriveMessage(files.length+" image"+(files.length===1?"":"s")+" imported.");
-              setDriveBusy(false);
-            }}>{driveBusy?"Fetching…":"Fetch Images"}</button>
-          </div>
-          {driveMessage&&<small className="admin-inline-message">{driveMessage}</small>}
-        </div>
-
         <div className="admin-product-section admin-product-images-section">
           <div className="product-images-toolbar">
-            <div className="admin-product-inline-title"><b>Product Images</b><small>Drag to reorder. The selected main image is always named _1; other images follow the displayed order. Existing main image stays selected unless changed.</small></div>
+            <div className="admin-product-inline-title"><b>Product Images</b><small>Drag the handle or use the arrows to reorder. The first image for each colour is automatically its main image.</small></div>
             <button type="button" className="secondary" onClick={addImage}>+ Add Image URL</button>
           </div>
           <label className="admin-product-upload-label">Upload image files
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={event=>{const files=Array.from(event.target.files||[]);setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"file-"+crypto.randomUUID(),file,previewUrl:URL.createObjectURL(file),image_url:"",alt_text:file.name,color:"",is_main:false}))]);event.target.value="";}}/>
             <small>JPG, PNG, WebP or AVIF · up to 15 MB each</small>
           </label>
-          <div className="product-image-edit-list">
-            {images.map((img,i)=><div key={img.clientKey||img.id||"new-"+i} className="product-image-edit-row" draggable onDragStart={()=>setDragIndex(i)} onDragOver={event=>event.preventDefault()} onDrop={()=>{if(dragIndex!==null)moveImage(dragIndex,i);setDragIndex(null)}} onDragEnd={()=>setDragIndex(null)} style={{cursor:"grab",border:dragIndex===i?"1px dashed var(--accent, #777)":undefined,alignItems:"center"}}>
-              <span title="Drag to reorder" aria-label="Drag to reorder" style={{fontSize:20,userSelect:"none"}}>⠿</span>
-              <div className="product-image-thumb">{(img.previewUrl||img.image_url)?<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={x=>{x.currentTarget.style.display="none"}}/>:<span>—</span>}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:5,minWidth:0,flex:1}}>
-                <label style={{display:"flex",alignItems:"center",gap:6,fontSize:12}}><input type="radio" name={"main-image-"+p.id} checked={mainKey===(img.clientKey||String(img.id))} onChange={()=>setMainKey(img.clientKey||String(img.id))}/> Main image {mainKey===(img.clientKey||String(img.id))?"(_1)":""}</label>
-                <input aria-label={"Image URL "+(i+1)} value={img.image_url||""} onChange={x=>updateImage(i,{image_url:x.target.value})} placeholder="Image URL (optional for uploaded file)" disabled={!!img.file}/>
-                <input aria-label={"Image colour "+(i+1)} value={img.color||""} onChange={x=>updateImage(i,{color:x.target.value})} placeholder="Colour (optional)"/>
-              </div>
-              <button type="button" className="danger product-image-remove" title="Remove image" aria-label={"Remove image "+(i+1)} onClick={()=>{if(mainKey===(img.clientKey||String(img.id)))setMainKey("");setImages(prev=>prev.filter((_,j)=>j!==i));}}>×</button>
-            </div>)}
+          {imagesLoading?<p className="form-note">Loading existing images…</p>:null}
+          <div className={"product-image-edit-list"+(dragIndex!==null?" is-dragging":"")}>
+            {images.map((img,i)=>{
+              const isColorMain=isMainForColor(img,i);
+              const groupLabel=String(img.color||"").trim()||"Unspecified colour";
+              return <div key={img.clientKey||img.id||"new-"+i} data-image-index={i} className={"product-image-edit-row"+(dragOverIndex===i?" is-drag-over":"")+(dragIndex===i?" is-drag-source":"")}>
+                <div className="product-image-order-controls">
+                  <button type="button" className="product-image-drag-handle" title="Hold and drag to reorder" aria-label={"Drag image "+(i+1)+" to reorder"} onPointerDown={event=>beginDrag(event,i)}>⠿</button>
+                  <button type="button" className="product-image-move" title="Move image up" aria-label={"Move image "+(i+1)+" up"} disabled={i===0||uploading} onClick={()=>moveImage(i,i-1)}>↑</button>
+                  <button type="button" className="product-image-move" title="Move image down" aria-label={"Move image "+(i+1)+" down"} disabled={i===images.length-1||uploading} onClick={()=>moveImage(i,i+1)}>↓</button>
+                </div>
+                <div className="product-image-thumb">{(img.previewUrl||img.image_url)?<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={x=>{x.currentTarget.style.display="none"}}/>:<span>No image</span>}</div>
+                <div className="product-image-edit-fields">
+                  <div className="product-image-row-meta">
+                    <span className={isColorMain?"product-image-main-badge":"product-image-index"}>{isColorMain?"Main image · "+groupLabel:"Image "+(i+1)}</span>
+                    <span className="product-image-row-number">#{i+1}</span>
+                  </div>
+                  <input aria-label={"Image URL "+(i+1)} value={img.image_url||""} onChange={x=>updateImage(i,{image_url:x.target.value})} placeholder="Image URL (or upload a file)" disabled={!!img.file}/>
+                  <input aria-label={"Image colour "+(i+1)} value={img.color||""} onChange={x=>updateImage(i,{color:x.target.value})} placeholder="Colour group (optional)"/>
+                </div>
+                <button type="button" className="danger product-image-remove" title="Remove image" aria-label={"Remove image "+(i+1)} onClick={()=>setImages(prev=>prev.filter((_,j)=>j!==i))}>×</button>
+              </div>;
+            })}
+            {!imagesLoading&&images.length===0&&<p className="form-note">No images yet. Upload image files or add an image URL.</p>}
           </div>
         </div>
       </div>
