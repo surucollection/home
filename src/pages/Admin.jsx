@@ -176,21 +176,35 @@ function Admin(){
   const isVideo=file.type.startsWith("video/");
   const maxBytes=isVideo?100*1024*1024:15*1024*1024;
   if(file.size<1||file.size>maxBytes)throw new Error(isVideo?"Video must be 100 MB or smaller.":"Image must be 15 MB or smaller.");
+  const uploadViaFunction=async()=>{
+    const form=new FormData();
+    form.append("action","upload");
+    form.append("product_id",productId);
+    form.append("file",file,file.name);
+    const{data,error}=await supabase.functions.invoke("admin-product-images",{body:form});
+    if(error)throw new Error(data?.error||error.message||"Server-side upload failed.");
+    if(!data?.ok||!data?.url)throw new Error(data?.error||"Server-side upload failed.");
+    return data.url;
+  };
   const{data,error}=await supabase.functions.invoke("admin-product-images",{body:{action:"presign-upload",product_id:productId,filename:file.name,content_type:file.type}});
-  if(error)throw new Error("Could not prepare direct upload: "+(data?.error||error.message||"Edge Function request failed."));
-  if(!data?.ok||!data?.upload_url||!data?.url)throw new Error(data?.error||"Could not prepare direct upload.");
-  let response;
-  try{
-    response=await fetch(data.upload_url,{method:"PUT",headers:{"Content-Type":file.type},body:file});
-  }catch(e){
-    throw new Error("Direct upload to Cloudflare R2 failed. Check R2 bucket CORS settings and try again. "+(e?.message||""));
+  if(error||!data?.ok||!data?.upload_url||!data?.url){
+    // A transient presign/signature issue should not make uploads impossible:
+    // the authenticated function can stream the same file into R2 as a fallback.
+    return await uploadViaFunction();
   }
-  if(!response.ok)throw new Error("Cloudflare R2 upload failed ("+response.status+"). Please retry.");
-  const check=await fetch(data.url,{method:"GET",headers:{Range:"bytes=0-31"}});
-  const expected=isVideo?"video/":"image/";
-  if(!check.ok&&check.status!==206)throw new Error("Upload finished, but the public media URL could not be verified. Please retry saving.");
-  if(!(check.headers.get("content-type")||"").toLowerCase().startsWith(expected))throw new Error("Uploaded media type did not match the selected file.");
-  return data.url;
+  try{
+    const response=await fetch(data.upload_url,{method:"PUT",headers:{"Content-Type":file.type},body:file});
+    if(response.ok){
+      const check=await fetch(data.url,{method:"GET",headers:{Range:"bytes=0-31"}});
+      const expected=isVideo?"video/":"image/";
+      if((check.ok||check.status===206)&&(check.headers.get("content-type")||"").toLowerCase().startsWith(expected))return data.url;
+    }
+  }catch(e){
+    console.warn("Direct R2 upload failed; retrying through authenticated upload function.",e);
+  }
+  // Fallback avoids browser CORS/preflight issues. The function enforces admin
+  // authorization, file types and size limits, and still writes the object to R2.
+  return await uploadViaFunction();
 }
 async function normalizeProductGallery(productId,orderedIds){
   if(!orderedIds.length)return;
