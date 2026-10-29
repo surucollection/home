@@ -21,7 +21,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
       setImagesLoading(true);
       try{
         const{data,error}=await supabase.from("product_images")
-          .select("id,image_url,alt_text,is_main,sort_order,color")
+          .select("id,image_url,alt_text,is_main,sort_order,color,media_type")
           .eq("product_id",p.id).order("sort_order",{ascending:true});
         const rows=error?[]:(data||[])
           .filter(x=>String(x.image_url||"").trim())
@@ -37,7 +37,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
   },[p.id]);
 
   const updateImage=(index,patch)=>setImages(prev=>prev.map((x,i)=>i===index?{...x,...patch}:x));
-  const addImage=()=>setImages(prev=>[...prev,{id:null,clientKey:"new-"+crypto.randomUUID(),image_url:"",alt_text:p.name||"",color:"",is_main:false}]);
+  const addImage=()=>setImages(prev=>[...prev,{id:null,clientKey:"new-"+crypto.randomUUID(),image_url:"",alt_text:p.name||"",color:"",media_type:"image",is_main:false}]);
   const moveImage=(from,to)=>setImages(prev=>{
     if(from<0||to<0||from>=prev.length||to>=prev.length||from===to)return prev;
     const next=[...prev];const[item]=next.splice(from,1);next.splice(to,0,item);return next;
@@ -99,15 +99,15 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
         const img=prepared[i];
         if(img.file){
           const url=await uploadProductImage(p.id,img.file);
-          prepared[i]={...img,image_url:url,file:null};
+          prepared[i]={...img,image_url:url,media_type:img.file.type.startsWith("video/")?"video":"image",file:null};
         }
       }
       setSaveMessage("Saving gallery order and colour main images…");
       await saveProduct(e,prepared,setSaveMessage);
       const{data:rows,error}=await supabase.from("product_images")
-        .select("id,image_url,alt_text,is_main,sort_order,color")
+        .select("id,image_url,alt_text,is_main,sort_order,color,media_type")
         .eq("product_id",p.id).order("sort_order",{ascending:true});
-      if(!error)setImages((rows||[]).map(x=>({...x,color:x.color||"",clientKey:String(x.id)})));
+      if(!error)setImages((rows||[]).map(x=>({...x,color:x.color||"",media_type:x.media_type||"image",clientKey:String(x.id)})));
     }catch(err){
       setSaveMessage(err?.message||"Image upload failed. Please retry.");
     }finally{
@@ -116,7 +116,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
   };
 
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
-  const isMainForColor=(img,index)=>!images.slice(0,index).some(other=>colorGroupKey(other.color)===colorGroupKey(img.color));
+  const isMainForColor=(img,index)=>img.media_type!=="video"&&!images.slice(0,index).some(other=>other.media_type!=="video"&&colorGroupKey(other.color)===colorGroupKey(img.color));
   const close=()=>{setSaveMessage("");setEditing(null)};
 
   return <div className="product-admin-card">
@@ -175,12 +175,12 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
             <button type="button" className="secondary product-image-add-button" onClick={addImage} disabled={uploading}>+ Add Image</button>
           </div>
           <label className="admin-product-upload-label">Upload image files
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={event=>{
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" multiple disabled={uploading} onChange={event=>{
               const files=Array.from(event.target.files||[]);
-              setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"file-"+crypto.randomUUID(),file,previewUrl:URL.createObjectURL(file),image_url:"",alt_text:file.name,color:"",is_main:false}))]);
+              setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"file-"+crypto.randomUUID(),file,previewUrl:URL.createObjectURL(file),image_url:"",alt_text:file.name,color:"",media_type:file.type.startsWith("video/")?"video":"image",is_main:false}))]);
               event.target.value="";
             }}/>
-            <small>Select multiple images at once · JPG, PNG, WebP or AVIF · up to 15 MB each</small>
+            <small>Select photos and videos together · JPG, PNG, WebP, AVIF, MP4 or WebM. Photos up to 15 MB; videos up to 100 MB.</small>
           </label>
           {imagesLoading?<p className="form-note">Loading existing images…</p>:null}
           <div className={"product-image-edit-list"+(dragIndex!==null?" is-dragging":"")}>
@@ -192,12 +192,12 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
                   <button type="button" className="product-image-drag-handle" title="Hold and drag to reorder" aria-label={"Drag "+rowLabel+" to reorder"} onPointerDown={event=>beginDrag(event,i)} disabled={uploading}>⠿</button>
                 </div>
                 {(img.previewUrl||img.image_url)
-                  ? <div className="product-image-thumb"><img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={event=>{event.currentTarget.style.display="none"}}/></div>
-                  : <label className="product-image-thumb product-image-single-upload" title="Choose one image for this row">
+                  ? <div className={"product-image-thumb"+(img.media_type==="video"?" is-video-thumb":"")}>{img.media_type==="video"?<><video src={img.previewUrl||img.image_url} muted playsInline preload="metadata"/><span className="product-video-play" aria-label="Video">▶</span></>:<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={event=>{event.currentTarget.style.display="none"}}/>}</div>
+                  : <label className="product-image-thumb product-image-single-upload" title="Choose one image or video for this row">
                       <span>＋<small>Choose</small></span>
-                      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploading} aria-label={"Choose one image for row "+(i+1)} onChange={event=>{
+                      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" disabled={uploading} aria-label={"Choose one image or video for row "+(i+1)} onChange={event=>{
                         const file=event.target.files?.[0];
-                        if(file)updateImage(i,{file,previewUrl:URL.createObjectURL(file),alt_text:file.name,image_url:""});
+                        if(file)updateImage(i,{file,previewUrl:URL.createObjectURL(file),alt_text:file.name,image_url:"",media_type:file.type.startsWith("video/")?"video":"image"});
                         event.target.value="";
                       }}/>
                     </label>}
