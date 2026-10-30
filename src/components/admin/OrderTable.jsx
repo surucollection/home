@@ -7,10 +7,10 @@ import {createBrandedPaymentQr} from "../../lib/brandedPaymentQr.js";
 const ADMIN_INVOICE_ACTIONS_VERSION="2026.09.29.5";
 
 function normalizeAlternateNepalPhone(value){
-  let digits=String(value||"").replace(/\\D/g,"");
+  let digits=String(value||"").replace(/\D/g,"");
   if(digits.startsWith("00977")&&digits.length===15)digits=digits.slice(5);
   else if(digits.startsWith("977")&&digits.length===13)digits=digits.slice(3);
-  return /^9\\d{9}$/.test(digits)?digits:"";
+  return /^9\d{9}$/.test(digits)?digits:"";
 }
 
 export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,onInvoice,onCancelInvoice,onCreateShipment,onManualPayment,onSelfDelivery,onReturnOrder,onEditOrder,onRefresh,branches=[],getNcmBranchName=b=>String(b?.name||b?.branch_name||b?.title||b?.branch||"").trim(),loadNcmBranches,ncmBusy=false,ncmBranchMessage="",ncmSyncMessage="",compact=false}){
