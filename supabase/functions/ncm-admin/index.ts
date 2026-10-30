@@ -538,13 +538,13 @@ Deno.serve(async (req) => {
       }
       if (action === "send_alternative_number") {
         const rawPhone = String(body.alternate_phone || "");
-        let alternatePhone = rawPhone.replace(/\\D/g, "");
+        let alternatePhone = rawPhone.replace(/\D/g, "");
         if (alternatePhone.startsWith("00977") && alternatePhone.length === 15) {
           alternatePhone = alternatePhone.slice(5);
         } else if (alternatePhone.startsWith("977") && alternatePhone.length === 13) {
           alternatePhone = alternatePhone.slice(3);
         }
-        if (!/^9\\d{9}$/.test(alternatePhone)) {
+        if (!/^9\d{9}$/.test(alternatePhone)) {
           throw new Error("Enter a valid 10-digit Nepal mobile number, optionally with +977.");
         }
         const comment = "If the customer cannot be reached on the primary contact number, please call the alternate number: +977 " + alternatePhone + ".";
