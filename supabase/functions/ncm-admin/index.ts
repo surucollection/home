@@ -151,27 +151,10 @@ function extractNcmTrackingId(value: any): string {
 
 function mapNcmStatus(raw: string): string | null {
   const s = String(raw || "").toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
-
-  // Terminal exception states take precedence over any other status wording.
   if (s.includes("cancel")) return "cancelled";
   if (s.includes("return")) return "returned";
-
-  // A shipment that is on its way to the customer has NOT been delivered yet.
-  // NCM uses statuses such as "Sent for Delivery" and "Out for Delivery";
-  // check these before matching delivery-related words.
-  if (/\b(sent for delivery|out for delivery|on delivery|delivery in progress|delivery attempted|attempted delivery|unable to deliver|not delivered|undelivered|delivery failed|failed delivery|pending delivery)\b/.test(s)) {
-    return "shipped";
-  }
-
-  // Only clear completion statuses should move a store order to Delivered.
-  if (
-    s === "delivered" ||
-    /\b(successfully delivered|delivered successfully|delivered to (the )?(customer|recipient)|order delivered|shipment delivered|delivery successful)\b/.test(s)
-  ) {
-    return "delivered";
-  }
-
-  // Any other delivery-related status is non-final, so never treat it as delivered.
+  if (/\b(sent for delivery|out for delivery|on delivery|delivery in progress|delivery attempted|attempted delivery|unable to deliver|not delivered|undelivered|delivery failed|failed delivery|pending delivery)\b/.test(s)) return "shipped";
+  if (s === "delivered" || /\b(successfully delivered|delivered successfully|delivered to (the )?(customer|recipient)|order delivered|shipment delivered|delivery successful)\b/.test(s)) return "delivered";
   if (s.includes("deliver") || s.includes("delivery")) return "shipped";
   if (s.includes("pickup order created") || s.includes("order created") || s.includes("created") || s.includes("process") || s.includes("warehouse") || s.includes("assigned")) return "processing";
   if (s.includes("pickup") || s.includes("transit") || s.includes("dispatch") || s.includes("arriv")) return "shipped";
@@ -367,7 +350,37 @@ Deno.serve(async (req) => {
         patch.order_status = mapped;
       } // Cancelling a shipment alone must not cancel the store order.
       const updated = await updateOrder(order.id, patch, userToken);
-      return json({ order: updated, history });
+      const exResp = await supabase("order_exchanges?order_id=eq."+encodeURIComponent(order.id)+"&select=id,exchange_ncm_order_id,exchange_ncm_tracking_id,exchange_ncm_status,return_ncm_order_id,return_ncm_tracking_id,return_ncm_status");
+      const exRows = exResp.ok ? await exResp.json() : [];
+      const exchange_sync: any[] = [];
+      for (const ex of exRows) {
+        const fields: Record<string, unknown> = {};
+        for (const kind of ["exchange","return"]) {
+          const ncmId = ex[kind+"_ncm_order_id"];
+          if (!ncmId) continue;
+          try {
+            let det: any = null, hist: any = null;
+            for (const base of [NCM_BASE,"https://portal.nepalcanmove.com"]) {
+              try { det = await ncmJson("/api/v1/order?id="+encodeURIComponent(ncmId),{},base); break; } catch {}
+            }
+            for (const base of [NCM_BASE,"https://portal.nepalcanmove.com"]) {
+              try { hist = await ncmJson("/api/v1/order/status?id="+encodeURIComponent(ncmId),{},base); break; } catch {}
+            }
+            const arr = Array.isArray(hist)?hist:Array.isArray(hist?.results)?hist.results:Array.isArray(hist?.data)?hist.data:Array.isArray(hist?.history)?hist.history:[];
+            arr.sort((a:any,b:any)=>new Date(a.added_time||a.addedTime||a.timestamp||0).getTime()-new Date(b.added_time||b.addedTime||b.timestamp||0).getTime());
+            const raw = String(arr[arr.length-1]?.status||arr[arr.length-1]?.event||det?.status||"");
+            const track = extractNcmTrackingId(det);
+            if(raw) fields[kind+"_ncm_status"]=raw;
+            if(track && track!==String(ncmId)) fields[kind+"_ncm_tracking_id"]=track;
+            exchange_sync.push({shipment:kind,ncm_order_id:ncmId,status:raw,tracking_id:track||null,synced:!!(raw||track)});
+          } catch(e) { exchange_sync.push({shipment:kind,ncm_order_id:ncmId,synced:false,error:e instanceof Error?e.message:String(e)}); }
+        }
+        if(Object.keys(fields).length) {
+          const saved=await supabase("order_exchanges?id=eq."+encodeURIComponent(ex.id),{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(fields)});
+          if(!saved.ok) exchange_sync.push({exchange_id:ex.id,saved:false,error:(await saved.text()).slice(0,250)});
+        }
+      }
+      return json({ order: updated, history, exchange_sync });
     }
 
     if (action === "create") {
@@ -413,7 +426,7 @@ Deno.serve(async (req) => {
         address: [order.shipping_address, order.city, order.district, order.province, order.postal_code].filter(Boolean).join(", ").slice(0, 500),
         fbranch: sourceBranch,
         branch: destinationBranch,
-        package: packageText.slice(0, 1000),
+        package: (packageText || "Suru Collection order").slice(0, 50),
         vref_id: vrefId,
         instruction: order.customer_note || "",
         delivery_type: String(body.delivery_type || "Door2Door"),
@@ -476,7 +489,7 @@ Deno.serve(async (req) => {
       return json({ success: true, order: updated, ncm: response });
     }
 
-    if (["details","status_history","comments","add_comment","cancel_order","return","redirect","exchange"].includes(action)) {
+    if (["details","status_history","comments","add_comment","send_alternative_number","cancel_order","return","redirect","exchange"].includes(action)) {
       const body = requestBody;
       const userToken = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
       if (!userToken) throw new Error("Unauthorized");
@@ -522,6 +535,28 @@ Deno.serve(async (req) => {
         const commentText = collectText(comments).toLowerCase();
         const cancellationConfirmed = /\bcancelled\b|\bcanceled\b|cancellation\\s+(?:is\\s+)?confirmed|successfully\\s+(?:cancelled|canceled)|shipment\\s+(?:is\\s+)?(?:cancelled|canceled)|order\\s+(?:is\\s+)?(?:cancelled|canceled)|vendor\\s+(?:has\\s+)?cancelled/i.test(commentText);
         return json({ comments, cancellation_confirmed: cancellationConfirmed });
+      }
+      if (action === "send_alternative_number") {
+        const rawPhone = String(body.alternate_phone || "");
+        let alternatePhone = rawPhone.replace(/\\D/g, "");
+        if (alternatePhone.startsWith("00977") && alternatePhone.length === 15) {
+          alternatePhone = alternatePhone.slice(5);
+        } else if (alternatePhone.startsWith("977") && alternatePhone.length === 13) {
+          alternatePhone = alternatePhone.slice(3);
+        }
+        if (!/^9\\d{9}$/.test(alternatePhone)) {
+          throw new Error("Enter a valid 10-digit Nepal mobile number, optionally with +977.");
+        }
+        const comment = "If the customer cannot be reached on the primary contact number, please call the alternate number: +977 " + alternatePhone + ".";
+        const response = await callNcmCandidates("/api/v1/comment", {
+          method: "POST",
+          body: JSON.stringify({ orderid: ncmId, comments: comment }),
+        });
+        return json({
+          response,
+          comment,
+          message: "Alternate contact number sent to NCM as an order comment."
+        });
       }
       if (action === "cancel_order" || action === "add_comment") {
         const comment = String(body.comment || "").trim();
