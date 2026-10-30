@@ -6,6 +6,13 @@ import {createBrandedPaymentQr} from "../../lib/brandedPaymentQr.js";
 
 const ADMIN_INVOICE_ACTIONS_VERSION="2026.09.29.5";
 
+function normalizeAlternateNepalPhone(value){
+  let digits=String(value||"").replace(/\\D/g,"");
+  if(digits.startsWith("00977")&&digits.length===15)digits=digits.slice(5);
+  else if(digits.startsWith("977")&&digits.length===13)digits=digits.slice(3);
+  return /^9\\d{9}$/.test(digits)?digits:"";
+}
+
 export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,onNcmSync,onCancellation,onNcmAction,onInvoice,onCancelInvoice,onCreateShipment,onManualPayment,onSelfDelivery,onReturnOrder,onEditOrder,onRefresh,branches=[],getNcmBranchName=b=>String(b?.name||b?.branch_name||b?.title||b?.branch||"").trim(),loadNcmBranches,ncmBusy=false,ncmBranchMessage="",ncmSyncMessage="",compact=false}){
   const [busy,setBusy]=useState("");
   const [editingOrder,setEditingOrder]=useState(null);
@@ -140,6 +147,16 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       payload.comment=prompt("Enter NCM comment:","")||"";
       if(!payload.comment.trim())return;
     }
+    if(action==="send_alternative_number"){
+      const entered=prompt("Enter the customer's alternate Nepal mobile number:");
+      if(entered===null)return;
+      const alternatePhone=normalizeAlternateNepalPhone(entered);
+      if(!alternatePhone){
+        setResultModal({action:"error",value:{message:"Enter a valid 10-digit Nepal mobile number, optionally with +977."},order:o});
+        return;
+      }
+      payload.alternate_phone=alternatePhone;
+    }
     if(action==="cancel_order"){
       const ncmOrderId=o.ncm_order_id||"—";
       payload.comment="Please cancel my NCM shipment order ID #"+ncmOrderId+" for customer order #"+(o.order_number||o.id)+" and kindly confirm once cancelled.";
@@ -164,7 +181,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       }
       const value=data?.ncm||data?.history||data?.comments||data?.response||data;
       if(["details","status_history","comments"].includes(action))openResult(action,value,o);
-      else {setResultModal({action,value:{message:action==="cancel_order"?(data?.message||"Cancellation requested. Sync the NCM status after cancellation is confirmed."): "Action completed successfully."+inventoryMessage},order:o});if(action==="exchange")onRefresh?.();}
+      else {setResultModal({action,value:{message:action==="cancel_order"?(data?.message||"Cancellation requested. Sync the NCM status after cancellation is confirmed."):action==="send_alternative_number"?(data?.message||"Alternate contact number sent to NCM as an order comment."):"Action completed successfully."+inventoryMessage},order:o});if(action==="exchange")onRefresh?.();}
     }catch(e){
       setResultModal({action:"error",value:{message:e?.message||"Request failed."},order:o});
     }finally{
@@ -258,6 +275,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
     ["status_history","Status History"],
     ["comments","View Comments"],
     ["add_comment","Add Comment"],
+    ["send_alternative_number","Send Alternative Number"],
     ["cancel_order","Cancel NCM Order"],
     ["return","Return Shipment"],
     ["redirect","Redirect Shipment"],
