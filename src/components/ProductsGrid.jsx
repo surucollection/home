@@ -3,10 +3,12 @@ import { get } from "../lib/api.js";
 import ProductCard from "./ProductCard.jsx";
 
 const PAGE_SIZE=24;
+const PRODUCT_CACHE_TTL_MS=60000;
 
 export default function ProductsGrid({limit,category,featured=false,excludeFeatured=false}){
   const[p,setP]=useState([]),[loadedCount,setLoadedCount]=useState(0),[err,setErr]=useState(""),[loading,setLoading]=useState(true),[loadingMore,setLoadingMore]=useState(false),[hasMore,setHasMore]=useState(true);
   const requestId=useRef(0),loadedCountRef=useRef(0);
+  const cacheKey="suru_products_grid_v2:"+[category||"",featured?"1":"0",excludeFeatured?"1":"0",limit||"all"].join("|");
 
   const load=useCallback(async(reset=false)=>{
     const id=++requestId.current;
@@ -48,14 +50,46 @@ export default function ProductsGrid({limit,category,featured=false,excludeFeatu
       loadedCountRef.current=newLoadedCount;
       setLoadedCount(newLoadedCount);
       setHasMore(next.length===pageSize);
+      if(reset){
+        try{
+          sessionStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),products:expanded,loadedCount:newLoadedCount,hasMore:next.length===pageSize}));
+        }catch{}
+      }
     }catch(e){
       if(id===requestId.current)setErr(e.message||"Unable to load products.");
     }finally{
       if(id===requestId.current){setLoading(false);setLoadingMore(false);}
     }
-  },[category,featured]);
+  },[category,featured,excludeFeatured,limit,cacheKey]);
 
-  useEffect(()=>{setP([]);setLoadedCount(0);loadedCountRef.current=0;setHasMore(true);load(true)},[category,featured,load]);
+  useEffect(()=>{
+    let cached=null;
+    try{
+      const raw=sessionStorage.getItem(cacheKey);
+      if(raw){
+        const parsed=JSON.parse(raw);
+        if(parsed&&Date.now()-Number(parsed.savedAt||0)<=PRODUCT_CACHE_TTL_MS&&Array.isArray(parsed.products)){
+          cached=parsed;
+        }else sessionStorage.removeItem(cacheKey);
+      }
+    }catch{}
+    if(cached){
+      setP(cached.products);
+      const count=Math.max(0,Number(cached.loadedCount)||0);
+      setLoadedCount(count);
+      loadedCountRef.current=count;
+      setHasMore(cached.hasMore!==false);
+      setLoading(false);
+    }else{
+      setP([]);
+      setLoadedCount(0);
+      loadedCountRef.current=0;
+      setHasMore(true);
+      setLoading(true);
+    }
+    setErr("");
+    void load(true);
+  },[category,featured,excludeFeatured,limit,cacheKey,load]);
 
   if(loading&&!p.length)return <div className="product-loading">Loading products…</div>;
   if(err&&!p.length)return <div className="product-loading">{err}</div>;
