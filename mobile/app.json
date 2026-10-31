@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Suru Collection",
+    "slug": "suru-collection",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "suru",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#fffaf6"
+    },
+    "ios": {
+      "bundleIdentifier": "np.com.suru.collection",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "np.com.suru.collection",
+      "edgeToEdgeEnabled": true
+    }
+  }
+}
