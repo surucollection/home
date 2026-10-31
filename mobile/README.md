@@ -16,13 +16,14 @@ A native React Native / Expo customer shopping app for Suru Collection. The mobi
 
 ## Run locally
 
-Use Node.js LTS compatible with the installed Expo SDK.
+Use Node.js 22.13 or newer for Expo SDK 58.
 
 ```bash
 cd mobile
 cp .env.example .env
 npm install
-npx expo install --check
+npx expo install --fix
+npx expo-doctor@latest
 npx expo start
 ```
 
@@ -39,10 +40,10 @@ npm install -g eas-cli
 eas login
 eas build:configure
 eas build --platform android --profile preview
-eas build --platform ios --profile preview
+eas build --platform ios --profile ios-simulator
 ```
 
-For production builds, use `--profile production`. Apple signing / App Store Connect credentials and Google Play Console credentials are required for store submission. The Android package and iOS bundle identifier in `app.json` are proposed identifiers and must be checked for availability before store registration.
+The Android `preview` profile produces an installable APK for device testing. The `ios-simulator` profile produces a simulator build, not an installable iPhone IPA. To install on a physical iPhone before App Store release, use an ad hoc iOS build with the iPhone registered on your Apple Developer account; TestFlight/App Store distribution also requires Apple Developer Program membership. For store builds, use `--profile production`. Google Play Console and Apple Developer / App Store Connect credentials are required for publishing. The Android package and iOS bundle identifier in `app.json` are proposed identifiers and must be checked for availability before store registration.
 
 ## Synchronisation model
 
