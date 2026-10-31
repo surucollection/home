@@ -130,7 +130,6 @@ export function StoreProvider({ children }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => refreshCatalog(true).catch(() => {}))
       .on("postgres_changes", { event: "*", schema: "public", table: "product_images" }, () => refreshCatalog(true).catch(() => {}))
       .on("postgres_changes", { event: "*", schema: "public", table: "product_sizes" }, () => refreshCatalog(true).catch(() => {}))
-      .on("postgres_changes", { event: "*", schema: "public", table: "discount_coupons" }, () => refreshCatalog(true).catch(() => {}))
       .subscribe();
     const appStateSubscription = AppState.addEventListener("change", (state) => {
       if (state === "active") refreshCatalog(true).catch(() => {});

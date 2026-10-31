@@ -7,8 +7,7 @@ begin
   foreach table_name in array array[
     'products',
     'product_images',
-    'product_sizes',
-    'discount_coupons'
+    'product_sizes'
   ]
   loop
     if not exists (
