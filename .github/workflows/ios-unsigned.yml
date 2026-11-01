@@ -48,27 +48,25 @@ jobs:
               pixels = source.load()
               seen = bytearray(width * height)
               stack = []
-              def is_canvas_white(x, y):
-                  r, g, b, _ = pixels[x, y]
-                  return r >= 245 and g >= 245 and b >= 245
+              def enqueue(x, y):
+                  index = y * width + x
+                  if not seen[index] and is_canvas_white(x, y):
+                      seen[index] = 1
+                      stack.append((x, y))
               for x in range(width):
-                  if is_canvas_white(x, 0): stack.append((x, 0))
-                  if is_canvas_white(x, height - 1): stack.append((x, height - 1))
+                  enqueue(x, 0)
+                  enqueue(x, height - 1)
               for y in range(height):
-                  if is_canvas_white(0, y): stack.append((0, y))
-                  if is_canvas_white(width - 1, y): stack.append((width - 1, y))
+                  enqueue(0, y)
+                  enqueue(width - 1, y)
               while stack:
                   x, y = stack.pop()
-                  index = y * width + x
-                  if seen[index] or not is_canvas_white(x, y):
-                      continue
-                  seen[index] = 1
                   r, g, b, _ = pixels[x, y]
                   pixels[x, y] = (r, g, b, 0)
                   for ny in range(max(0, y - 1), min(height, y + 2)):
                       for nx in range(max(0, x - 1), min(width, x + 2)):
-                          if not seen[ny * width + nx] and is_canvas_white(nx, ny):
-                              stack.append((nx, ny))
+                          enqueue(nx, ny)
+          
           # Resize the full source canvas proportionally. Never crop to the logo bounds.
           source.thumbnail((512, 512), Image.Resampling.LANCZOS)
           canvas = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
