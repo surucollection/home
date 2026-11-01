@@ -89,6 +89,35 @@ jobs:
 
           # Keep the official image's full canvas and artwork placement; never crop or enlarge it.
           source = Image.open("/tmp/suru-logo-official.png").convert("RGBA")
+          # If the source is an opaque image, remove only edge-connected near-white canvas pixels.
+          # Enclosed white artwork details stay white; logo pixels are never recoloured.
+          if source.getchannel("A").getextrema() == (255, 255):
+              width, height = source.size
+              pixels = source.load()
+              seen = bytearray(width * height)
+              stack = []
+              def is_canvas_white(x, y):
+                  r, g, b, _ = pixels[x, y]
+                  return r >= 245 and g >= 245 and b >= 245
+              for x in range(width):
+                  if is_canvas_white(x, 0): stack.append((x, 0))
+                  if is_canvas_white(x, height - 1): stack.append((x, height - 1))
+              for y in range(height):
+                  if is_canvas_white(0, y): stack.append((0, y))
+                  if is_canvas_white(width - 1, y): stack.append((width - 1, y))
+              while stack:
+                  x, y = stack.pop()
+                  index = y * width + x
+                  if seen[index] or not is_canvas_white(x, y):
+                      continue
+                  seen[index] = 1
+                  r, g, b, _ = pixels[x, y]
+                  pixels[x, y] = (r, g, b, 0)
+                  for ny in range(max(0, y - 1), min(height, y + 2)):
+                      for nx in range(max(0, x - 1), min(width, x + 2)):
+                          if not seen[ny * width + nx] and is_canvas_white(nx, ny):
+                              stack.append((nx, ny))
+          # Resize the full source canvas proportionally. Never crop to the logo bounds.
           source.thumbnail((512, 512), Image.Resampling.LANCZOS)
           canvas = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
           canvas.alpha_composite(source, ((512 - source.width) // 2, (512 - source.height) // 2))
