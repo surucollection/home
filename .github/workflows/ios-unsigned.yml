@@ -34,12 +34,11 @@ jobs:
         run: |
           python3 -m venv /tmp/suru-icons-venv
           /tmp/suru-icons-venv/bin/python -m pip install --disable-pip-version-check Pillow
-          curl -fsSL "https://raw.githubusercontent.com/surucollection/home/d0f50f6e4e92f6eabd917ff04b0581d035f9fbe9/assets/suru-logo-official.png" -o /tmp/suru-logo-official.png
           /tmp/suru-icons-venv/bin/python - <<'PY'
           from PIL import Image
           from pathlib import Path
 
-          source = Image.open("/tmp/suru-logo-official.png").convert("RGBA")
+          source = Image.open("assets/suru-logo-transparent.png").convert("RGBA")
           bbox = source.getchannel("A").getbbox()
           if bbox:
               source = source.crop(bbox)
@@ -54,16 +53,22 @@ jobs:
               canvas.alpha_composite(logo, ((canvas_size - logo.width) // 2, (canvas_size - logo.height) // 2))
               return canvas
 
-          launcher = contain(512, 480, (255, 255, 255, 255))
-          launcher.convert("RGB").save(assets / "icon.png", "PNG", optimize=False)
-          launcher.convert("RGB").save(assets / "play-store-icon-512.png", "PNG", optimize=False)
-          contain(512, 400, (0, 0, 0, 0)).save(assets / "adaptive-icon.png", "PNG", optimize=False)
-
-          for name in ("icon.png", "adaptive-icon.png", "play-store-icon-512.png"):
+          transparent = (0, 0, 0, 0)
+          white = (255, 255, 255, 255)
+          # Main app artwork and Android adaptive foreground keep true transparency.
+          contain(512, 460, transparent).save(assets / "icon.png", "PNG", optimize=True)
+          contain(512, 400, transparent).save(assets / "adaptive-icon.png", "PNG", optimize=True)
+          # iOS and Play listing artwork use a solid white canvas for platform compatibility.
+          contain(512, 460, white).convert("RGB").save(assets / "ios-icon.png", "PNG", optimize=True)
+          contain(512, 460, white).convert("RGB").save(assets / "play-store-icon-512.png", "PNG", optimize=True)
+          for name in ("icon.png", "adaptive-icon.png", "ios-icon.png", "play-store-icon-512.png"):
               image = Image.open(assets / name)
               image.load()
-              assert image.size == (512, 512)
-              assert image.mode in ("RGB", "RGBA")
+              assert image.size == (512, 512), (name, image.size)
+          assert Image.open(assets / "icon.png").mode == "RGBA"
+          assert Image.open(assets / "adaptive-icon.png").mode == "RGBA"
+          assert Image.open(assets / "ios-icon.png").mode == "RGB"
+          assert Image.open(assets / "play-store-icon-512.png").mode == "RGB"
           print("Generated verified 512x512 Suru icons.")
           PY
 

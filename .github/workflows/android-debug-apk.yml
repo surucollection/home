@@ -82,12 +82,11 @@ jobs:
         shell: bash
         run: |
           python3 -m pip install --disable-pip-version-check --user Pillow
-          curl -fsSL "https://raw.githubusercontent.com/surucollection/home/d0f50f6e4e92f6eabd917ff04b0581d035f9fbe9/assets/suru-logo-official.png" -o /tmp/suru-logo-official.png
           python3 - <<'PY'
           from PIL import Image
           from pathlib import Path
 
-          source = Image.open("/tmp/suru-logo-official.png").convert("RGBA")
+          source = Image.open("assets/suru-logo-transparent.png").convert("RGBA")
           # Ignore empty transparent margins when present, but preserve the logo artwork.
           alpha = source.getchannel("A")
           bbox = alpha.getbbox()
@@ -101,24 +100,25 @@ jobs:
               logo = source.copy()
               logo.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
               canvas = Image.new("RGBA", (canvas_size, canvas_size), background)
-              x = (canvas_size - logo.width) // 2
-              y = (canvas_size - logo.height) // 2
-              canvas.alpha_composite(logo, (x, y))
+              canvas.alpha_composite(logo, ((canvas_size - logo.width) // 2, (canvas_size - logo.height) // 2))
               return canvas
 
-          # Opaque square icon for iOS/Android launcher and 512px Play Store listing artwork.
-          launcher = contain(512, 480, (255, 255, 255, 255))
-          launcher.convert("RGB").save(assets / "icon.png", "PNG", optimize=False)
-          launcher.convert("RGB").save(assets / "play-store-icon-512.png", "PNG", optimize=False)
-
-          # Transparent foreground, scaled to Android adaptive-icon safe area.
-          adaptive = contain(512, 400, (0, 0, 0, 0))
-          adaptive.save(assets / "adaptive-icon.png", "PNG", optimize=False)
-          for item in ("icon.png", "adaptive-icon.png", "play-store-icon-512.png"):
-              check = Image.open(assets / item)
-              check.load()
-              assert check.size == (512, 512), (item, check.size)
-              assert check.mode in ("RGB", "RGBA"), (item, check.mode)
+          transparent = (0, 0, 0, 0)
+          white = (255, 255, 255, 255)
+          # Main app artwork and Android adaptive foreground keep true transparency.
+          contain(512, 460, transparent).save(assets / "icon.png", "PNG", optimize=True)
+          contain(512, 400, transparent).save(assets / "adaptive-icon.png", "PNG", optimize=True)
+          # iOS and Play listing artwork use a solid white canvas for platform compatibility.
+          contain(512, 460, white).convert("RGB").save(assets / "ios-icon.png", "PNG", optimize=True)
+          contain(512, 460, white).convert("RGB").save(assets / "play-store-icon-512.png", "PNG", optimize=True)
+          for name in ("icon.png", "adaptive-icon.png", "ios-icon.png", "play-store-icon-512.png"):
+              image = Image.open(assets / name)
+              image.load()
+              assert image.size == (512, 512), (name, image.size)
+          assert Image.open(assets / "icon.png").mode == "RGBA"
+          assert Image.open(assets / "adaptive-icon.png").mode == "RGBA"
+          assert Image.open(assets / "ios-icon.png").mode == "RGB"
+          assert Image.open(assets / "play-store-icon-512.png").mode == "RGB"
           print("Generated verified 512x512 Suru icons.")
           PY
 

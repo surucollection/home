@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleDisplayName": "Suru Nepal - Fashion Store"
-      }
+      },
+      "icon": "./assets/ios-icon.png"
     },
     "android": {
       "package": "np.com.suru.collection",
