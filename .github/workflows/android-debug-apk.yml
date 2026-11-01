@@ -1,4 +1,4 @@
-name: Suru Collection Android APK
+name: Suru Nepal Android Standalone APK
 
 on:
   push:
@@ -96,6 +96,9 @@ jobs:
               pixels = source.load()
               seen = bytearray(width * height)
               stack = []
+              def is_canvas_white(x, y):
+                  r, g, b, _ = pixels[x, y]
+                  return r >= 245 and g >= 245 and b >= 245
               def enqueue(x, y):
                   index = y * width + x
                   if not seen[index] and is_canvas_white(x, y):
@@ -141,15 +144,15 @@ jobs:
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build standalone installable debug APK
+      - name: Build standalone installable release APK
         working-directory: mobile/android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Verify APK
         run: |
-          test -f mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          test -f mobile/android/app/build/outputs/apk/release/app-release.apk
           SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
           APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort | tail -n 1)"
           "$APKSIGNER" verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk
@@ -157,6 +160,6 @@ jobs:
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: Suru-Collection-Android-Debug-APK
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          name: Suru-Nepal-Android-Standalone-APK
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
