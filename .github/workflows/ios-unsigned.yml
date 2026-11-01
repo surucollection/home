@@ -1,0 +1,63 @@
+name: Suru Collection iOS IPA
+
+on:
+  push:
+    branches:
+      - feat/native-mobile-app
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/ios-unsigned.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Generate iOS project
+        working-directory: mobile
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: Install CocoaPods
+        run: pod install --project-directory=mobile/ios
+
+      - name: Build unsigned iOS app
+        run: |
+          xcodebuild \
+            -workspace mobile/ios/SuruCollection.xcworkspace \
+            -scheme SuruCollection \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        run: |
+          mkdir -p ipa/Payload
+          cp -R build/Build/Products/Release-iphoneos/SuruCollection.app ipa/Payload/
+          cd ipa
+          zip -qr ../SuruCollection-unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Suru-Collection-Unsigned-iOS
+          path: SuruCollection-unsigned.ipa
+          retention-days: 7

@@ -6,16 +6,12 @@
     "orientation": "portrait",
     "scheme": "suru",
     "userInterfaceStyle": "light",
-    "splash": {
-      "backgroundColor": "#fffaf6"
-    },
     "ios": {
       "bundleIdentifier": "np.com.suru.collection",
       "supportsTablet": true
     },
     "android": {
-      "package": "np.com.suru.collection",
-      "edgeToEdgeEnabled": true
+      "package": "np.com.suru.collection"
     }
   }
 }
