@@ -125,7 +125,12 @@ jobs:
           assets = Path("assets")
           assets.mkdir(exist_ok=True)
           canvas.save(assets / "icon.png", "PNG", optimize=True)
-          canvas.save(assets / "adaptive-icon.png", "PNG", optimize=True)
+          # Android masks adaptive icons into circles/squircles. Scale the entire unchanged
+          # square artwork into the 380px safe area so no lettering is cut by the mask.
+          adaptive_art = canvas.resize((380, 380), Image.Resampling.LANCZOS)
+          adaptive = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
+          adaptive.alpha_composite(adaptive_art, (66, 66))
+          adaptive.save(assets / "adaptive-icon.png", "PNG", optimize=True)
           canvas.save(assets / "play-store-icon-512.png", "PNG", optimize=True)
           ios = Image.new("RGBA", (512, 512), (255, 255, 255, 255))
           ios.alpha_composite(canvas)
