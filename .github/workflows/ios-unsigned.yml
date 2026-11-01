@@ -32,9 +32,10 @@ jobs:
         working-directory: mobile
         shell: bash
         run: |
-          python3 -m pip install --disable-pip-version-check --user Pillow
+          python3 -m venv /tmp/suru-icons-venv
+          /tmp/suru-icons-venv/bin/python -m pip install --disable-pip-version-check Pillow
           curl -fsSL "https://raw.githubusercontent.com/surucollection/home/d0f50f6e4e92f6eabd917ff04b0581d035f9fbe9/assets/suru-logo-official.png" -o /tmp/suru-logo-official.png
-          python3 - <<'PY'
+          /tmp/suru-icons-venv/bin/python - <<'PY'
           from PIL import Image
           from pathlib import Path
 
