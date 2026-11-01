@@ -6,13 +6,21 @@
     "orientation": "portrait",
     "scheme": "suru",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "ios": {
       "bundleIdentifier": "np.com.suru.collection",
       "supportsTablet": true,
-      "displayName": "Suru"
+      "infoPlist": {
+        "CFBundleDisplayName": "Suru"
+      }
     },
     "android": {
-      "package": "np.com.suru.collection"
+      "package": "np.com.suru.collection",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
     }
   }
 }
