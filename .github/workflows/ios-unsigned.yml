@@ -33,7 +33,8 @@ jobs:
         run: npx expo prebuild --platform ios --no-install
 
       - name: Install CocoaPods
-        run: pod install --project-directory=mobile/ios
+        working-directory: mobile
+        run: pod install --project-directory=ios
 
       - name: Build unsigned iOS app
         run: |
