@@ -155,7 +155,15 @@ jobs:
           test -f mobile/android/app/build/outputs/apk/release/app-release.apk
           SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
           APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort | tail -n 1)"
-          "$APKSIGNER" verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          "$APKSIGNER" verify --print-certs mobile/android/app/build/outputs/apk/release/app-release.apk
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          apk = "mobile/android/app/build/outputs/apk/release/app-release.apk"
+          with ZipFile(apk) as archive:
+              if "assets/index.android.bundle" not in archive.namelist():
+                  raise SystemExit("Release APK is missing assets/index.android.bundle; refusing to upload a Metro-dependent APK.")
+          print("Verified embedded React Native JavaScript bundle.")
+          PY
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
