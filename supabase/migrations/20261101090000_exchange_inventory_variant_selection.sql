@@ -2,7 +2,7 @@ BEGIN;
 
 DROP FUNCTION IF EXISTS public.create_exchange_inventory(uuid, uuid);
 
-CREATE FUNCTION public.create_exchange_inventory(
+CREATE OR REPLACE FUNCTION public.create_exchange_inventory(
   p_order_id uuid,
   p_exchange_product_id uuid,
   p_exchange_size_id uuid
