@@ -77,6 +77,51 @@ jobs:
             exit 1
           fi
 
+      - name: Generate compatible Suru app icons from official logo
+        working-directory: mobile
+        shell: bash
+        run: |
+          python3 -m pip install --disable-pip-version-check --user Pillow
+          curl -fsSL "https://raw.githubusercontent.com/surucollection/home/d0f50f6e4e92f6eabd917ff04b0581d035f9fbe9/assets/suru-logo-official.png" -o /tmp/suru-logo-official.png
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+
+          source = Image.open("/tmp/suru-logo-official.png").convert("RGBA")
+          # Ignore empty transparent margins when present, but preserve the logo artwork.
+          alpha = source.getchannel("A")
+          bbox = alpha.getbbox()
+          if bbox:
+              source = source.crop(bbox)
+
+          assets = Path("assets")
+          assets.mkdir(exist_ok=True)
+
+          def contain(canvas_size, max_size, background):
+              logo = source.copy()
+              logo.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+              canvas = Image.new("RGBA", (canvas_size, canvas_size), background)
+              x = (canvas_size - logo.width) // 2
+              y = (canvas_size - logo.height) // 2
+              canvas.alpha_composite(logo, (x, y))
+              return canvas
+
+          # Opaque square icon for iOS/Android launcher and 512px Play Store listing artwork.
+          launcher = contain(512, 480, (255, 255, 255, 255))
+          launcher.convert("RGB").save(assets / "icon.png", "PNG", optimize=False)
+          launcher.convert("RGB").save(assets / "play-store-icon-512.png", "PNG", optimize=False)
+
+          # Transparent foreground, scaled to Android adaptive-icon safe area.
+          adaptive = contain(512, 400, (0, 0, 0, 0))
+          adaptive.save(assets / "adaptive-icon.png", "PNG", optimize=False)
+          for item in ("icon.png", "adaptive-icon.png", "play-store-icon-512.png"):
+              check = Image.open(assets / item)
+              check.load()
+              assert check.size == (512, 512), (item, check.size)
+              assert check.mode in ("RGB", "RGBA"), (item, check.mode)
+          print("Generated verified 512x512 Suru icons.")
+          PY
+
       - name: Generate Android project
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
