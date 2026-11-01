@@ -1,14 +1,15 @@
 {
   "expo": {
-    "name": "Suru Collection",
-    "slug": "suru-collection",
+    "name": "Suru",
+    "slug": "suru",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "suru",
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "np.com.suru.collection",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "displayName": "Suru"
     },
     "android": {
       "package": "np.com.suru.collection"
