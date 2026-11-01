@@ -83,8 +83,8 @@ jobs:
       - name: Build unsigned iOS app
         run: |
           xcodebuild \
-            -workspace mobile/ios/SuruCollection.xcworkspace \
-            -scheme SuruCollection \
+            -workspace mobile/ios/SuruNepalFashionStore.xcworkspace \
+            -scheme SuruNepalFashionStore \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
@@ -96,7 +96,7 @@ jobs:
       - name: Package IPA
         run: |
           mkdir -p ipa/Payload
-          cp -R build/Build/Products/Release-iphoneos/SuruCollection.app ipa/Payload/
+          cp -R build/Build/Products/Release-iphoneos/SuruNepalFashionStore.app ipa/Payload/
           cd ipa
           zip -qr ../SuruCollection-unsigned.ipa Payload
 
