@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "label": "Suru Nepal - Fashion Store"
+      "label": "Suru Nepal - Fashion Store",
+      "targetSdkVersion": 36
     }
   }
 }
