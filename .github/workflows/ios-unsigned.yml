@@ -28,38 +28,30 @@ jobs:
         working-directory: mobile
         run: npm ci
 
-      - name: Generate app icons without changing the original logo layout
+      - name: Generate app icons preserving original logo artwork
         working-directory: mobile
         shell: bash
         run: |
           python3 -m venv /tmp/suru-icons-venv
           /tmp/suru-icons-venv/bin/python -m pip install --disable-pip-version-check Pillow
-          /tmp/suru-icons-venv/bin/python
           curl -fsSL "https://raw.githubusercontent.com/surucollection/home/d0f50f6e4e92f6eabd917ff04b0581d035f9fbe9/assets/suru-logo-official.png" -o /tmp/suru-logo-official.png
-          python3 -m venv /tmp/suru-icons-venv
-          /tmp/suru-icons-venv/bin/python -m pip install --disable-pip-version-check Pillow
           /tmp/suru-icons-venv/bin/python - <<'PY'
           from PIL import Image
           from pathlib import Path
 
-          # Keep the official source image's full canvas and original artwork placement.
-          # Do not crop to the logo bounds or enlarge the logo inside the square.
+          # Keep the official image's full canvas and artwork placement; never crop or enlarge it.
           source = Image.open("/tmp/suru-logo-official.png").convert("RGBA")
           source.thumbnail((512, 512), Image.Resampling.LANCZOS)
           canvas = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
           canvas.alpha_composite(source, ((512 - source.width) // 2, (512 - source.height) // 2))
-
           assets = Path("assets")
           assets.mkdir(exist_ok=True)
           canvas.save(assets / "icon.png", "PNG", optimize=True)
           canvas.save(assets / "adaptive-icon.png", "PNG", optimize=True)
           canvas.save(assets / "play-store-icon-512.png", "PNG", optimize=True)
-
-          # iOS app icons must be opaque; retain the same logo size and position on white.
           ios = Image.new("RGBA", (512, 512), (255, 255, 255, 255))
           ios.alpha_composite(canvas)
           ios.convert("RGB").save(assets / "ios-icon.png", "PNG", optimize=True)
-
           for name in ("icon.png", "adaptive-icon.png", "play-store-icon-512.png", "ios-icon.png"):
               image = Image.open(assets / name)
               image.load()
@@ -69,6 +61,7 @@ jobs:
           assert Image.open(assets / "play-store-icon-512.png").mode == "RGBA"
           assert Image.open(assets / "ios-icon.png").mode == "RGB"
           print("Generated 512x512 icons preserving original logo framing.")
+          PY
       - name: Generate iOS project
         working-directory: mobile
         run: npx expo prebuild --platform ios --no-install
