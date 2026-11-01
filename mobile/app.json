@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Suru",
+    "name": "Suru Nepal - Fashion Store",
     "slug": "suru",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
       "bundleIdentifier": "np.com.suru.collection",
       "supportsTablet": true,
       "infoPlist": {
-        "CFBundleDisplayName": "Suru"
+        "CFBundleDisplayName": "Suru Nepal - Fashion Store"
       }
     },
     "android": {
@@ -20,7 +20,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "label": "Suru Nepal - Fashion Store"
     }
   }
 }
