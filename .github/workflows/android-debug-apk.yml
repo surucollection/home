@@ -49,10 +49,15 @@ jobs:
         shell: bash
         run: |
           SDKMANAGER="${{ steps.android-sdk.outputs.sdkmanager }}"
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
           set +o pipefail
           yes | "$SDKMANAGER" --licenses
           set -o pipefail
-          "$SDKMANAGER" --install "platform-tools" "platforms;android-37" "build-tools;37.0.0"
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-37.0" "build-tools;37.0.0"
+          if [ -d "$SDK_ROOT/platforms/android-37.0" ] && [ ! -e "$SDK_ROOT/platforms/android-37" ]; then
+            ln -s android-37.0 "$SDK_ROOT/platforms/android-37"
+          fi
+          ls -ld "$SDK_ROOT/platforms/android-37" "$SDK_ROOT/platforms/android-37.0"
 
       - name: Install dependencies
         working-directory: mobile
