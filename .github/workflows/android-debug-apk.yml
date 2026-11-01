@@ -31,10 +31,26 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Accept Android SDK licences and install required packages
+      - name: Locate Android SDK manager
+        id: android-sdk
+        shell: bash
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-37" "build-tools;37.0.0"
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager was not found under $SDK_ROOT/cmdline-tools"
+            find "$SDK_ROOT" -maxdepth 4 -type f -name sdkmanager -print || true
+            exit 1
+          fi
+          echo "sdkmanager=$SDKMANAGER" >> "$GITHUB_OUTPUT"
+          echo "Using $SDKMANAGER"
+
+      - name: Accept Android SDK licences and install required packages
+        shell: bash
+        run: |
+          SDKMANAGER="${{ steps.android-sdk.outputs.sdkmanager }}"
+          yes | "$SDKMANAGER" --licenses
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-37" "build-tools;37.0.0"
 
       - name: Install dependencies
         working-directory: mobile
@@ -53,7 +69,9 @@ jobs:
       - name: Verify APK
         run: |
           test -f mobile/android/app/build/outputs/apk/debug/app-debug.apk
-          $ANDROID_HOME/build-tools/37.0.0/apksigner verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort | tail -n 1)"
+          "$APKSIGNER" verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
