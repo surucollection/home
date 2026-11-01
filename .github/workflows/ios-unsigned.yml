@@ -28,6 +28,44 @@ jobs:
         working-directory: mobile
         run: npm ci
 
+      - name: Generate compatible Suru app icons from official logo
+        working-directory: mobile
+        shell: bash
+        run: |
+          python3 -m pip install --disable-pip-version-check --user Pillow
+          curl -fsSL "https://raw.githubusercontent.com/surucollection/home/d0f50f6e4e92f6eabd917ff04b0581d035f9fbe9/assets/suru-logo-official.png" -o /tmp/suru-logo-official.png
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+
+          source = Image.open("/tmp/suru-logo-official.png").convert("RGBA")
+          bbox = source.getchannel("A").getbbox()
+          if bbox:
+              source = source.crop(bbox)
+
+          assets = Path("assets")
+          assets.mkdir(exist_ok=True)
+
+          def contain(canvas_size, max_size, background):
+              logo = source.copy()
+              logo.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+              canvas = Image.new("RGBA", (canvas_size, canvas_size), background)
+              canvas.alpha_composite(logo, ((canvas_size - logo.width) // 2, (canvas_size - logo.height) // 2))
+              return canvas
+
+          launcher = contain(512, 480, (255, 255, 255, 255))
+          launcher.convert("RGB").save(assets / "icon.png", "PNG", optimize=False)
+          launcher.convert("RGB").save(assets / "play-store-icon-512.png", "PNG", optimize=False)
+          contain(512, 400, (0, 0, 0, 0)).save(assets / "adaptive-icon.png", "PNG", optimize=False)
+
+          for name in ("icon.png", "adaptive-icon.png", "play-store-icon-512.png"):
+              image = Image.open(assets / name)
+              image.load()
+              assert image.size == (512, 512)
+              assert image.mode in ("RGB", "RGBA")
+          print("Generated verified 512x512 Suru icons.")
+          PY
+
       - name: Generate iOS project
         working-directory: mobile
         run: npx expo prebuild --platform ios --no-install
