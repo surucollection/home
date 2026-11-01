@@ -1,0 +1,68 @@
+name: Suru Collection Android APK
+
+on:
+  push:
+    branches:
+      - feat/native-mobile-app
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/android-debug-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: mobile/android/**/*.gradle*
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 37
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-37" "build-tools;37.0.0"
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Generate Android project
+        working-directory: mobile
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build installable debug APK
+        working-directory: mobile/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK
+        run: |
+          test -f mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          $ANDROID_HOME/build-tools/37.0.0/apksigner verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Suru-Collection-Android-Debug-APK
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
