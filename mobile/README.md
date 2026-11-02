@@ -74,7 +74,6 @@ The Android `preview` profile produces an installable APK for device testing. Th
 The website remains fully operational and unchanged. The first native pass intentionally does not claim full parity for:
 - Native CyberSource card checkout (the existing website card flow uses a browser SDK).
 - Native preorder lifecycle, advance/balance actions and preorder-specific screens.
-- Google OAuth / passkey login deep-link configuration.
 - Full invoice PDF, cancellation / return / exchange, product review submission and push notifications.
 
-These need dedicated native implementations and end-to-end testing before production release. The current checkout must be tested with Fonepay's live merchant configuration and NCM branch/rate responses on a real device before release.
+These remaining areas need dedicated native implementations and end-to-end testing before production release. The current checkout must be tested with Fonepay's live merchant configuration and NCM branch/rate responses on a real device before release.
