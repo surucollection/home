@@ -54,6 +54,20 @@
               "pathPrefix": "/callback"
             }
           ]
+        },
+        {
+          "action": "VIEW",
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "scheme": "https",
+              "host": "suru.com.np",
+              "pathPrefix": "/share/"
+            }
+          ]
         }
       ]
     }
