@@ -27,7 +27,7 @@ export default function ShopScreen({ navigate, params = {} }) {
           {categories.map((item) => <Text key={item} onPress={() => { setCategory(item); setFeaturedOnly(false); }} style={[styles.chip, category === item && styles.chipActive]}>{item}</Text>)}
         </ScrollView>
         <SectionHeading title={filtered.length + " styles"} />
-        <View style={styles.grid}>{filtered.map((product) => <ProductCard key={product.id} product={product} onPress={() => navigate("product", { productId: product.id })} />)}</View>
+        <View style={styles.grid}>{filtered.map((product) => <ProductCard key={product.id} product={product} onPress={(initialColor) => navigate("product", { productId: product.id, initialColor })} />)}</View>
         {!filtered.length && <Text style={styles.empty}>No products match your search.</Text>}
       </ScrollView>
     </Page>
