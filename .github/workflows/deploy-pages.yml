@@ -106,3 +106,26 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify live Android association and optimized SC063 image
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 5 --retry-delay 2 "https://suru.com.np/.well-known/assetlinks.json" -o /tmp/assetlinks.json
+          grep -q "np.com.suru.collection" /tmp/assetlinks.json
+          grep -q "FA: C6: 17: 45: DC: 09: 03: 78: 6F: B9: ED: E6: 2A: 96: 2B: 39: 9F: 73: 48: F0: BB: 6F: 89: 9B: 83: 32: 66: 75: 91: 03: 3B: 9C" /tmp/assetlinks.json
+          curl -fsSL --retry 5 --retry-delay 2 "https://suru.com.np/assets/optimized-products/SC063_1.webp" -o /tmp/SC063_live.webp
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          image_path = Path("/tmp/SC063_live.webp")
+          with Image.open(image_path) as image:
+              image.verify()
+          size = image_path.stat().st_size
+          if size <= 0 or size > 300_000:
+              raise SystemExit(f"Unexpected deployed SC063 WebP size: {size} bytes")
+          print(f"Live SC063 WebP verified: {size:,} bytes")
+          PY
+          curl -fsSL --retry 5 --retry-delay 2 "https://suru.com.np/share/SC063/" -o /tmp/SC063_share.html
+          grep -q "https://suru.com.np/assets/optimized-products/SC063_1.webp" /tmp/SC063_share.html
+          echo "Live app association, optimized product image, and share preview verified."
