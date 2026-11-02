@@ -26,7 +26,22 @@
         "backgroundColor": "#FFFFFF"
       },
       "label": "Suru Nepal - Fashion Store",
-      "targetSdkVersion": 36
+      "targetSdkVersion": 36,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "scheme": "suru",
+              "host": "product"
+            }
+          ]
+        }
+      ]
     }
   }
 }
