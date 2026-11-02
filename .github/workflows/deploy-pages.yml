@@ -43,6 +43,10 @@ jobs:
           grep -q 'property="og:image"' "$SHARE_PAGE"
           grep -q 'https://images.suru.com.np/products/SC065_1.jpg' "$SHARE_PAGE"
           grep -q 'https://suru.com.np/product.html?code=SC065' "$SHARE_PAGE"
+          grep -q 'suru://product?code=SC065' "$SHARE_PAGE"
+          grep -q 'intent://product?code=SC065' "$SHARE_PAGE"
+          test -s "dist/wishlist/index.html"
+          test -s "dist/account/index.html"
           LEGACY_URL="https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=SC065"
           curl -sS -D /tmp/suru-legacy-share-headers.txt -o /dev/null "$LEGACY_URL"
           grep -Eq '^HTTP/[^ ]+ 302' /tmp/suru-legacy-share-headers.txt
