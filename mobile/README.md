@@ -9,6 +9,7 @@ A native React Native / Expo customer shopping app for Suru Collection. The mobi
 - Size / colour selection, stock display and a persistent local shopping bag.
 - Existing Supabase customer authentication and email OTP registration.
 - Existing customer profile RPC and saved-address registration flow.
+- Contact, About and Policies pages are rendered from the live Suru Collection website inside the app, so website content changes appear without a mobile release.
 - NCM branch lookup and delivery-rate Edge Function.
 - Existing `place_order` RPC, server-side coupon validation and Fonepay QR checkout for full Fonepay / COD advance.
 - Fonepay payment status verification through the existing Edge Function.
@@ -49,9 +50,11 @@ The Android `preview` profile produces an installable APK for device testing. Th
 ## Native Google sign-in and passkeys
 
 - Google OAuth returns to `suru://auth/callback`. Android registers this callback host in `app.json`; the app exchanges the callback code with Supabase and checks that a persisted native session exists before leaving the sign-in screen.
+- Add `suru://auth/callback` to Supabase Authentication → URL Configuration → Redirect URLs. Keep the Google provider's authorised redirect URI as `https://vkycraymxhkqxgpcpdzw.supabase.co/auth/v1/callback`.
 - Add `suru://auth/callback` to Authentication → URL Configuration → Redirect URLs in the Supabase Dashboard. The Google provider's own OAuth callback remains the Supabase Auth callback URL shown in its provider settings.
 - Native passkey registration and sign-in use `react-native-passkeys` with Supabase Auth's two-step WebAuthn API. Supabase passkey support is experimental and must be enabled in Authentication → Passkeys.
 - Set the Supabase relying-party ID to `suru.com.np`, keep `https://suru.com.np` in the allowed relying-party origins, and add this Android app origin as well:
+  In Authentication → Passkeys, enable passkey authentication and set the relying-party display name to `Suru Collection`. The Android app origin below must be included in the comma-separated Relying Party Origins setting (along with `https://suru.com.np`):
 
   ```text
   android:apk-key-hash:-sYXRdwJA3hvue3mKpYrOZ9zSPC7b4mbgzJmdZEDO5w
