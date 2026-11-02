@@ -27,9 +27,16 @@ export default function AccountScreen({ navigate }) {
     {session ? <>
       <Text style={styles.title}>Hello{profile?.first_name ? ", " + profile.first_name : ""}</Text>
       <View style={styles.profileCard}>
-        <Text style={styles.name}>{profile?.name || session.user?.email}</Text>
-        <Text style={styles.email}>{session.user?.email}</Text>
-        {!!profile?.phone && <Text style={styles.detail}>{profile.phone}</Text>}
+        <View style={styles.profileCardRow}>
+          <View style={styles.profileDetails}>
+            <Text style={styles.name}>{profile?.name || session.user?.email}</Text>
+            <Text style={styles.email}>{session.user?.email}</Text>
+            {!!profile?.phone && <Text style={styles.detail}>{profile.phone}</Text>}
+          </View>
+          <Pressable onPress={() => signOut()} style={styles.signOutButton} accessibilityRole="button" accessibilityLabel="Sign out">
+            <Text style={styles.signOutText}>Sign out</Text>
+          </Pressable>
+        </View>
       </View>
       <Text style={styles.sectionTitle}>My account</Text>
       <AccountOption title="Personal details" description="Update your name and phone number" onPress={() => navigate("profile")} />
@@ -37,8 +44,6 @@ export default function AccountScreen({ navigate }) {
       <AccountOption title="My wishlist" description="View the styles you have saved" onPress={() => navigate("wishlist")} />
       <AccountOption title="Sign-in & security" description="Change your password and review available sign-in options" onPress={() => navigate("security")} />
       <AccountOption title="My orders and tracking" description="View orders and delivery progress" onPress={() => navigate("orders")} />
-      <Button title="Shop the collection" secondary onPress={() => navigate("shop")} />
-      <Button title="Sign out" secondary onPress={() => signOut()} style={{ marginTop: 18 }} />
     </> : <>
       <Text style={styles.title}>Welcome back</Text>
       <Text style={styles.subtitle}>Sign in to manage your profile, saved delivery addresses, orders and security. Your wishlist is available on this device without signing in.</Text>
@@ -59,6 +64,10 @@ const styles = {
   title: { color: colors.ink, fontSize: 27, fontWeight: "800", marginTop: 5 },
   subtitle: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 7, marginBottom: 15 },
   profileCard: { borderRadius: radius.lg, padding: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginTop: 16, marginBottom: 18 },
+  profileCardRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  profileDetails: { flex: 1, minWidth: 0 },
+  signOutButton: { minHeight: 40, minWidth: 88, paddingHorizontal: 13, paddingVertical: 9, alignItems: "center", justifyContent: "center", borderRadius: radius.pill, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.surface },
+  signOutText: { color: colors.primary, fontSize: 12, fontWeight: "800" },
   name: { color: colors.ink, fontSize: 17, fontWeight: "800" },
   email: { color: colors.accent, fontSize: 12, marginTop: 5 },
   detail: { color: colors.muted, fontSize: 12, marginTop: 8 },
