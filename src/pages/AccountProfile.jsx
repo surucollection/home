@@ -273,7 +273,7 @@ function AccountProfile(){
      </div>
    </section>
 
-   <section className="account-section account-wishlist-section">
+   <section id="wishlist" className="account-section account-wishlist-section">
      <div className="account-section-heading">
        <div><p className="account-section-kicker">SAVED FOR LATER</p><h2>My Wishlist</h2><p>Your saved styles are shared with your Suru Collection app account.</p></div>
        <a className="btn secondary" href="/products.html">Explore Products</a>
