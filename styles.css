@@ -6848,3 +6848,172 @@ a {
     padding: 12px 14px;
   }
 }
+
+
+/* Dedicated wishlist page layout */
+.wishlist-page{
+  width:min(1000px,calc(100% - 32px));
+  min-height:calc(100vh - 150px);
+  margin:0 auto;
+  padding:28px 0 64px;
+  display:block;
+}
+.wishlist-page .account-card{
+  width:100%;
+  max-width:none;
+  padding:clamp(20px,3.5vw,38px);
+  border:1px solid #eadfd8;
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 14px 42px rgba(75,35,39,.06);
+}
+.wishlist-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:22px;
+  padding-bottom:24px;
+  margin-bottom:22px;
+  border-bottom:1px solid #eee5df;
+}
+.wishlist-heading>div{min-width:0;flex:1}
+.wishlist-heading .account-section-kicker{
+  margin:0 0 9px;
+  color:#987761;
+  font-size:12px;
+  font-weight:750;
+  letter-spacing:.18em;
+}
+.wishlist-heading h1{
+  margin:0 0 12px;
+  color:#76292d;
+  font:500 clamp(30px,5vw,46px)/1.15 Georgia,"Times New Roman",serif;
+  overflow-wrap:anywhere;
+}
+.wishlist-heading p:not(.account-section-kicker){
+  margin:0;
+  max-width:650px;
+  color:#766868;
+  font-size:15px;
+  line-height:1.7;
+}
+.wishlist-heading>.btn{
+  flex:0 0 auto;
+  align-self:center;
+}
+.wishlist-empty{
+  padding:22px;
+  border:1px dashed #e5d9d2;
+  border-radius:14px;
+  background:#fcf8f5;
+  color:#766868;
+  font-size:15px;
+  line-height:1.7;
+}
+.wishlist-empty p{margin:0}
+.wishlist-empty p+p{margin-top:8px}
+.wishlist-empty a{color:#76292d;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.wishlist-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:18px;
+}
+.wishlist-product-card{
+  min-width:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  border:1px solid #eadfd8;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(75,35,39,.045);
+}
+.wishlist-product-link{
+  display:block;
+  min-width:0;
+  color:inherit;
+  text-decoration:none;
+}
+.wishlist-product-image{
+  display:block;
+  width:100%;
+  height:clamp(190px,26vw,260px);
+  object-fit:cover;
+  background:#f8f2ee;
+}
+.wishlist-product-placeholder{
+  display:grid;
+  place-items:center;
+  color:#8b7770;
+  font-size:13px;
+}
+.wishlist-product-info{padding:13px 14px 15px}
+.wishlist-product-info strong{
+  display:-webkit-box;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  color:#3f3031;
+  font-size:14px;
+  line-height:1.45;
+}
+.wishlist-product-price{
+  display:block;
+  margin-top:8px;
+  color:#76292d;
+  font-size:15px;
+  font-weight:800;
+}
+.wishlist-remove{
+  width:calc(100% - 26px);
+  min-height:42px;
+  margin:auto 13px 13px;
+  border-radius:999px;
+}
+.wishlist-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:24px;
+}
+.wishlist-actions .btn{
+  min-height:44px;
+  padding:10px 20px;
+  border-radius:999px;
+}
+.wishlist-page .message{
+  margin-top:16px;
+  padding:12px 15px;
+  border-radius:12px;
+  overflow-wrap:anywhere;
+}
+@media(max-width:640px){
+  .wishlist-page{
+    width:calc(100% - 24px);
+    padding:16px 0 40px;
+  }
+  .wishlist-page .account-card{
+    padding:21px 17px;
+    border-radius:17px;
+  }
+  .wishlist-heading{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:16px;
+    padding-bottom:18px;
+    margin-bottom:18px;
+  }
+  .wishlist-heading h1{font-size:clamp(29px,8vw,38px)}
+  .wishlist-heading p:not(.account-section-kicker){font-size:14px}
+  .wishlist-heading>.btn{width:100%;justify-content:center}
+  .wishlist-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .wishlist-product-card{border-radius:12px}
+  .wishlist-product-image{height:auto;aspect-ratio:3/4}
+  .wishlist-product-info{padding:10px}
+  .wishlist-product-info strong{font-size:12px;line-height:1.4}
+  .wishlist-product-price{font-size:13px;margin-top:6px}
+  .wishlist-remove{width:calc(100% - 18px);min-height:38px;margin:0 9px 9px;padding:8px 10px;font-size:12px}
+  .wishlist-actions{display:grid;grid-template-columns:1fr;gap:9px}
+  .wishlist-actions .btn{width:100%;justify-content:center}
+}
