@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Text, View } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import QRCode from "react-native-qrcode-svg";
+import FonepayPaymentPanel from "../components/FonepayPaymentPanel";
 import { useStore } from "../StoreContext";
 import { supabase } from "../lib/supabase";
 import { money, normalizeNepalPhone, isNepalMobile, canonicalProvince, provinces, randomIdempotencyKey } from "../lib/format";
@@ -182,6 +182,8 @@ export default function CheckoutScreen({ goBack, onComplete }) {
           orderId, orderNumber, amount, purpose,
           guestCheckoutKey,
           qrString: paymentData.qrString,
+          qrMessage: paymentData.qrMessage || null,
+          reference: paymentData.reference || null,
           expiresAt: paymentData.paymentExpiresAt || null,
           balanceDue: Number(paymentData.balanceDue || 0)
         });
@@ -246,11 +248,9 @@ export default function CheckoutScreen({ goBack, onComplete }) {
 
   if (payment) return <Page>
     <Text style={styles.eyebrow}>SECURE PAYMENT</Text>
-    <Text style={styles.title}>Scan with Fonepay</Text>
-    <Notice>Order {payment.orderNumber ? "#" + payment.orderNumber : ""}. Pay {money(payment.amount)} using your banking or wallet app. This screen checks payment status automatically.</Notice>
-    <View style={styles.qrWrap}><QRCode value={payment.qrString} size={220} /></View>
-    <Text style={styles.qrAmount}>{money(payment.amount)}</Text>
-    {!!payment.balanceDue && payment.purpose === "cod_advance" && <Text style={styles.small}>Remaining COD balance: {money(payment.balanceDue)}</Text>}
+    <Text style={styles.title}>Complete your payment</Text>
+    <Notice>Order {payment.orderNumber ? "#" + payment.orderNumber : ""}. Choose a supported bank app or scan the QR. Payment is verified automatically.</Notice>
+    <FonepayPaymentPanel payment={payment} session={session} purpose={payment.purpose} />
     <ActivityIndicator color={colors.primary} style={{ marginTop: 16 }} />
     <Text style={styles.small}>Waiting for payment confirmation…</Text>
   </Page>;
