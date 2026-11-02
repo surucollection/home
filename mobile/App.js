@@ -15,6 +15,7 @@ import CheckoutScreen from "./src/screens/CheckoutScreen";
 import PreorderScreen from "./src/screens/PreorderScreen";
 import OrdersScreen from "./src/screens/OrdersScreen";
 import WishlistScreen from "./src/screens/WishlistScreen";
+import WebsiteScreen from "./src/screens/WebsiteScreen";
 import { TopBar, Notice } from "./src/components/UI";
 import { colors } from "./src/theme";
 
@@ -90,7 +91,7 @@ function Application() {
       wishlistReturnRoute.current = null;
       return previous?.name ? navigate(previous.name, previous.params || {}) : navigate("account");
     }
-    if (route.name === "profile" || route.name === "addresses" || route.name === "security") return navigate("account");
+    if (route.name === "profile" || route.name === "addresses" || route.name === "security" || route.name === "website") return navigate("account");
     if (route.name === "product") return navigate("shop");
     if (route.name === "checkout") return navigate("cart");
     if (route.name === "preorder") return navigate("product", { productId: route.params.productId });
@@ -116,6 +117,9 @@ function Application() {
       break;
     case "wishlist":
       screen = <WishlistScreen navigate={navigate} />;
+      break;
+    case "website":
+      screen = <WebsiteScreen title={route.params.title} url={route.params.url} />;
       break;
     case "account":
       screen = <AccountScreen navigate={navigate} />;
@@ -153,7 +157,7 @@ function Application() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <TopBar
-        title={route.name === "product" ? "Product details" : route.name === "cart" ? "Your Cart" : route.name === "wishlist" ? "My Wishlist" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : route.name === "profile" ? "Personal details" : route.name === "addresses" ? "Saved addresses" : route.name === "security" ? "Sign-in & security" : undefined}
+        title={route.name === "website" ? route.params.title : route.name === "product" ? "Product details" : route.name === "cart" ? "Your Cart" : route.name === "wishlist" ? "My Wishlist" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : route.name === "profile" ? "Personal details" : route.name === "addresses" ? "Saved addresses" : route.name === "security" ? "Sign-in & security" : undefined}
         onBack={route.name === "cart" || route.name === "wishlist" || !tabsVisible ? goBack : undefined}
         onWishlist={route.name !== "wishlist" ? () => navigate("wishlist") : undefined}
         onCart={route.name !== "cart" ? () => navigate("cart") : undefined}
