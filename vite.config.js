@@ -7,6 +7,7 @@ const htmlEntries = [
   "index.html",
   "about.html",
   "account/index.html",
+  "wishlist/index.html",
   "addresses/index.html",
   "orders/index.html",
   "admin.html",
