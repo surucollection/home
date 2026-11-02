@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -58,6 +58,20 @@ jobs:
           print(f"SC063 source: {original_dimensions[0]}x{original_dimensions[1]}, {original_size:,} bytes")
           print(f"SC063 WebP: {optimized_size:,} bytes ({optimized_size / original_size:.1%} of source)")
           PY
+
+      - name: Commit optimized SC063 image for every Pages deployment mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add assets/optimized-products/SC063_1.webp
+          if git diff --cached --quiet; then
+            echo "Optimized SC063 image is already committed."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Add optimized SC063 WebP product image"
+            git push origin HEAD:main
+          fi
 
       - name: Install dependencies
         run: npm install
