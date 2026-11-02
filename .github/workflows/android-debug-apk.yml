@@ -61,7 +61,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: mobile
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Remove Expo development launcher for standalone Android app
         working-directory: mobile
