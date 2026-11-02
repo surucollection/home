@@ -203,10 +203,11 @@ export default function ProductScreen({ productId, initialColor = "", navigate, 
     if (!product) return;
     const url = "https://suru.com.np/share/" + encodeURIComponent(product.product_code || "") + "/";
     try {
+      // Keep the URL in one field only. Supplying both message and url
+      // causes native share sheets to append the same product link twice.
       await Share.share({
         title: product.name,
-        message: product.name + " — " + money(product.price) + "\n" + url,
-        url
+        message: product.name + " — " + money(product.price) + "\n" + url
       });
     } catch (error) {
       setMessage(error?.message || "Unable to share this product.");
