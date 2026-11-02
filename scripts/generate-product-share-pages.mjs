@@ -62,6 +62,10 @@ function imageType(value) {
 function renderPage(product, image) {
   const code = String(product.product_code).trim().toUpperCase();
   const productUrl = SITE + "/product.html?code=" + encodeURIComponent(code);
+  const appSchemeUrl = "suru://product?code=" + encodeURIComponent(code);
+  const androidIntentUrl = "intent://product?code=" + encodeURIComponent(code)
+    + "#Intent;scheme=suru;package=np.com.suru.collection;S.browser_fallback_url="
+    + encodeURIComponent(productUrl) + ";end";
   const title = String(product.name || "Suru Collection");
   const price = Number(product.price || 0);
   const priceText = Number.isFinite(price) && price > 0
@@ -99,7 +103,7 @@ function renderPage(product, image) {
     + (priceText ? '<p>' + escapeHtml(priceText) + '</p>' : "")
     + (image ? '<img src="' + encodedImage + '" alt="' + escapeHtml(image.alt_text || title) + '" style="max-width:100%;height:auto">' : "")
     + '<p><a href="' + encodedProductUrl + '">Open this product on Suru Collection</a></p></main>\n'
-    + '  <script>window.location.replace(' + JSON.stringify(productUrl) + ');</script>\n'
+    + '  <script>(function(){var webUrl=' + JSON.stringify(productUrl) + ';var appUrl=' + JSON.stringify(appSchemeUrl) + ';var androidUrl=' + JSON.stringify(androidIntentUrl) + ';var agent=navigator.userAgent||"";if(/Android/i.test(agent)){window.location.href=androidUrl;return;}if(/iPhone|iPad|iPod/i.test(agent)){var fallback=setTimeout(function(){window.location.replace(webUrl);},1800);document.addEventListener("visibilitychange",function(){if(document.hidden)clearTimeout(fallback);});window.location.href=appUrl;return;}window.location.replace(webUrl);})();</script>\n'
     + '</body>\n</html>\n';
 }
 
