@@ -276,9 +276,9 @@
 
 /* Product share action: visually matches the native app's image overlay. */
 .product-share-overlay-button{
-  position:absolute;top:72px;right:16px;z-index:10;
-  width:48px;height:48px;border-radius:14px;
-  border:1px solid #e7dfda;background:rgba(255,255,255,.96);
+  position:absolute;top:65px;right:13px;z-index:10;
+  width:42px;height:42px;border-radius:13px;
+  border:1px solid rgba(90,63,57,.12);background:rgba(255,255,255,.94);
   color:#6d393b;font-size:21px;line-height:1;
   display:grid;place-items:center;cursor:pointer;
 }
