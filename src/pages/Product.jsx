@@ -33,7 +33,17 @@ function Product(){
   if(!p?.id){setWishlistSaved(false);setWishlistCustomerId("");return()=>{active=false}};
   (async()=>{
     const{data:{session}}=await supabase.auth.getSession();
-    if(!active||!session?.user?.id){if(active){setWishlistSaved(false);setWishlistCustomerId("")}return}
+    if(!active)return;
+    if(!session?.user?.id){
+      let guestIds=[];
+      try{
+        const parsed=JSON.parse(localStorage.getItem("suruGuestWishlist")||"[]");
+        if(Array.isArray(parsed))guestIds=parsed.filter(id=>typeof id==="string");
+      }catch{}
+      setWishlistCustomerId("");
+      setWishlistSaved(guestIds.includes(p.id));
+      return;
+    }
     const{data:customer,error:customerError}=await supabase.from("customers")
       .select("id").eq("auth_user_id",session.user.id).maybeSingle();
     if(customerError)throw customerError;
@@ -52,7 +62,16 @@ function Product(){
   try{
     const{data:{session}}=await supabase.auth.getSession();
     if(!session?.user?.id){
-      location.href="/login.html?return="+encodeURIComponent(location.pathname+location.search);
+      let guestIds=[];
+      try{
+        const parsed=JSON.parse(localStorage.getItem("suruGuestWishlist")||"[]");
+        if(Array.isArray(parsed))guestIds=parsed.filter(id=>typeof id==="string");
+      }catch{}
+      const exists=guestIds.includes(p.id);
+      const next=exists?guestIds.filter(id=>id!==p.id):[...guestIds,p.id];
+      localStorage.setItem("suruGuestWishlist",JSON.stringify(next));
+      setWishlistSaved(!exists);
+      setMsg(exists?"Removed from your wishlist.":"Added to your guest wishlist.");
       return;
     }
     let customerId=wishlistCustomerId;
