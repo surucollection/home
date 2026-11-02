@@ -75,7 +75,7 @@ export function ProductCard({ product, onPress }) {
   const productImages = product?.images?.filter((item) => item.media_type !== "video") || [];
   const image = productImages.find((item) => item.is_main) || productImages[0];
   return (
-    <Pressable onPress={onPress} style={styles.productCard}>
+    <Pressable onPress={() => onPress?.(image?.color || product?.color || "")} style={styles.productCard}>
       {image?.image_url
         ? <Image source={{ uri: imageUrl(image.image_url, 520) }} style={styles.productImage} resizeMode="cover" />
         : <View style={[styles.productImage, styles.imageFallback]}><Text style={styles.fallbackLetter}>{String(product?.name || "S").slice(0, 1)}</Text></View>}
