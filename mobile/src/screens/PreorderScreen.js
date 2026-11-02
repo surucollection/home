@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useStore } from "../StoreContext";
+import NcmBranchDropdown from "../components/NcmBranchDropdown";
+import { resolveNcmBranch } from "../lib/ncmBranchResolver";
 import { supabase } from "../lib/supabase";
 import {
   money, normalizeNepalPhone, isNepalMobile, canonicalProvince, provinces
@@ -40,17 +42,19 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
   const [payment, setPayment] = useState(null);
   const [confirmed, setConfirmed] = useState(null);
 
-  const normalizeLocation = (value) => String(value || "").toLowerCase().replace(/\bprovince\b|\bdistrict\b|\bmetropolitan city\b|\bmunicipality\b|\bcity\b/g, "").replace(/[^a-z0-9]/g, "");
-  const branchOptions = useMemo(() => {
-    if (!form.district) return branches;
-    const district = normalizeLocation(form.district);
-    const province = normalizeLocation(form.province);
-    const filtered = branches.filter((item) =>
-      normalizeLocation(item.district_name || item.district) === district &&
-      (!item.province_name && !item.province || !province || normalizeLocation(item.province_name || item.province) === province)
-    );
-    return filtered.length ? filtered : branches;
-  }, [branches, form.district, form.province]);
+  const branchResolution = useMemo(() => resolveNcmBranch(branches, {
+    province: form.province,
+    district: form.district,
+    city: form.city,
+    address: form.address
+  }), [branches, form.province, form.district, form.city, form.address]);
+  const branchOptions = branchResolution.candidates;
+
+  useEffect(() => {
+    if (!branch && branchResolution.branch) {
+      setBranch(branchResolution.branch);
+    }
+  }, [branchResolution.branch, branch]);
   const qty = Math.max(1, Math.floor(Number(quantity) || 1));
   const productAmount = Math.round(Number(product?.price || 0) * qty * 0.95);
   const deliveryFee = Number(rate?.advanceDeliveryCharge || 0);
@@ -104,24 +108,8 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
           : branchResult.data?.branches || [];
         setBranches(list);
 
-        const savedBranch = String(customer?.ncm_destination_branch || "").trim();
-        const exactBranch = list.find((item) =>
-          String(item.name || "").trim().toLowerCase() === savedBranch.toLowerCase()
-        );
-        if (exactBranch) {
-          setBranch(exactBranch.name);
-        } else if (customer) {
-          const districtName = String(customer.district || "").trim().toLowerCase();
-          const cityName = String(customer.city || "").split(",")[0].trim().toLowerCase();
-          const match = list.find((item) => {
-            const name = String(item.name || "").toLowerCase();
-            const municipality = String(item.municipality || "").toLowerCase();
-            const district = String(item.district_name || item.district || "").toLowerCase();
-            return (cityName && (municipality === cityName || name.includes(cityName))) ||
-              (districtName && (district === districtName || name.includes(districtName)));
-          });
-          if (match) setBranch(match.name);
-        }
+        // The shared NCM resolver below selects a branch from the chosen delivery
+        // address and keeps the customer's same-district alternatives available.
 
         const percentage = Number(advanceResult?.data);
         if (Number.isFinite(percentage) && percentage >= 1 && percentage <= 100) {
@@ -173,7 +161,7 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
           body: { action: "preorder_status", intentId: payment.intentId }
         });
         if (stopped || error || !data) return;
-        if (data.verified) {
+        if (data.verified === true) {
           stopped = true;
           setConfirmed({
             orderNumber: data.order_number || data.orderNumber || "",
@@ -347,7 +335,7 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
     {!!profile && <Notice>Signed in as {profile.name || session?.user?.email}. Your saved details have been filled where available.</Notice>}
     <Field label="Full name" value={form.name} onChangeText={(value) => update("name", value)} />
     <Field label="Mobile number" value={form.phone} onChangeText={(value) => update("phone", value)} keyboardType="phone-pad" />
-    <Field label="Delivery address" value={form.address} onChangeText={(value) => update("address", value)} multiline />
+    <Field label="Delivery address" value={form.address} onChangeText={(value) => { update("address", value); setBranch(""); }} multiline />
     <NepalLocationFields
       province={form.province}
       district={form.district}
@@ -359,20 +347,15 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
     <Field label="Postal code (optional)" value={form.postal_code} onChangeText={(value) => update("postal_code", value)} keyboardType="number-pad" />
 
     <Text style={styles.pickerLabel}>NCM destination branch</Text>
-    <View style={styles.pickerBox}>
-      {branchBusy ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> : (
-        <Picker selectedValue={branch} onValueChange={setBranch}>
-          <Picker.Item label="Select destination branch" value="" />
-          {branchOptions.map((item) => (
-            <Picker.Item
-              key={String(item.code || item.pk || item.name)}
-              label={item.name + (item.municipality ? " · " + item.municipality : "")}
-              value={item.name}
-            />
-          ))}
-        </Picker>
-      )}
-    </View>
+    {branchBusy
+      ? <View style={styles.pickerBox}><ActivityIndicator color={colors.primary} style={{ padding: 16 }} /></View>
+      : <NcmBranchDropdown
+          value={branch}
+          options={branchOptions}
+          disabled={!form.district || !branchOptions.length}
+          onSelect={setBranch}
+        />}
+    {!!branchResolution.message && !branchBusy && <Text style={styles.branchMatchMessage}>{branchResolution.message}</Text>}
     {rateBusy && <Notice>Calculating live NCM delivery charge…</Notice>}
     {!!rateError && <Notice tone="error">{rateError}</Notice>}
 
@@ -426,6 +409,7 @@ const styles = {
   productMeta: { color: colors.muted, fontSize: 11, marginTop: 5, marginBottom: 13 },
   pickerLabel: { color: colors.ink, fontSize: 12, fontWeight: "700", marginBottom: 5, marginTop: 10 },
   pickerBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, marginBottom: 12, overflow: "hidden" },
+  branchMatchMessage: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: -5, marginBottom: 12 },
   summary: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: radius.md, padding: 15, marginTop: 16 },
   summaryLine: { color: colors.muted, fontSize: 11, lineHeight: 17, marginVertical: 4 },
   summaryLineRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },

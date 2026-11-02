@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import FonepayPaymentPanel from "../components/FonepayPaymentPanel";
 import { useStore } from "../StoreContext";
 import { supabase } from "../lib/supabase";
 import { money, normalizeNepalPhone, isNepalMobile, canonicalProvince, provinces, randomIdempotencyKey } from "../lib/format";
 import { Button, Field, Notice, Page } from "../components/UI";
 import NepalLocationFields from "../components/NepalLocationFields";
+import NcmBranchDropdown from "../components/NcmBranchDropdown";
+import { resolveNcmBranch } from "../lib/ncmBranchResolver";
 import { colors, radius } from "../theme";
 
 export default function CheckoutScreen({ goBack, onComplete }) {
@@ -160,20 +161,23 @@ export default function CheckoutScreen({ goBack, onComplete }) {
     return () => { active = false; };
   }, [session?.user?.id]);
 
-  const normalizeLocation = (value) => String(value || "").toLowerCase()
-    .replace(/province|district|metropolitan city|municipality|city/g, "")
-    .replace(/[^a-z0-9]/g, "");
-  const matchingBranchOptions = useMemo(() => {
-    const district = normalizeLocation(form.district);
-    const province = normalizeLocation(form.province);
-    if (!district) return branches;
-    const rows = branches.filter((item) => {
-      const itemDistrict = normalizeLocation(item.district_name || item.district || "");
-      const itemProvince = normalizeLocation(item.province_name || item.province || "");
-      return itemDistrict === district && (!itemProvince || !province || itemProvince === province);
-    });
-    return rows.length ? rows : branches;
-  }, [branches, form.district, form.province]);
+  const branchResolution = useMemo(() => resolveNcmBranch(branches, {
+    province: form.province,
+    district: form.district,
+    city: form.city,
+    address: form.address
+  }), [branches, form.province, form.district, form.city, form.address]);
+  const branchOptions = branchResolution.candidates;
+
+  // When there is one strong match, preselect it automatically just like the website.
+  // A customer can still open the dropdown and select any other candidate in the same district.
+  useEffect(() => {
+    if (!form.destination_branch && branchResolution.branch) {
+      setForm((current) => current.destination_branch
+        ? current
+        : { ...current, destination_branch: branchResolution.branch });
+    }
+  }, [branchResolution.branch, form.destination_branch]);
 
   function chooseSavedAddress(address) {
     setSelectedAddressId(address.id);
@@ -307,16 +311,6 @@ export default function CheckoutScreen({ goBack, onComplete }) {
     setMessage("");
   }
 
-  const branchOptions = useMemo(() => {
-    const rows = matchingBranchOptions.slice();
-    const selected = rows.some((item) => item.name === form.destination_branch);
-    if (form.destination_branch && !selected) {
-      const existing = branches.find((item) => item.name === form.destination_branch);
-      if (existing) rows.unshift(existing);
-    }
-    return rows;
-  }, [matchingBranchOptions, branches, form.destination_branch]);
-
   useEffect(() => {
     if (!form.destination_branch) { setRate(null); setRateError(""); return; }
     let active = true;
@@ -420,7 +414,7 @@ export default function CheckoutScreen({ goBack, onComplete }) {
         if (paymentError) throw paymentError;
         if (paymentData?.error) throw new Error(paymentData.error);
         if (paymentData?.expired) throw new Error("The payment window has expired. Please place a new order.");
-        if (paymentData?.alreadyPaid) {
+        if (paymentData?.alreadyPaid === true) {
           await clearCart();
           setPaid({ orderNumber: paymentData.orderNumber || orderNumber, purpose, balanceDue: paymentData.balanceDue || 0 });
           return;
@@ -439,8 +433,7 @@ export default function CheckoutScreen({ goBack, onComplete }) {
           balanceDue: Number(paymentData.balanceDue || 0)
         });
       } else {
-        await clearCart();
-        setPaid({ orderNumber, purpose: "cod", balanceDue: Number(data?.cod_balance_due || data?.total || 0) });
+        throw new Error("Unsupported payment option. Choose Fonepay or Cash on delivery.");
       }
     } catch (error) {
       setMessage(error?.message || "Checkout could not be completed.");
@@ -471,7 +464,7 @@ export default function CheckoutScreen({ goBack, onComplete }) {
           setPayment(null);
           return;
         }
-        if (data.verified) {
+        if (data.verified === true) {
           stopped = true;
           await clearCart();
           setPaid({
@@ -493,14 +486,14 @@ export default function CheckoutScreen({ goBack, onComplete }) {
   if (paid) return <Page>
     <Text style={styles.eyebrow}>THANK YOU</Text>
     <Text style={styles.title}>Order placed successfully</Text>
-    <Notice tone="success">Order {paid.orderNumber ? "#" + paid.orderNumber : ""} is confirmed. {paid.purpose === "cod_advance" ? "Your remaining COD balance is " + money(paid.balanceDue) + "." : "Fonepay payment has been verified."}</Notice>
+    <Notice tone="success">Order {paid.orderNumber ? "#" + paid.orderNumber : ""} is confirmed. {paid.purpose === "cod_advance" ? "Your COD advance payment has been verified. Remaining balance payable on delivery: " + money(paid.balanceDue) + "." : "Fonepay payment has been verified."}</Notice>
     <Button title="Continue shopping" onPress={onComplete} />
   </Page>;
 
   if (payment) return <Page>
     <Text style={styles.eyebrow}>SECURE PAYMENT</Text>
     <Text style={styles.title}>Complete your payment</Text>
-    <Notice>Order {payment.orderNumber ? "#" + payment.orderNumber : ""}. Choose a supported bank app or scan the QR. Payment is verified automatically.</Notice>
+    <Notice>Order {payment.orderNumber ? "#" + payment.orderNumber : ""}. Choose a supported bank app or scan the QR. {payment.purpose === "cod_advance" ? "Your COD order stays unconfirmed until the advance payment is successfully verified." : "Payment is verified automatically."}</Notice>
     <FonepayPaymentPanel payment={payment} session={session} purpose={payment.purpose} />
     <ActivityIndicator color={colors.primary} style={{ marginTop: 16 }} />
     <Text style={styles.small}>Waiting for payment confirmation…</Text>
@@ -544,7 +537,7 @@ export default function CheckoutScreen({ goBack, onComplete }) {
         <Field label="Full name" value={form.name} onChangeText={(v) => update("name", v)} />
         <Field label="Mobile number" value={form.phone} onChangeText={(v) => update("phone", v)} keyboardType="phone-pad" />
         <Field label="Email (optional)" value={form.email} onChangeText={(v) => update("email", v)} keyboardType="email-address" autoCapitalize="none" />
-        <Field label="Delivery address" value={form.address} onChangeText={(v) => update("address", v)} multiline />
+        <Field label="Delivery address" value={form.address} onChangeText={(v) => { update("address", v); update("destination_branch", ""); }} multiline />
         <NepalLocationFields
           province={form.province}
           district={form.district}
@@ -576,13 +569,15 @@ export default function CheckoutScreen({ goBack, onComplete }) {
       </View>}
       <Field label="Email (optional)" value={form.email} onChangeText={(v) => update("email", v)} keyboardType="email-address" autoCapitalize="none" />
       <Text style={styles.pickerLabel}>NCM destination branch</Text>
-      <View style={styles.pickerBox}>
-        {branchBusy ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> :
-          <Picker selectedValue={form.destination_branch} onValueChange={(v) => { update("destination_branch", v); setCoupon(null); }}>
-            <Picker.Item label="Select NCM branch for your district" value="" />
-            {branchOptions.map((branch) => <Picker.Item key={String(branch.code || branch.pk || branch.name)} label={branch.name + (branch.municipality ? " · " + branch.municipality : "")} value={branch.name} />)}
-          </Picker>}
-      </View>
+      {branchBusy
+        ? <View style={styles.pickerBox}><ActivityIndicator color={colors.primary} style={{ padding: 16 }} /></View>
+        : <NcmBranchDropdown
+            value={form.destination_branch}
+            options={branchOptions}
+            disabled={!form.district || !branchOptions.length}
+            onSelect={(value) => { update("destination_branch", value); setCoupon(null); }}
+          />}
+      {!!branchResolution.message && !branchBusy && <Text style={styles.branchMatchMessage}>{branchResolution.message}</Text>}
       {rateBusy && <Notice>Calculating live delivery charge…</Notice>}
       {!!rateError && <Notice tone="error">{rateError}</Notice>}
       {rateValid && <View style={styles.shippingLine}><Text style={styles.small}>NCM delivery charge</Text><Text style={styles.shippingPrice}>{money(rate.advanceDeliveryCharge)}</Text></View>}
@@ -595,6 +590,7 @@ export default function CheckoutScreen({ goBack, onComplete }) {
         <Text onPress={() => setPaymentMethod("fonepay")} style={[styles.paymentChoice, paymentMethod === "fonepay" && styles.paymentChoiceActive]}>Fonepay QR</Text>
         <Text onPress={() => setPaymentMethod("cod")} style={[styles.paymentChoice, paymentMethod === "cod" && styles.paymentChoiceActive]}>Cash on delivery</Text>
       </View>
+      {paymentMethod === "cod" && <Notice>COD requires an advance payment through Fonepay. Your order will be confirmed only after Fonepay verifies the exact advance amount. The remaining balance is payable on delivery.</Notice>}
       <View style={styles.summary}>
         <Text style={styles.summaryLine}>Subtotal   {money(cartSubtotal)}</Text>
         {!!discountAmount && <Text style={styles.summaryLine}>Discount   −{money(discountAmount)}</Text>}
@@ -632,6 +628,7 @@ const styles = {
   title: { color: colors.ink, fontSize: 27, fontWeight: "800", marginTop: 5, marginBottom: 8 },
   pickerLabel: { color: colors.ink, fontSize: 12, fontWeight: "700", marginBottom: 5 },
   pickerBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, marginBottom: 12, overflow: "hidden" },
+  branchMatchMessage: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: -5, marginBottom: 12 },
   shippingLine: { flexDirection: "row", justifyContent: "space-between", padding: 12, backgroundColor: colors.surfaceSoft, borderRadius: 10, marginBottom: 12 },
   shippingPrice: { color: colors.primary, fontSize: 13, fontWeight: "900" },
   label: { color: colors.ink, fontSize: 13, fontWeight: "800", marginTop: 14, marginBottom: 8 },
