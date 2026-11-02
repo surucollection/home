@@ -8,6 +8,7 @@ const SITE_HOST = "suru.com.np";
 export default function WebsiteScreen({ title, url }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   const handleNavigation = useCallback((request) => {
     const target = String(request?.url || "");
@@ -39,7 +40,7 @@ export default function WebsiteScreen({ title, url }) {
   return (
     <View style={styles.screen}>
       <WebView
-        key={url}
+        key={url + ":" + reloadKey}
         source={{ uri: url }}
         style={styles.webview}
         originWhitelist={["https://*"]}
@@ -73,7 +74,7 @@ export default function WebsiteScreen({ title, url }) {
         <View style={styles.errorOverlay}>
           <Text style={styles.errorTitle}>Unable to load this page</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={() => setError("")} style={styles.retryButton}>
+          <Pressable onPress={() => { setError(""); setLoading(true); setReloadKey((value) => value + 1); }} style={styles.retryButton}>
             <Text style={styles.retryText}>Retry page</Text>
           </Pressable>
         </View>
