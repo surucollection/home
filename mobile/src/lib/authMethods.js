@@ -23,22 +23,29 @@ export async function continueWithGoogle({ link = false } = {}) {
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
   if (result.type !== "success" || !result.url) throw new Error("Google sign-in was cancelled or did not return to Suru Collection.");
   const { query, hash } = getRedirectParts(result.url);
-  const callbackError = query.get("error_description") || query.get("error") || hash.get("error_description") || hash.get("error");
+  const callbackError = query.get("error_description") || query.get("error") || query.get("error_code") || hash.get("error_description") || hash.get("error") || hash.get("error_code");
   if (callbackError) throw new Error(callbackError);
   const code = query.get("code");
   if (code) {
-    const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     if (exchangeError) throw exchangeError;
-    return sessionData;
-  }
-  const access_token = hash.get("access_token") || query.get("access_token");
-  const refresh_token = hash.get("refresh_token") || query.get("refresh_token");
-  if (access_token && refresh_token) {
-    const { data: sessionData, error: setError } = await supabase.auth.setSession({ access_token, refresh_token });
+  } else {
+    const access_token = hash.get("access_token") || query.get("access_token");
+    const refresh_token = hash.get("refresh_token") || query.get("refresh_token");
+    if (!access_token || !refresh_token) {
+      throw new Error("Google returned without an authentication code. Confirm that " + redirectTo + " is allowed in Supabase Auth redirect URLs.");
+    }
+    const { error: setError } = await supabase.auth.setSession({ access_token, refresh_token });
     if (setError) throw setError;
-    return sessionData;
   }
-  throw new Error("Google returned without an authentication code. Add " + redirectTo + " to Supabase Auth's allowed redirect URLs.");
+
+  // Confirm the callback has created a persistent Supabase session for the app.
+  const { data: activeSession, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  if (!activeSession?.session?.user) {
+    throw new Error("Google authenticated successfully, but Suru Collection could not store the app session. Please sign in again.");
+  }
+  return activeSession;
 }
 
 export function isNativePasskeysSupported() {
