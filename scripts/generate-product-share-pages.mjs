@@ -42,7 +42,11 @@ async function fetchAll(table, params) {
 function isR2Url(value) {
   try {
     const parsed = new URL(String(value || ""));
-    return parsed.protocol === "https:" && parsed.hostname === R2_HOST && parsed.pathname.startsWith("/products/");
+    const r2ProductImage = parsed.protocol === "https:" &&
+      parsed.hostname === R2_HOST && parsed.pathname.startsWith("/products/");
+    const optimizedSiteImage = parsed.protocol === "https:" &&
+      parsed.hostname === "suru.com.np" && parsed.pathname.startsWith("/assets/optimized-products/");
+    return r2ProductImage || optimizedSiteImage;
   } catch {
     return false;
   }
