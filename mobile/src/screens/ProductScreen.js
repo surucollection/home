@@ -183,7 +183,7 @@ export default function ProductScreen({ productId, navigate, goBack }) {
 
   async function shareProduct() {
     if (!product) return;
-    const url = "https://suru.com.np/product.html?code=" + encodeURIComponent(product.product_code || "");
+    const url = "https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=" + encodeURIComponent(product.product_code || "");
     try {
       await Share.share({
         title: product.name,
