@@ -30,7 +30,7 @@ function ProductVideo({ uri }) {
 
 export default function ProductScreen({ productId, navigate, goBack }) {
   const insets = useSafeAreaInsets();
-  const { products, session, addToCart, buyNow: replaceCartWithProduct } = useStore();
+  const { products, session, cartItems, addToCart, buyNow: replaceCartWithProduct } = useStore();
   const product = products.find((item) => item.id === productId);
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
@@ -74,6 +74,8 @@ export default function ProductScreen({ productId, navigate, goBack }) {
   const stock = matching.reduce((sum, item) => sum + Number(item.stock || 0), 0);
   const variantRequired = sizes.length > 0 || colours.length > 0;
   const selectionComplete = (!sizes.length || !!size) && (!colours.length || !!color);
+  const selectedColor = color || product?.color || "";
+  const alreadyInCart = Boolean(product && cartItems.some((item) => item.productId === product.id && norm(item.size) === norm(size) && norm(item.color) === norm(selectedColor)));
   const showPreorderAction = Boolean(product?.preorder_enabled && (
     !selectionComplete || !variants.length || !matching.length || stock <= 0
   ));
@@ -333,9 +335,9 @@ export default function ProductScreen({ productId, navigate, goBack }) {
         ) : (
           <>
             <Button
-              title="Add to Cart"
+              title={alreadyInCart ? "View Cart" : "Add to Cart"}
               secondary
-              onPress={add}
+              onPress={alreadyInCart ? () => navigate("cart") : add}
               style={styles.actionButton}
               disabled={variantRequired && (!selectionComplete || (variants.length > 0 && stock <= 0))}
             />
@@ -391,6 +393,6 @@ const styles = {
   quantityButton: { color: colors.primary, fontSize: 20, fontWeight: "700" },
   quantityText: { color: colors.ink, minWidth: 20, textAlign: "center", fontWeight: "800" },
   bottomBar: { flexDirection: "row", gap: 10, paddingHorizontal: 18, paddingTop: 11, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background },
-  actionButton: { flex: 1, marginTop: 0, paddingHorizontal: 8 },
+  actionButton: { flex: 1, flexBasis: 0, flexGrow: 1, flexShrink: 1, width: 0, minWidth: 0, marginTop: 0, paddingHorizontal: 6 },
   actionButtonFull: { width: "100%", marginTop: 0 }
 };

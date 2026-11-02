@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { StatusBar, Text, View, Pressable } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StoreProvider, useStore } from "./src/StoreContext";
@@ -7,6 +7,9 @@ import ShopScreen from "./src/screens/ShopScreen";
 import ProductScreen from "./src/screens/ProductScreen";
 import CartScreen from "./src/screens/CartScreen";
 import AccountScreen from "./src/screens/AccountScreen";
+import ProfileScreen from "./src/screens/ProfileScreen";
+import AddressesScreen from "./src/screens/AddressesScreen";
+import SecurityScreen from "./src/screens/SecurityScreen";
 import AuthScreen from "./src/screens/AuthScreen";
 import CheckoutScreen from "./src/screens/CheckoutScreen";
 import PreorderScreen from "./src/screens/PreorderScreen";
@@ -16,9 +19,19 @@ import { colors } from "./src/theme";
 
 function Application() {
   const [route, setRoute] = useState({ name: "home", params: {} });
+  const cartReturnRoute = useRef(null);
   const { cartCount, catalogError, refreshCatalog } = useStore();
-  const navigate = (name, params = {}) => setRoute({ name, params });
+  const navigate = (name, params = {}) => {
+    if (name === "cart" && route.name !== "cart") cartReturnRoute.current = { name: route.name, params: route.params || {} };
+    setRoute({ name, params });
+  };
   const goBack = () => {
+    if (route.name === "cart") {
+      const previous = cartReturnRoute.current;
+      cartReturnRoute.current = null;
+      return previous?.name ? navigate(previous.name, previous.params || {}) : navigate("shop");
+    }
+    if (route.name === "profile" || route.name === "addresses" || route.name === "security") return navigate("account");
     if (route.name === "product") return navigate("shop");
     if (route.name === "checkout") return navigate("cart");
     if (route.name === "preorder") return navigate("product", { productId: route.params.productId });
@@ -45,6 +58,9 @@ function Application() {
     case "account":
       screen = <AccountScreen navigate={navigate} />;
       break;
+    case "profile": screen = <ProfileScreen goBack={goBack} />; break;
+    case "addresses": screen = <AddressesScreen goBack={goBack} />; break;
+    case "security": screen = <SecurityScreen goBack={goBack} />; break;
     case "auth":
       screen = <AuthScreen goBack={goBack} onDone={() => {
         const target = route.params?.returnRoute;
@@ -75,8 +91,8 @@ function Application() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <TopBar
-        title={route.name === "product" ? "Product details" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : undefined}
-        onBack={tabsVisible ? undefined : goBack}
+        title={route.name === "product" ? "Product details" : route.name === "cart" ? "Your Cart" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : route.name === "profile" ? "Personal details" : route.name === "addresses" ? "Saved addresses" : route.name === "security" ? "Sign-in & security" : undefined}
+        onBack={route.name === "cart" || !tabsVisible ? goBack : undefined}
         onCart={route.name !== "cart" ? () => navigate("cart") : undefined}
         cartCount={cartCount}
       />
