@@ -22,8 +22,6 @@ export async function get(table,params={}){
   return data;
 }
 
-// Cloudinary automatically delivers AVIF/WebP when supported, compresses the image,
-// and caps the width for product-card usage. Non-Cloudinary URLs are unchanged.
 export const imageUrl=(url,width=600)=>{
   const value=String(url||"").trim();
   const isDrive=/^https?:\/\/(?:www\.)?drive\.google\.com\//i.test(value);
