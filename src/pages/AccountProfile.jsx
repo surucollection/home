@@ -230,20 +230,6 @@ function AccountProfile(){
    }finally{setPasswordBusy(false)}
  };
 
-
- const signOut=async()=>{
-   setBusy(true);
-   try{
-     const{error}=await supabase.auth.signOut();
-     if(error)throw error;
-     location.href="/login.html";
-   }catch(e){
-     setMsg(e?.message||"Unable to sign out. Please try again.");
-     setMsgType("error");
-     setBusy(false);
-   }
- };
-
  if(!profile&&!msg)return <><Header/><main className="page"><section className="account-card"><div className="product-loading">Loading account…</div></section></main><Footer/></>;
 
  return <><Header/><main className="page account-page"><section className="account-card account-profile-only">
@@ -256,15 +242,6 @@ function AccountProfile(){
          <p className="account-profile-subtitle">Manage your personal information and sign-in security.</p>
        </div>
      </div>
-   </div>
-
-   <div className="account-profile-summary-card">
-     <div className="account-profile-summary-content">
-       <strong>{profile?.name||"Suru Collection customer"}</strong>
-       <span>{profile?.email||session?.user?.email||""}</span>
-       {profile?.phone&&<span>{profile.phone}</span>}
-     </div>
-     <button className="account-profile-signout" type="button" onClick={signOut} disabled={busy}>Sign out</button>
    </div>
 
    {msg&&<div className={"message account-profile-message "+(msgType==="error"?"error":"success")} role="status">{msg}</div>}
@@ -299,6 +276,7 @@ function AccountProfile(){
    <section className="account-section account-wishlist-section">
      <div className="account-section-heading">
        <div><p className="account-section-kicker">SAVED FOR LATER</p><h2>My Wishlist</h2><p>Your saved styles are shared with your Suru Collection app account.</p></div>
+       <a className="btn secondary" href="/products.html">Explore Products</a>
      </div>
      {wishlistBusy&&!wishlistItems.length?<p className="account-security-muted">Loading your wishlist…</p>:!wishlistItems.length?<p className="account-security-muted">Your wishlist is empty. Tap the heart on a product to save it here and in the mobile app.</p>:
        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:14}}>
