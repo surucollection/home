@@ -41,7 +41,6 @@ export default function AccountScreen({ navigate }) {
       <Text style={styles.sectionTitle}>My account</Text>
       <AccountOption title="Personal details" description="Update your name and phone number" onPress={() => navigate("profile")} />
       <AccountOption title="Saved addresses" description="Add, edit, delete and choose your default delivery address" onPress={() => navigate("addresses")} />
-      <AccountOption title="My wishlist" description="View the styles you have saved" onPress={() => navigate("wishlist")} />
       <AccountOption title="Sign-in & security" description="Change your password and review available sign-in options" onPress={() => navigate("security")} />
       <AccountOption title="My orders and tracking" description="View orders and delivery progress" onPress={() => navigate("orders")} />
     </> : <>
@@ -49,7 +48,6 @@ export default function AccountScreen({ navigate }) {
       <Text style={styles.subtitle}>Sign in to manage your profile, saved delivery addresses, orders and security. Your wishlist is available on this device without signing in.</Text>
       <Button title="Sign in or create account" onPress={() => navigate("auth")} />
       <Button title="Browse as guest" secondary onPress={() => navigate("shop")} />
-      <AccountOption title="My wishlist" description="View the styles you have saved" onPress={() => navigate("wishlist")} />
     </>}
     <Text style={[styles.sectionTitle, styles.helpHeading]}>Help & information</Text>
     <AccountOption title="Contact Us" description="Questions about products, orders or delivery" onPress={() => openWebsitePage("contact.html")} />
