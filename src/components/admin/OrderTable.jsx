@@ -152,11 +152,15 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       return;
     }
     const key=o.id+":"+action;
-    if(action==="return"&&!shipmentDelivered&&!redirectEligible){
-      setResultModal({action:"error",value:{message:"NCM return is available only when the shipment status is Arrived, Pickup Complete, or Returned to Warehouse."},order:o});
+    if(action==="return"&&(shipmentDelivered||!redirectEligible)){
+      setResultModal({action:"error",value:{message:"Vendor Return is available only before customer delivery, when NCM status is Arrived, Pickup Complete, or Returned to Warehouse. For an already delivered order, use Request Customer Reverse Pickup."},order:o});
       return;
     }
-    if(["return","exchange","exchange"].includes(action)&&!confirm(action==="return"?"Return this NCM shipment?":"Create an NCM exchange/exchange through Nepal Can Move?"))return;
+    if(action==="reverse_pickup"&&!shipmentDelivered){
+      setResultModal({action:"error",value:{message:"Customer Reverse Pickup is available only after the NCM shipment is delivered."},order:o});
+      return;
+    }
+    if(["return","exchange"].includes(action)&&!confirm(action==="return"?"Request NCM vendor return for this shipment?":"Create an NCM exchange through Nepal Can Move?"))return;
     const payload={...extraPayload};
 
     if(action==="add_comment"){
@@ -177,7 +181,14 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       const ncmOrderId=o.ncm_order_id||"—";
       payload.comment="Please cancel my NCM shipment order ID #"+ncmOrderId+" for customer order #"+(o.order_number||o.id)+" and kindly confirm once cancelled.";
     }
-    if(action==="return")payload.comment=prompt("Return comment (optional):","")||"";
+    if(action==="return")payload.comment=prompt("Vendor return comment (optional):","")||"";
+    if(action==="reverse_pickup"){
+      payload.reason=prompt("Why is the customer returning this delivered product?","");
+      if(payload.reason===null)return;
+      payload.reason=payload.reason.trim();
+      if(!payload.reason){alert("Please enter a return reason.");return;}
+      if(!confirm("Submit an NCM Return support ticket requesting pickup from the customer's address? NCM must confirm the pickup and provide a reverse tracking ID."))return;
+    }
     if(action==="redirect"){
       payload.name=prompt("New recipient name:",o.customer_name||"")||"";
       payload.phone=prompt("New recipient phone:",o.customer_phone||"")||"";
@@ -216,7 +227,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
       }
       const value=data?.ncm||data?.history||data?.comments||data?.response||data;
       if(["details","status_history","comments"].includes(action))openResult(action,value,o);
-      else {setResultModal({action,value:{message:action==="cancel_order"?(data?.message||"Cancellation requested. Sync the NCM status after cancellation is confirmed."):action==="send_alternative_number"?(data?.message||"Alternate contact number sent to NCM as an order comment."):"Action completed successfully."+inventoryMessage},order:o});if(action==="exchange")onRefresh?.();}
+      else {setResultModal({action,value:{message:action==="cancel_order"?(data?.message||"Cancellation requested. Sync the NCM status after cancellation is confirmed."):action==="send_alternative_number"?(data?.message||"Alternate contact number sent to NCM as an order comment."):action==="reverse_pickup"?(data?.message||"NCM reverse-pickup request submitted. Wait for NCM to confirm the pickup and provide a reverse tracking ID."):"Action completed successfully."+inventoryMessage},order:o});if(action==="exchange")onRefresh?.();}
     }catch(e){
       setResultModal({action:"error",value:{message:e?.message||"Request failed."},order:o});
     }finally{
@@ -312,7 +323,8 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
     ["add_comment","Add Comment"],
     ["send_alternative_number","Send Alternative Number"],
     ["cancel_order","Cancel NCM Order"],
-    ["return","Return Shipment"],
+    ["return","Vendor Return (eligible NCM statuses)"],
+    ["reverse_pickup","Request Customer Reverse Pickup"],
     ["redirect","Redirect Shipment"],
     ["branch_contacts","NCM Branch Contacts"]
   ];
@@ -384,7 +396,7 @@ export default function OrderTable({trackingUrl,rows,onStatus,onNcm,onNcmRate,on
                       <div className="order-action-row order-action-row-primary">
                         {o.ncm_order_id&&!isNcmCancelled(o)&&onNcmSync&&<button className="secondary" disabled={!!busy} onClick={()=>onNcmSync(o)}>Sync</button>}
                         {o.order_number&&o.ncm_order_id&&!isNcmCancelled(o)&&<button className="secondary" disabled={!!busy} onClick={()=>setTrackingPopup(String(o.order_number))}>Track</button>}
-                        {o.ncm_order_id&&!isNcmCancelled(o)&&onNcmAction&&<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a==="branch_contacts"){setBranchContactsOrder(o);setBranchContactsSearch("");if(!branches.length&&loadNcmBranches)loadNcmBranches()}else if(a)runNcm(o,a)}}><option value="" disabled>Select Action</option>{actionOptions.map(([v,l])=>{const s=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();const store=String(o.order_status||"").toLowerCase().replace(/[_-]+/g," ").trim();const delivered=s.includes("deliver")||store==="delivered";const redirectEligible=["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));const exchangeBlocked=(v==="exchange"||v==="exchange")&&!delivered;const returnBlocked=v==="return"&&!delivered&&!redirectEligible;const redirectBlocked=v==="redirect"&&!redirectEligible;return <option key={v} value={v} disabled={exchangeBlocked||returnBlocked||redirectBlocked}>{exchangeBlocked?"Exchange (available after delivery)":returnBlocked?"Return Shipment (after delivery/eligible status)":redirectBlocked?"Redirect Shipment (before delivery only)":l}</option>})}</select>}{String(o.order_status||"").toLowerCase()!=="delivered"&&(!o.ncm_order_id||isNcmCancelled(o))&&(onCreateShipment||onNcm)&&<button className="secondary" disabled={!!busy} onClick={()=>onCreateShipment?onCreateShipment(o):onNcm(o)}>Create shipment</button>}{String(o.order_status||"").toLowerCase()!=="delivered"&&(!o.ncm_order_id||isNcmCancelled(o))}{(!o.ncm_order_id||isNcmCancelled(o))&&o.order_status!=="delivered"&&!["cancelled","returned"].includes(String(o.order_status||"").toLowerCase())&&<button className="secondary" disabled={!!busy||!!onSelfDelivery===false} onClick={async()=>{const note=prompt("Optional delivery note (e.g. self-delivery / nearby customer):","");if(note===null)return;if(!confirm("Mark order #"+(o.order_number||o.id)+" as delivered without NCM?"))return;setBusy(o.id+":self_delivery");try{await onSelfDelivery?.(o,note.trim());}finally{setBusy("")}}}>{busy===o.id+":self_delivery"?"Saving…":"Mark Delivered (Direct)"}</button>}
+                        {o.ncm_order_id&&!isNcmCancelled(o)&&onNcmAction&&<select className="ncm-action-select" value="" disabled={!!busy} onChange={e=>{const a=e.target.value;if(a==="branch_contacts"){setBranchContactsOrder(o);setBranchContactsSearch("");if(!branches.length&&loadNcmBranches)loadNcmBranches()}else if(a)runNcm(o,a)}}><option value="" disabled>Select Action</option>{actionOptions.map(([v,l])=>{const s=String(o.ncm_status||"").toLowerCase().replace(/[_-]+/g," ").trim();const store=String(o.order_status||"").toLowerCase().replace(/[_-]+/g," ").trim();const delivered=s.includes("deliver")||store==="delivered";const redirectEligible=["arrived","pickup complete","returned to warehouse"].some(x=>s.includes(x));const exchangeBlocked=(v==="exchange"||v==="exchange")&&!delivered;const returnBlocked=v==="return"&&(delivered||!redirectEligible);const reversePickupBlocked=v==="reverse_pickup"&&!delivered;const redirectBlocked=v==="redirect"&&!redirectEligible;return <option key={v} value={v} disabled={exchangeBlocked||returnBlocked||reversePickupBlocked||redirectBlocked}>{exchangeBlocked?"Exchange (available after delivery)":returnBlocked?"Vendor Return (Arrived/Pickup Complete/Returned to Warehouse only)":reversePickupBlocked?"Customer Reverse Pickup (after delivery only)":redirectBlocked?"Redirect Shipment (before delivery only)":l}</option>})}</select>}{String(o.order_status||"").toLowerCase()!=="delivered"&&(!o.ncm_order_id||isNcmCancelled(o))&&(onCreateShipment||onNcm)&&<button className="secondary" disabled={!!busy} onClick={()=>onCreateShipment?onCreateShipment(o):onNcm(o)}>Create shipment</button>}{String(o.order_status||"").toLowerCase()!=="delivered"&&(!o.ncm_order_id||isNcmCancelled(o))}{(!o.ncm_order_id||isNcmCancelled(o))&&o.order_status!=="delivered"&&!["cancelled","returned"].includes(String(o.order_status||"").toLowerCase())&&<button className="secondary" disabled={!!busy||!!onSelfDelivery===false} onClick={async()=>{const note=prompt("Optional delivery note (e.g. self-delivery / nearby customer):","");if(note===null)return;if(!confirm("Mark order #"+(o.order_number||o.id)+" as delivered without NCM?"))return;setBusy(o.id+":self_delivery");try{await onSelfDelivery?.(o,note.trim());}finally{setBusy("")}}}>{busy===o.id+":self_delivery"?"Saving…":"Mark Delivered (Direct)"}</button>}
                       </div>
                       <div className="order-action-row order-action-row-invoice">
                         {(o.invoice_number||o.invoice_data)&&<>{String(o.invoice_status||"active").toLowerCase()!=="cancelled"&&<>{o.invoice_data&&<button className="secondary" disabled={!!busy} onClick={()=>onInvoice&&onInvoice(o)}>View Invoice</button>}{onCancelInvoice&&<button className="danger" disabled={!!busy} onClick={()=>onCancelInvoice(o)}>Cancel Invoice</button>}</>}{String(o.invoice_status||"active").toLowerCase()==="cancelled"&&<><small style={{color:"#9b2c2c",fontWeight:700}}>Invoice cancelled</small>{onInvoice&&["confirmed","processing","packed","shipped","delivered"].includes(String(o.order_status||"").toLowerCase())&&<button className="secondary" disabled={!!busy} onClick={()=>onInvoice(o)}>Create New Invoice</button>}</>}</>}{onInvoice&&["confirmed","processing","packed","shipped","delivered"].includes(String(o.order_status||"").toLowerCase())&&!o.invoice_number&&!o.invoice_data&&<button className="secondary" disabled={!!busy} onClick={()=>onInvoice(o)}>Generate Invoice</button>}
