@@ -6,7 +6,7 @@ import { colors, radius } from "../theme";
 
 export default function ShopScreen({ navigate, params = {} }) {
   const { products, categories, loadingCatalog, refreshCatalog } = useStore();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(params.search || "");
   const [category, setCategory] = useState(params.category || "");
   const [featuredOnly, setFeaturedOnly] = useState(!!params.featured);
   const filtered = useMemo(() => products.filter((product) => {
