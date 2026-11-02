@@ -94,7 +94,6 @@ function renderPage(product, image) {
     + '  <meta name="twitter:card" content="summary_large_image">\n'
     + '  <meta name="twitter:title" content="' + escapeHtml(shareTitle) + '">\n'
     + '  <meta name="twitter:description" content="' + escapeHtml(description) + '">\n'
-    + '  <meta http-equiv="refresh" content="0;url=' + encodedProductUrl + '">\n'
     + '</head>\n<body>\n'
     + '  <main><h1>' + escapeHtml(title) + '</h1>'
     + (priceText ? '<p>' + escapeHtml(priceText) + '</p>' : "")
