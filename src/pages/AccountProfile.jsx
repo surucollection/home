@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from "react";
+import React,{useCallback,useEffect,useState} from "react";
 import {supabase} from "../lib/api.js";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
@@ -24,6 +24,58 @@ function AccountProfile(){
  const[passwordBusy,setPasswordBusy]=useState(false);
  const[passwordMsg,setPasswordMsg]=useState("");
 
+ const loadWishlist=useCallback(async(customerId)=>{
+   if(!customerId){setWishlistItems([]);return}
+   setWishlistBusy(true);
+   setWishlistMsg("");
+   try{
+     const{data:saved,error:savedError}=await supabase.from("customer_wishlist")
+       .select("product_id,created_at").eq("customer_id",customerId).order("created_at",{ascending:false});
+     if(savedError)throw savedError;
+     const ids=(saved||[]).map(row=>row.product_id).filter(Boolean);
+     if(!ids.length){setWishlistItems([]);return}
+     const[productResult,imageResult]=await Promise.all([
+       supabase.from("products").select("id,product_code,name,price,compare_at_price,category").in("id",ids).eq("is_active",true),
+       supabase.from("product_images").select("id,product_id,image_url,is_main,sort_order,media_type").in("product_id",ids).order("sort_order",{ascending:true})
+     ]);
+     if(productResult.error)throw productResult.error;
+     if(imageResult.error)throw imageResult.error;
+     const imageMap=new Map();
+     (imageResult.data||[]).forEach(image=>{
+       if(image.media_type==="video")return;
+       const rows=imageMap.get(image.product_id)||[];
+       rows.push(image);
+       imageMap.set(image.product_id,rows);
+     });
+     const byId=new Map((productResult.data||[]).map(product=>{
+       const images=imageMap.get(product.id)||[];
+       return [product.id,{...product,image:images.find(image=>image.is_main)?.image_url||images[0]?.image_url||""}];
+     }));
+     setWishlistItems(ids.map(id=>byId.get(id)).filter(Boolean));
+   }catch(error){
+     setWishlistMsg(error?.message||"Unable to load your saved products.");
+   }finally{
+     setWishlistBusy(false);
+   }
+ },[]);
+
+ const removeWishlistItem=async(productId)=>{
+   if(!profile?.id)return;
+   setWishlistBusy(true);
+   setWishlistMsg("");
+   try{
+     const{error}=await supabase.from("customer_wishlist").delete()
+       .eq("customer_id",profile.id).eq("product_id",productId);
+     if(error)throw error;
+     setWishlistItems(items=>items.filter(item=>item.id!==productId));
+     setWishlistMsg("Product removed from your wishlist.");
+   }catch(error){
+     setWishlistMsg(error?.message||"Could not remove this product.");
+   }finally{
+     setWishlistBusy(false);
+   }
+ };
+
  const isGoogleLinked=!!session?.user?.identities?.some(i=>i.provider==="google");
 
  useEffect(()=>{
@@ -43,6 +95,7 @@ function AccountProfile(){
      const next={name:p?.name||"",email:p?.email||data.session.user.email||"",phone:p?.phone||""};
      setProfile(p||{});
      setValues(next);
+     if(p?.id)await loadWishlist(p.id);
      setPasskeys(keys);
      setPasskeyChecking(false);
      if(new URLSearchParams(location.search).get("google_link")==="1"){
@@ -57,7 +110,15 @@ function AccountProfile(){
      }
    });
    return()=>{active=false};
- },[]);
+ },[loadWishlist]);
+
+ useEffect(()=>{
+   if(!profile?.id)return undefined;
+   const channel=supabase.channel("website-customer-wishlist-"+profile.id)
+     .on("postgres_changes",{event:"*",schema:"public",table:"customer_wishlist",filter:"customer_id=eq."+profile.id},()=>loadWishlist(profile.id))
+     .subscribe();
+   return()=>{supabase.removeChannel(channel)};
+ },[profile?.id,loadWishlist]);
 
  const startEdit=field=>{
    setMsg("");
@@ -210,6 +271,27 @@ function AccountProfile(){
          </div>
        })}
      </div>
+   </section>
+
+   <section className="account-section account-wishlist-section">
+     <div className="account-section-heading">
+       <div><p className="account-section-kicker">SAVED FOR LATER</p><h2>My Wishlist</h2><p>Your saved styles are shared with your Suru Collection app account.</p></div>
+       <a className="btn secondary" href="/products.html">Explore Products</a>
+     </div>
+     {wishlistBusy&&!wishlistItems.length?<p className="account-security-muted">Loading your wishlist…</p>:!wishlistItems.length?<p className="account-security-muted">Your wishlist is empty. Tap the heart on a product to save it here and in the mobile app.</p>:
+       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:14}}>
+         {wishlistItems.map(item=><article key={item.id} style={{border:"1px solid var(--border,#e9dfd8)",borderRadius:12,overflow:"hidden",background:"#fff"}}>
+           <a href={"/product.html?code="+encodeURIComponent(item.product_code)} style={{display:"block",color:"inherit",textDecoration:"none"}}>
+             {item.image?<img src={item.image} alt={item.name} loading="lazy" style={{width:"100%",height:190,objectFit:"cover",display:"block"}}/>:<div style={{height:190,display:"grid",placeItems:"center",background:"#f8f2ee"}}>Suru Collection</div>}
+             <div style={{padding:"10px 11px"}}>
+               <strong style={{display:"block",fontSize:13,lineHeight:1.4}}>{item.name}</strong>
+               <span style={{display:"block",marginTop:6,fontWeight:800,color:"var(--primary,#65413c)"}}>NPR {Number(item.price||0).toLocaleString("en-IN")}</span>
+             </div>
+           </a>
+           <button className="btn secondary" type="button" disabled={wishlistBusy} onClick={()=>removeWishlistItem(item.id)} style={{margin:"0 10px 10px",width:"calc(100% - 20px)"}}>♥ Remove</button>
+         </article>)}
+       </div>}
+     {wishlistMsg&&<div className="message">{wishlistMsg}</div>}
    </section>
 
    <section className="account-section account-security-section">

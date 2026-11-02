@@ -30,7 +30,7 @@ function ProductVideo({ uri }) {
 
 export default function ProductScreen({ productId, navigate, goBack }) {
   const insets = useSafeAreaInsets();
-  const { products, session, cartItems, wishlist, toggleWishlist, addToCart, buyNow: replaceCartWithProduct } = useStore();
+  const { products, session, cartItems, wishlist, wishlistReady, toggleWishlist, addToCart, buyNow: replaceCartWithProduct } = useStore();
   const product = products.find((item) => item.id === productId);
   const isWishlisted = Boolean(product && wishlist.includes(product.id));
   const [size, setSize] = useState("");
@@ -250,7 +250,8 @@ export default function ProductScreen({ productId, navigate, goBack }) {
             <View pointerEvents="box-none" style={styles.mediaActions}>
               <Pressable
                 onPress={toggleFavorite}
-                style={styles.mediaAction}
+                disabled={!wishlistReady}
+                style={[styles.mediaAction, !wishlistReady && { opacity: 0.55 }]}
                 accessibilityRole="button"
                 accessibilityLabel={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >

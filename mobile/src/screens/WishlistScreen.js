@@ -6,12 +6,12 @@ import { imageUrl, money } from "../lib/format";
 import { colors, radius } from "../theme";
 
 export default function WishlistScreen({ navigate }) {
-  const { wishlistItems, removeFromWishlist } = useStore();
+  const { wishlistItems, wishlistReady, removeFromWishlist } = useStore();
   return <Page>
     <Text style={styles.eyebrow}>YOUR SAVED STYLES</Text>
     <Text style={styles.title}>My Wishlist</Text>
     <Text style={styles.subtitle}>The pieces you have saved for another look.</Text>
-    {!wishlistItems.length ? <>
+    {!wishlistReady ? <Notice>Syncing your account wishlist…</Notice> : !wishlistItems.length ? <>
       <Notice>Your wishlist is empty. Tap the heart on a product to save it here.</Notice>
       <Button title="Explore the collection" onPress={() => navigate("shop")} />
     </> : <>
