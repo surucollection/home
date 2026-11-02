@@ -489,7 +489,7 @@ Deno.serve(async (req) => {
       return json({ success: true, order: updated, ncm: response });
     }
 
-    if (["details","status_history","comments","add_comment","send_alternative_number","cancel_order","return","redirect","exchange"].includes(action)) {
+    if (["details","status_history","comments","add_comment","send_alternative_number","cancel_order","return","reverse_pickup","redirect","exchange"].includes(action)) {
       const body = requestBody;
       const userToken = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
       if (!userToken) throw new Error("Unauthorized");
@@ -583,6 +583,105 @@ Deno.serve(async (req) => {
         }
         return json({ response });
       }
+      if (action === "reverse_pickup") {
+        const portalBase = "https://portal.nepalcanmove.com";
+        const reason = String(body.reason || "").trim();
+        if (!reason) throw new Error("A return reason is required before requesting customer pickup.");
+        const orderDetails = await ncmJson(
+          "/api/v1/order?id=" + encodeURIComponent(order.ncm_order_id),
+          {},
+          portalBase
+        );
+        const statusHistory = await ncmJson(
+          "/api/v1/order/status?id=" + encodeURIComponent(order.ncm_order_id),
+          {},
+          portalBase
+        );
+        const historyRows = Array.isArray(statusHistory)
+          ? statusHistory
+          : Array.isArray(statusHistory?.results)
+          ? statusHistory.results
+          : Array.isArray(statusHistory?.data)
+          ? statusHistory.data
+          : Array.isArray(statusHistory?.history)
+          ? statusHistory.history
+          : [];
+        const latestHistory = historyRows.slice().sort((a: any, b: any) =>
+          new Date(a.added_time || a.addedTime || a.timestamp || 0).getTime() -
+          new Date(b.added_time || b.addedTime || b.timestamp || 0).getTime()
+        ).pop();
+        const liveStatus = String(
+          latestHistory?.status ||
+          latestHistory?.event ||
+          latestHistory?.status_name ||
+          latestHistory?.statusName ||
+          orderDetails?.last_delivery_status ||
+          orderDetails?.data?.last_delivery_status ||
+          orderDetails?.data?.lastDeliveryStatus ||
+          ""
+        ).trim();
+        if (!liveStatus) {
+          throw new Error("Could not verify the live NCM shipment status. Sync the shipment and try again.");
+        }
+        if (!/delivered/i.test(liveStatus)) {
+          throw new Error("Customer reverse pickup is available only after delivery. Latest NCM status: " + liveStatus + ".");
+        }
+
+        const customerName = String(order.customer_name || "").trim();
+        const customerPhone = String(order.customer_phone || "").trim();
+        const pickupAddress = [
+          order.shipping_address,
+          [order.city, order.district, order.province, order.postal_code].filter(Boolean).join(", "),
+        ].filter(Boolean).join(", ");
+        if (!customerName || !customerPhone || !pickupAddress) {
+          throw new Error("Customer name, phone, and complete delivery address are required to request a reverse pickup.");
+        }
+
+        const ticketMessage = [
+          "CUSTOMER REVERSE PICKUP REQUEST — SURU COLLECTION",
+          "Store order: " + String(order.order_number || order.id),
+          "Original NCM shipment ID: " + String(order.ncm_order_id),
+          "Latest NCM shipment status: " + liveStatus,
+          "Customer name: " + customerName,
+          "Customer phone: " + customerPhone,
+          "Pickup address: " + pickupAddress,
+          "Return reason: " + reason,
+          "Please arrange collection of the delivered parcel from the customer address above and return it to the Suru Collection vendor/warehouse. Please confirm pickup feasibility, charges, and the reverse shipment/tracking ID. Do not treat this ticket as a confirmed pickup booking."
+        ].join("\n");
+        const ticket = await ncmJson("/api/v2/vendor/ticket/create", {
+          method: "POST",
+          body: JSON.stringify({ ticket_type: "Return", message: ticketMessage }),
+        }, portalBase);
+        const ticketId = ticket?.ticket_id ?? ticket?.ticketId ?? ticket?.id ??
+          ticket?.data?.ticket_id ?? ticket?.data?.ticketId ?? ticket?.data?.id ?? null;
+        const requestedAt = new Date().toISOString();
+        let updated = null;
+        let persistenceWarning = null;
+        try {
+          updated = await updateOrder(order.id, {
+            ncm_return_ticket_id: ticketId === null ? null : String(ticketId),
+            ncm_reverse_pickup_status: "ticket_submitted",
+            ncm_reverse_pickup_requested_at: requestedAt,
+            ncm_reverse_pickup_reason: reason,
+            ncm_reverse_pickup_response: ticket,
+          }, SERVICE_ROLE_KEY);
+        } catch (e) {
+          persistenceWarning = e instanceof Error ? e.message : String(e);
+        }
+        return json({
+          success: true,
+          action: "reverse_pickup",
+          ticket,
+          ticket_id: ticketId,
+          live_ncm_status: liveStatus,
+          order: updated,
+          persistence_warning: persistenceWarning,
+          message: "NCM Return support ticket submitted" +
+            (ticketId !== null ? " (ticket #" + String(ticketId) + ")" : "") +
+            ". This is a pickup arrangement request, not a confirmed reverse-shipment booking. Wait for NCM to confirm pickup and provide a reverse tracking ID."
+        });
+      }
+
       if (action === "return") {
         const comment = String(body.comment || "").trim();
         const ncmOrderId = Number(order.ncm_order_id);
