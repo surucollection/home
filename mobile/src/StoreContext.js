@@ -172,6 +172,18 @@ export function StoreProvider({ children }) {
     await persistCart(next);
   }, [cart, persistCart]);
 
+  const buyNow = useCallback(async (product, size = "", color = "", quantity = 1) => {
+    // Replace, rather than append to, the existing cart for an immediate checkout.
+    const line = {
+      productId: product.id,
+      productCode: product.product_code,
+      size: size || null,
+      color: color || null,
+      quantity: Math.max(1, Number(quantity || 1))
+    };
+    await persistCart([line]);
+  }, [persistCart]);
+
   const updateCartQuantity = useCallback(async (productId, size, color, quantity) => {
     const key = [productId, size || "", color || ""].join("::");
     const next = cart
@@ -211,6 +223,7 @@ export function StoreProvider({ children }) {
     cartSubtotal,
     cartReady,
     addToCart,
+    buyNow,
     updateCartQuantity,
     removeFromCart,
     clearCart,
