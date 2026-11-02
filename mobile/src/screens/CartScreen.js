@@ -10,9 +10,9 @@ export default function CartScreen({ navigate }) {
   return (
     <Page>
       <Text style={styles.eyebrow}>YOUR SELECTION</Text>
-      <Text style={styles.title}>Shopping bag</Text>
-      <Text style={styles.subtitle}>Review your pieces before checkout.</Text>
-      {!cartItems.length ? <Notice>Your shopping bag is empty. Discover the latest Suru Collection styles.</Notice> : <>
+      <Text style={styles.title}>Your Cart</Text>
+      <Text style={styles.subtitle}>Review your selected pieces before checkout.</Text>
+      {!cartItems.length ? <Notice>Your cart is empty. Discover the latest Suru Collection styles.</Notice> : <>
         {cartItems.map((item) => {
           const product = item.product;
           const image = product?.images?.find((entry) => entry.is_main) || product?.images?.[0];
