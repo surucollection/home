@@ -9,6 +9,7 @@ import CartScreen from "./src/screens/CartScreen";
 import AccountScreen from "./src/screens/AccountScreen";
 import AuthScreen from "./src/screens/AuthScreen";
 import CheckoutScreen from "./src/screens/CheckoutScreen";
+import PreorderScreen from "./src/screens/PreorderScreen";
 import OrdersScreen from "./src/screens/OrdersScreen";
 import { TopBar, Notice } from "./src/components/UI";
 import { colors } from "./src/theme";
@@ -20,7 +21,11 @@ function Application() {
   const goBack = () => {
     if (route.name === "product") return navigate("shop");
     if (route.name === "checkout") return navigate("cart");
-    if (route.name === "auth") return navigate("account");
+    if (route.name === "preorder") return navigate("product", { productId: route.params.productId });
+    if (route.name === "auth") {
+      const target = route.params?.returnRoute;
+      return target?.name ? navigate(target.name, target.params || {}) : navigate("account");
+    }
     if (route.name === "orders") return navigate("account");
     navigate("home");
   };
@@ -41,13 +46,26 @@ function Application() {
       screen = <AccountScreen navigate={navigate} />;
       break;
     case "auth":
-      screen = <AuthScreen goBack={goBack} onDone={() => navigate("account")} />;
+      screen = <AuthScreen goBack={goBack} onDone={() => {
+        const target = route.params?.returnRoute;
+        navigate(target?.name || "account", target?.params || {});
+      }} />;
       break;
     case "orders":
       screen = <OrdersScreen goBack={goBack} navigate={navigate} />;
       break;
     case "checkout":
       screen = <CheckoutScreen goBack={goBack} onComplete={(next) => navigate(next === "orders" ? "orders" : "home")} />;
+      break;
+    case "preorder":
+      screen = <PreorderScreen
+        productId={route.params.productId}
+        size={route.params.size}
+        color={route.params.color}
+        quantity={route.params.quantity}
+        navigate={navigate}
+        goBack={goBack}
+      />;
       break;
     default:
       screen = <HomeScreen navigate={navigate} />;
@@ -57,7 +75,7 @@ function Application() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <TopBar
-        title={route.name === "product" ? "Product details" : route.name === "checkout" ? "Checkout" : route.name === "orders" ? "My orders" : undefined}
+        title={route.name === "product" ? "Product details" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : undefined}
         onBack={tabsVisible ? undefined : goBack}
         onCart={route.name !== "cart" ? () => navigate("cart") : undefined}
         cartCount={cartCount}
