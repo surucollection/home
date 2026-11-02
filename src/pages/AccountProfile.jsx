@@ -1,4 +1,4 @@
-import React,{useCallback,useEffect,useState} from "react";
+import React,{useEffect,useState} from "react";
 import {supabase} from "../lib/api.js";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
