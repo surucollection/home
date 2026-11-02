@@ -41,7 +41,11 @@ jobs:
           grep -q 'property="og:image"' "$SHARE_PAGE"
           grep -q 'https://images.suru.com.np/products/SC065_1.jpg' "$SHARE_PAGE"
           grep -q 'https://suru.com.np/product.html?code=SC065' "$SHARE_PAGE"
-          echo "Static share page includes the SC065 R2 image, Open Graph metadata, and product-page redirect."
+          LEGACY_URL="https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=SC065"
+          curl -sS -D /tmp/suru-legacy-share-headers.txt -o /dev/null "$LEGACY_URL"
+          grep -Eq '^HTTP/[^ ]+ 302' /tmp/suru-legacy-share-headers.txt
+          grep -qi '^location: https://suru.com.np/share/SC065/' /tmp/suru-legacy-share-headers.txt
+          echo "Static preview page and legacy share-link redirect both verified."
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
