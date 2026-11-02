@@ -7,6 +7,7 @@ import {
   money, normalizeNepalPhone, isNepalMobile, canonicalProvince, provinces
 } from "../lib/format";
 import { Button, Field, Notice, Page } from "../components/UI";
+import NepalLocationFields from "../components/NepalLocationFields";
 import FonepayPaymentPanel from "../components/FonepayPaymentPanel";
 import { colors, radius } from "../theme";
 
@@ -39,6 +40,17 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
   const [payment, setPayment] = useState(null);
   const [confirmed, setConfirmed] = useState(null);
 
+  const normalizeLocation = (value) => String(value || "").toLowerCase().replace(/\bprovince\b|\bdistrict\b|\bmetropolitan city\b|\bmunicipality\b|\bcity\b/g, "").replace(/[^a-z0-9]/g, "");
+  const branchOptions = useMemo(() => {
+    if (!form.district) return branches;
+    const district = normalizeLocation(form.district);
+    const province = normalizeLocation(form.province);
+    const filtered = branches.filter((item) =>
+      normalizeLocation(item.district_name || item.district) === district &&
+      (!item.province_name && !item.province || !province || normalizeLocation(item.province_name || item.province) === province)
+    );
+    return filtered.length ? filtered : branches;
+  }, [branches, form.district, form.province]);
   const qty = Math.max(1, Math.floor(Number(quantity) || 1));
   const productAmount = Math.round(Number(product?.price || 0) * qty * 0.95);
   const deliveryFee = Number(rate?.advanceDeliveryCharge || 0);
@@ -336,15 +348,14 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
     <Field label="Full name" value={form.name} onChangeText={(value) => update("name", value)} />
     <Field label="Mobile number" value={form.phone} onChangeText={(value) => update("phone", value)} keyboardType="phone-pad" />
     <Field label="Delivery address" value={form.address} onChangeText={(value) => update("address", value)} multiline />
-    <Field label="City / Municipality" value={form.city} onChangeText={(value) => update("city", value)} />
-    <Field label="District" value={form.district} onChangeText={(value) => update("district", value)} />
-    <Text style={styles.pickerLabel}>Province</Text>
-    <View style={styles.pickerBox}>
-      <Picker selectedValue={form.province} onValueChange={(value) => update("province", value)}>
-        <Picker.Item label="Select province" value="" />
-        {provinces.map((item) => <Picker.Item key={item} label={item} value={item} />)}
-      </Picker>
-    </View>
+    <NepalLocationFields
+      province={form.province}
+      district={form.district}
+      city={form.city}
+      onProvinceChange={(value) => { setForm((current) => ({ ...current, province: value, district: "", city: "" })); setBranch(""); }}
+      onDistrictChange={(value) => { setForm((current) => ({ ...current, district: value, city: "" })); setBranch(""); }}
+      onCityChange={(value) => { update("city", value); setBranch(""); }}
+    />
     <Field label="Postal code (optional)" value={form.postal_code} onChangeText={(value) => update("postal_code", value)} keyboardType="number-pad" />
 
     <Text style={styles.pickerLabel}>NCM destination branch</Text>
@@ -352,7 +363,7 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
       {branchBusy ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> : (
         <Picker selectedValue={branch} onValueChange={setBranch}>
           <Picker.Item label="Select destination branch" value="" />
-          {branches.map((item) => (
+          {branchOptions.map((item) => (
             <Picker.Item
               key={String(item.code || item.pk || item.name)}
               label={item.name + (item.municipality ? " · " + item.municipality : "")}

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { supabase } from "../lib/supabase";
 import { Button, Field, Notice, Page } from "../components/UI";
+import NepalLocationFields, { canonicalLocationProvince } from "../components/NepalLocationFields";
 import { colors, radius } from "../theme";
 
 const blankAddress = () => ({
@@ -45,14 +46,34 @@ export default function AddressesScreen({ goBack }) {
 
   function openNew() {
     setEditingId("");
-    setDraft({ ...blankAddress(), full_name: customer?.name || "", phone: customer?.phone || "", address: customer?.address || "", city: customer?.city || "", district: customer?.district || "", province: customer?.province || "", postal_code: customer?.postal_code || "", is_default: addresses.length === 0 });
+    setDraft({
+      ...blankAddress(),
+      full_name: customer?.name || "",
+      phone: customer?.phone || "",
+      address: customer?.address || "",
+      city: customer?.city || "",
+      district: customer?.district || "",
+      province: canonicalLocationProvince(customer?.province || ""),
+      postal_code: customer?.postal_code || "",
+      is_default: addresses.length === 0
+    });
     setFormOpen(true);
     setMessage("");
   }
 
   function openEdit(item) {
     setEditingId(item.id);
-    setDraft({ label: item.label || "Home", full_name: item.full_name || "", phone: item.phone || "", address: item.address || "", city: item.city || "", district: item.district || "", province: item.province || "", postal_code: item.postal_code || "", is_default: !!item.is_default });
+    setDraft({
+      label: item.label || "Home",
+      full_name: item.full_name || "",
+      phone: item.phone || "",
+      address: item.address || "",
+      city: item.city || "",
+      district: item.district || "",
+      province: canonicalLocationProvince(item.province || ""),
+      postal_code: item.postal_code || "",
+      is_default: !!item.is_default
+    });
     setFormOpen(true);
     setMessage("");
   }
@@ -74,7 +95,7 @@ export default function AddressesScreen({ goBack }) {
         p_address: draft.address.trim(),
         p_city: draft.city.trim(),
         p_district: draft.district.trim(),
-        p_province: draft.province.trim(),
+        p_province: canonicalLocationProvince(draft.province),
         p_postal_code: draft.postal_code.trim() || null,
         p_is_default: !!draft.is_default
       });
@@ -103,7 +124,7 @@ export default function AddressesScreen({ goBack }) {
         p_address: item.address || "",
         p_city: item.city || "",
         p_district: item.district || "",
-        p_province: item.province || "",
+        p_province: canonicalLocationProvince(item.province || ""),
         p_postal_code: item.postal_code || null,
         p_is_default: true
       });
@@ -167,9 +188,14 @@ export default function AddressesScreen({ goBack }) {
       <Field label="Full name" value={draft.full_name} onChangeText={(v) => updateDraft("full_name", v)} />
       <Field label="Phone number" value={draft.phone} onChangeText={(v) => updateDraft("phone", v)} keyboardType="phone-pad" />
       <Field label="Delivery address" value={draft.address} onChangeText={(v) => updateDraft("address", v)} multiline />
-      <Field label="City / Municipality" value={draft.city} onChangeText={(v) => updateDraft("city", v)} />
-      <Field label="District" value={draft.district} onChangeText={(v) => updateDraft("district", v)} />
-      <Field label="Province" value={draft.province} onChangeText={(v) => updateDraft("province", v)} />
+      <NepalLocationFields
+        province={draft.province}
+        district={draft.district}
+        city={draft.city}
+        onProvinceChange={(v) => setDraft((current) => ({ ...current, province: v, district: "", city: "" }))}
+        onDistrictChange={(v) => setDraft((current) => ({ ...current, district: v, city: "" }))}
+        onCityChange={(v) => updateDraft("city", v)}
+      />
       <Field label="Postal code (optional)" value={draft.postal_code} onChangeText={(v) => updateDraft("postal_code", v)} keyboardType="number-pad" />
       <Pressable onPress={() => updateDraft("is_default", !draft.is_default)} style={styles.defaultRow}>
         <View style={[styles.checkbox, draft.is_default && styles.checkboxChecked]} />

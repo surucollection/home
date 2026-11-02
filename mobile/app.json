@@ -13,7 +13,10 @@
       "infoPlist": {
         "CFBundleDisplayName": "Suru Nepal - Fashion Store"
       },
-      "icon": "./assets/ios-icon.png"
+      "icon": "./assets/ios-icon.png",
+      "associatedDomains": [
+        "webcredentials:suru.com.np"
+      ]
     },
     "android": {
       "package": "np.com.suru.collection",

@@ -120,6 +120,7 @@ export default function ProductScreen({ productId, navigate, goBack }) {
     ? galleryMedia.findIndex((item) => item.image_url === currentMedia.image_url)
     : -1;
   const currentIsVideo = currentMedia?.media_type === "video";
+  const videoPoster = galleryMedia.find((item) => item.media_type !== "video") || galleryMedia[0] || null;
 
   // Horizontal swipes change the main product image. Vertical movement remains
   // available to the surrounding ScrollView, and videos keep their native controls.
@@ -251,8 +252,18 @@ export default function ProductScreen({ productId, navigate, goBack }) {
                 >
                   {video ? (
                     <View style={styles.videoThumbnail}>
-                      <Text style={styles.videoPlay}>▶</Text>
-                      <Text style={styles.videoLabel}>VIDEO</Text>
+                      {!!videoPoster?.image_url && (
+                        <Image
+                          source={{ uri: imageUrl(videoPoster.image_url, 220) }}
+                          resizeMode="cover"
+                          style={styles.videoThumbnailImage}
+                        />
+                      )}
+                      <View style={styles.videoThumbnailShade}>
+                        <View style={styles.videoPlayCircle}>
+                          <Text style={styles.videoPlay}>▶</Text>
+                        </View>
+                      </View>
                     </View>
                   ) : (
                     <Image
@@ -380,9 +391,11 @@ const styles = {
   thumbnail: { width: 68, height: 86, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: 2, overflow: "hidden", backgroundColor: colors.surface },
   thumbnailSelected: { borderWidth: 2, borderColor: colors.primary },
   thumbnailImage: { width: "100%", height: "100%", borderRadius: 7, backgroundColor: colors.surfaceSoft },
-  videoThumbnail: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.primaryDark, borderRadius: 7, gap: 4 },
-  videoPlay: { color: colors.white, fontSize: 24, fontWeight: "900" },
-  videoLabel: { color: colors.white, fontSize: 8, fontWeight: "900", letterSpacing: 1.2 },
+  videoThumbnail: { flex: 1, borderRadius: 7, overflow: "hidden", backgroundColor: colors.surfaceSoft },
+  videoThumbnailImage: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, width: "100%", height: "100%" },
+  videoThumbnailShade: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(35,22,20,0.28)" },
+  videoPlayCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(59,35,32,0.82)", alignItems: "center", justifyContent: "center" },
+  videoPlay: { color: colors.white, fontSize: 17, fontWeight: "900", marginLeft: 2 },
   code: { color: colors.accent, fontSize: 10, letterSpacing: 1.5, fontWeight: "800", marginTop: 10 },
   title: { color: colors.ink, fontSize: 25, fontWeight: "800", lineHeight: 31, marginTop: 5 },
   priceLine: { flexDirection: "row", alignItems: "center", gap: 9, marginTop: 9 },
@@ -403,7 +416,7 @@ const styles = {
   quantityPress: { paddingHorizontal: 12, paddingVertical: 5 },
   quantityButton: { color: colors.primary, fontSize: 20, fontWeight: "700" },
   quantityText: { color: colors.ink, minWidth: 20, textAlign: "center", fontWeight: "800" },
-  bottomBar: { flexDirection: "row", gap: 10, paddingHorizontal: 18, paddingTop: 11, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background },
-  actionButton: { flex: 1, flexBasis: 0, flexGrow: 1, flexShrink: 1, width: 0, minWidth: 0, marginTop: 0, paddingHorizontal: 6 },
+  bottomBar: { flexDirection: "row", justifyContent: "space-between", gap: 10, paddingHorizontal: 18, paddingTop: 11, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background },
+  actionButton: { width: "48%", flexGrow: 0, flexShrink: 0, marginTop: 0, paddingHorizontal: 6 },
   actionButtonFull: { width: "100%", marginTop: 0 }
 };

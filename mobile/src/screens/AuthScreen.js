@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { supabase } from "../lib/supabase";
-import { normalizeNepalPhone, isNepalMobile, provinces } from "../lib/format";
+import { normalizeNepalPhone, isNepalMobile } from "../lib/format";
 import { Button, Field, Notice, Page } from "../components/UI";
+import NepalLocationFields from "../components/NepalLocationFields";
+import { continueWithGoogle, signInWithNativePasskey } from "../lib/authMethods";
 import { colors } from "../theme";
 
 const empty = {
@@ -174,6 +175,18 @@ export default function AuthScreen({ onDone, goBack }) {
           <Field label="Email address" value={form.email} onChangeText={(value) => update("email", value)} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" />
           <Field label="Password" value={form.password} onChangeText={(value) => update("password", value)} secureTextEntry placeholder="Your password" autoCapitalize="none" />
           <Button title="Sign in" onPress={login} loading={busy} />
+          <Button title="Continue with Google" secondary onPress={async () => {
+            setBusy(true); setMessage("");
+            try { await continueWithGoogle(); onDone?.(); }
+            catch (error) { setMessage(error?.message || "Google sign-in could not be completed."); }
+            finally { setBusy(false); }
+          }} disabled={busy} />
+          <Button title="Sign in with a passkey" secondary onPress={async () => {
+            setBusy(true); setMessage("");
+            try { await signInWithNativePasskey(); onDone?.(); }
+            catch (error) { setMessage(error?.message || "Passkey sign-in could not be completed."); }
+            finally { setBusy(false); }
+          }} disabled={busy} />
         </> : <>
           <View style={styles.twoCols}>
             <View style={{ flex: 1 }}><Field label="First name" value={form.first_name} onChangeText={(v) => update("first_name", v)} /></View>
@@ -182,17 +195,21 @@ export default function AuthScreen({ onDone, goBack }) {
           <Field label="Email address" value={form.email} onChangeText={(v) => update("email", v)} keyboardType="email-address" autoCapitalize="none" />
           <Field label="Nepal mobile number" value={form.phone} onChangeText={(v) => update("phone", v.replace(/[^0-9+]/g, "").slice(0, 14))} keyboardType="phone-pad" />
           <Field label="Delivery address" value={form.address} onChangeText={(v) => update("address", v)} multiline />
-          <Field label="City / Municipality" value={form.city} onChangeText={(v) => update("city", v)} />
-          <Field label="District" value={form.district} onChangeText={(v) => update("district", v)} />
-          <Text style={styles.pickerLabel}>Province</Text>
-          <View style={styles.pickerBox}><Picker selectedValue={form.province} onValueChange={(v) => update("province", v)}><Picker.Item label="Select province" value="" />{provinces.map((item) => <Picker.Item key={item} label={item} value={item} />)}</Picker></View>
+          <NepalLocationFields
+            province={form.province}
+            district={form.district}
+            city={form.city}
+            onProvinceChange={(v) => setForm((current) => ({ ...current, province: v, district: "", city: "" }))}
+            onDistrictChange={(v) => setForm((current) => ({ ...current, district: v, city: "" }))}
+            onCityChange={(v) => update("city", v)}
+          />
           <Field label="Postal code (optional)" value={form.postal_code} onChangeText={(v) => update("postal_code", v)} keyboardType="number-pad" />
           <Field label="Password" value={form.password} onChangeText={(v) => update("password", v)} secureTextEntry autoCapitalize="none" />
           <Field label="Confirm password" value={form.confirm} onChangeText={(v) => update("confirm", v)} secureTextEntry autoCapitalize="none" />
           <Button title="Create account and send OTP" onPress={register} loading={busy} />
         </>}
         {!!message && <Notice tone={/unable|failed|error|must|enter|complete|match|not /i.test(message) ? "error" : "info"}>{message}</Notice>}
-        <Text style={styles.footnote}>Google sign-in and passkeys can be added after native deep-link settings are configured for both app stores.</Text>
+        <Text style={styles.footnote}>Google sign-in and passkeys use your Suru Collection account. Passkey sign-in requires passkey support to be enabled for this project.</Text>
       </Page>
     </KeyboardAvoidingView>
   );
@@ -207,7 +224,5 @@ const styles = {
   tab: { flex: 1, textAlign: "center", paddingVertical: 11, color: colors.muted, fontWeight: "700", overflow: "hidden", borderRadius: 11 },
   activeTab: { color: colors.primary, backgroundColor: colors.white },
   twoCols: { flexDirection: "row", gap: 10 },
-  pickerLabel: { color: colors.ink, fontSize: 12, fontWeight: "700", marginBottom: 5 },
-  pickerBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, marginBottom: 12, overflow: "hidden" },
   footnote: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 16 }
 };
