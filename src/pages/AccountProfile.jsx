@@ -23,6 +23,10 @@ function AccountProfile(){
  const[confirmPassword,setConfirmPassword]=useState("");
  const[passwordBusy,setPasswordBusy]=useState(false);
  const[passwordMsg,setPasswordMsg]=useState("");
+ const[wishlistItems,setWishlistItems]=useState([]);
+ const[wishlistBusy,setWishlistBusy]=useState(false);
+ const[wishlistMsg,setWishlistMsg]=useState("");
+
  useEffect(()=>{
    if(location.hash!=="#wishlist"||!profile?.id)return;
    const frame=requestAnimationFrame(()=>{
@@ -90,8 +94,16 @@ function AccountProfile(){
    let active=true;
    (async()=>{
      const{data}=await supabase.auth.getSession();
-     if(!data.session){location.href="/login.html?return="+encodeURIComponent(location.pathname+location.search);return}
      if(!active)return;
+     if(!data.session){
+       setSession(null);
+       setProfile({guest:true});
+       setValues(EMPTY_PROFILE);
+       setWishlistItems([]);
+       setPasskeys([]);
+       setPasskeyChecking(false);
+       return;
+     }
      setSession(data.session);
      const[{data:p,error:profileError},keyResult]=await Promise.all([
        supabase.from("customers").select("id,name,email,phone").eq("auth_user_id",data.session.user.id).maybeSingle(),
@@ -239,7 +251,12 @@ function AccountProfile(){
  };
 
  if(!profile&&!msg)return <><Header/><main className="page"><section className="account-card"><div className="product-loading">Loading account…</div></section></main><Footer/></>;
-
+ if(profile?.guest)return <><Header/><main className="page account-page"><section className="account-card account-profile-only">
+   <div className="account-profile-hero"><div><p className="product-code">CUSTOMER ACCOUNT</p><h1>My Account</h1><p className="account-profile-subtitle">Sign in to manage your personal details, addresses, orders and security.</p></div></div>
+   <div className="account-section"><h2>Welcome to Suru Collection</h2><p className="account-security-muted">You can browse products and use a guest wishlist without signing in. Sign in when you are ready to manage your account or place an order.</p>
+     <div className="account-profile-actions"><a className="btn" href={"/login.html?return="+encodeURIComponent("/account/")}>Sign in or create account</a><a className="btn secondary" href="/wishlist/">Open Wishlist</a><a className="btn secondary" href="/products.html">Browse Collection</a></div>
+   </div>
+ </section></main><Footer/></>;
  return <><Header/><main className="page account-page"><section className="account-card account-profile-only">
    <div className="account-profile-hero">
      <div className="account-profile-identity">
