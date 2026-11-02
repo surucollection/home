@@ -23,6 +23,14 @@ function AccountProfile(){
  const[confirmPassword,setConfirmPassword]=useState("");
  const[passwordBusy,setPasswordBusy]=useState(false);
  const[passwordMsg,setPasswordMsg]=useState("");
+ useEffect(()=>{
+   if(location.hash!=="#wishlist"||!profile?.id)return;
+   const frame=requestAnimationFrame(()=>{
+     document.getElementById("wishlist")?.scrollIntoView({behavior:"smooth",block:"start"});
+   });
+   return()=>cancelAnimationFrame(frame);
+ },[profile?.id]);
+
 
  const loadWishlist=useCallback(async(customerId)=>{
    if(!customerId){setWishlistItems([]);return}
