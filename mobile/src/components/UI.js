@@ -14,12 +14,15 @@ export function Page({ children, scroll = true, style }) {
 export function TopBar({ title = "Suru Collection", onBack, onCart, cartCount = 0 }) {
   return (
     <View style={styles.topBar}>
-      {onBack ? <Pressable onPress={onBack} style={styles.backButton}><Text style={styles.backText}>‹</Text></Pressable> : <View style={styles.brandMark}><Text style={styles.brandMarkText}>S</Text></View>}
+      {onBack ? <Pressable onPress={onBack} style={styles.backButton}><Text style={styles.backText}>‹</Text></Pressable> : <View style={styles.brandMark}><Image source={require("../../assets/icon.png")} style={styles.brandLogo} resizeMode="contain" /></View>}
       <View style={{ flex: 1 }}>
         <Text style={styles.brandName}>{title}</Text>
         {!onBack && <Text style={styles.brandTag}>TRADITIONAL • ETHNIC • EVERYDAY</Text>}
       </View>
-      {onCart && <Pressable onPress={onCart} style={styles.cartButton}><Text style={styles.cartButtonText}>Bag {cartCount ? "(" + cartCount + ")" : ""}</Text></Pressable>}
+      {onCart && <Pressable onPress={onCart} style={styles.cartButton} accessibilityRole="button" accessibilityLabel={"Open cart" + (cartCount ? ", " + cartCount + " items" : "")}>
+        <Text style={styles.cartIcon}>🛍️</Text>
+        {cartCount > 0 && <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{cartCount > 99 ? "99+" : cartCount}</Text></View>}
+      </Pressable>}
     </View>
   );
 }
@@ -94,14 +97,16 @@ export const uiStyles = styles;
 
 const styles = {
   topBar: { minHeight: 66, backgroundColor: colors.background, flexDirection: "row", alignItems: "center", paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 11 },
-  brandMark: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
-  brandMarkText: { color: colors.white, fontFamily: "serif", fontSize: 23, fontWeight: "700" },
+  brandMark: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+  brandLogo: { width: 48, height: 48 },
   brandName: { color: colors.primaryDark, fontSize: 18, fontWeight: "800", letterSpacing: 0.2 },
   brandTag: { color: colors.muted, fontSize: 8, letterSpacing: 1.2, marginTop: 2 },
   backButton: { width: 36, height: 38, alignItems: "center", justifyContent: "center" },
   backText: { color: colors.primary, fontSize: 34, lineHeight: 36 },
-  cartButton: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingVertical: 9, paddingHorizontal: 13 },
-  cartButtonText: { color: colors.primary, fontSize: 12, fontWeight: "700" },
+  cartButton: { minWidth: 42, height: 42, alignItems: "center", justifyContent: "center", position: "relative", paddingHorizontal: 4 },
+  cartIcon: { fontSize: 25 },
+  cartBadge: { position: "absolute", top: -1, right: -4, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.accent, alignItems: "center", justifyContent: "center" },
+  cartBadgeText: { color: colors.white, fontSize: 9, lineHeight: 12, fontWeight: "900" },
   button: { minHeight: 48, borderRadius: radius.pill, backgroundColor: colors.primary, paddingHorizontal: 18, alignItems: "center", justifyContent: "center", marginTop: 8 },
   buttonSecondary: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary },
   buttonText: { color: colors.white, fontSize: 14, fontWeight: "800", letterSpacing: 0.2 },
