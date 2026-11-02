@@ -44,6 +44,8 @@ function copyRuntimeFiles() {
 
       copy(path.join(root, "styles.css"), path.join(out, "styles.css"));
       copy(path.join(root, "assets"), path.join(out, "assets"));
+      // Preserve standards-based app association files in the published site.
+      copy(path.join(root, ".well-known"), path.join(out, ".well-known"));
 
       // GitHub Pages has no rewrite rules for /track/{order-number}; serve the built app via its 404 fallback.
       const builtIndex = path.join(out, "index.html");
