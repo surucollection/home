@@ -32,33 +32,16 @@ jobs:
 
       - name: Build
         run: npm run build
-      - name: Verify product share preview and browser redirect
+      - name: Verify generated R2 product share page
         shell: bash
         run: |
           set -euo pipefail
-          SHARE_URL="https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=SC065&v=2"
-
-          curl --retry 3 --retry-delay 2 -fsS \
-            -A "facebookexternalhit/1.1 Facebot" \
-            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
-            -D /tmp/suru-preview-headers.txt \
-            -o /tmp/suru-preview.html \
-            "$SHARE_URL"
-
-          grep -qi '^content-type: text/html' /tmp/suru-preview-headers.txt
-          grep -q 'property="og:image"' /tmp/suru-preview.html
-          grep -q 'https://images.suru.com.np/products/SC065_1.jpg' /tmp/suru-preview.html
-
-          curl -sS \
-            -A "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 Version/27.2 Mobile/15E148 Safari/604.1" \
-            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
-            -D /tmp/suru-click-headers.txt \
-            -o /dev/null \
-            "$SHARE_URL"
-
-          grep -Eq '^HTTP/[^ ]+ 302' /tmp/suru-click-headers.txt
-          grep -qi '^location: https://suru.com.np/product.html?code=SC065' /tmp/suru-click-headers.txt
-          echo "Product share preview returns R2 Open Graph metadata and browser clicks redirect to the product page."
+          SHARE_PAGE="dist/share/SC065/index.html"
+          test -s "$SHARE_PAGE"
+          grep -q 'property="og:image"' "$SHARE_PAGE"
+          grep -q 'https://images.suru.com.np/products/SC065_1.jpg' "$SHARE_PAGE"
+          grep -q 'https://suru.com.np/product.html?code=SC065' "$SHARE_PAGE"
+          echo "Static share page includes the SC065 R2 image, Open Graph metadata, and product-page redirect."
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
