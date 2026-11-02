@@ -585,10 +585,71 @@ Deno.serve(async (req) => {
       }
       if (action === "return") {
         const comment = String(body.comment || "").trim();
-        const response = await callNcmCandidates("/api/v2/vendor/order/return", {
+        const ncmOrderId = Number(order.ncm_order_id);
+        if (!Number.isSafeInteger(ncmOrderId) || ncmOrderId <= 0) {
+          throw new Error("A valid NCM shipment ID is required before returning this order.");
+        }
+
+        // NCM only accepts a vendor return for these shipment states. Read the latest
+        // history from the portal first so stale order.ncm_status values cannot trigger
+        // a rejected request.
+        const portalBase = "https://portal.nepalcanmove.com";
+        const history = await ncmJson(
+          "/api/v1/order/status?id=" + encodeURIComponent(ncmOrderId),
+          {},
+          portalBase
+        );
+        const historyRows = Array.isArray(history)
+          ? history
+          : Array.isArray(history?.results)
+          ? history.results
+          : Array.isArray(history?.data)
+          ? history.data
+          : Array.isArray(history?.history)
+          ? history.history
+          : Array.isArray(history?.data?.results)
+          ? history.data.results
+          : [];
+        const latest = historyRows.slice().sort((a: any, b: any) =>
+          new Date(a.added_time || a.addedTime || a.timestamp || 0).getTime() -
+          new Date(b.added_time || b.addedTime || b.timestamp || 0).getTime()
+        ).pop();
+        const latestStatus = String(
+          latest?.status ||
+          latest?.event ||
+          latest?.status_name ||
+          latest?.statusName ||
+          (typeof history?.status === "string" ? history.status : "") ||
+          (typeof history?.data?.status === "string" ? history.data.status : "")
+        ).trim();
+        const normalizedStatus = latestStatus
+          .toLowerCase()
+          .replace(/[_-]+/g, " ")
+          .replace(/\\s+/g, " ")
+          .trim();
+        const allowedReturnStatuses = new Set([
+          "arrived",
+          "pickup complete",
+          "returned to warehouse",
+        ]);
+
+        if (!latestStatus) {
+          throw new Error("Could not verify the latest NCM shipment status. Open NCM Status History or sync the shipment, then try the return again.");
+        }
+        if (!allowedReturnStatuses.has(normalizedStatus)) {
+          throw new Error(
+            "NCM cannot return this order yet. Latest NCM status: " +
+            latestStatus +
+            ". Returns are allowed only when the shipment is Arrived, Pickup Complete, or Returned to Warehouse."
+          );
+        }
+
+        // Use the portal host once. The old host returns 404, and the former fallback
+        // list generated the same portal URL twice for this /api/... route.
+        const response = await ncmJson("/api/v2/vendor/order/return", {
           method: "POST",
-          body: JSON.stringify({ pk: Number(order.ncm_order_id), ...(comment ? { comment } : {}) }),
-        });
+          body: JSON.stringify({ pk: ncmOrderId, ...(comment ? { comment } : {}) }),
+        }, portalBase);
         const deduction = Number(order.shipping_fee || 0) > 0 ? 0 : Math.max(0, Number(order.ncm_delivery_charge || 0));
         const updated = await updateOrder(order.id, { return_delivery_deduction: deduction }, SERVICE_ROLE_KEY);
         return json({ response, order: updated, return_delivery_deduction: deduction });
