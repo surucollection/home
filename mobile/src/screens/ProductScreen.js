@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Image, PanResponder, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, PanResponder, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useStore } from "../StoreContext";
@@ -30,8 +30,9 @@ function ProductVideo({ uri }) {
 
 export default function ProductScreen({ productId, navigate, goBack }) {
   const insets = useSafeAreaInsets();
-  const { products, session, cartItems, addToCart, buyNow: replaceCartWithProduct } = useStore();
+  const { products, session, cartItems, wishlist, toggleWishlist, addToCart, buyNow: replaceCartWithProduct } = useStore();
   const product = products.find((item) => item.id === productId);
+  const isWishlisted = Boolean(product && wishlist.includes(product.id));
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -174,6 +175,26 @@ export default function ProductScreen({ productId, navigate, goBack }) {
     }
   }
 
+  async function toggleFavorite() {
+    if (!product) return;
+    const saved = await toggleWishlist(product.id);
+    setMessage(saved ? "Added to your wishlist." : "Removed from your wishlist.");
+  }
+
+  async function shareProduct() {
+    if (!product) return;
+    const url = "https://suru.com.np/product.html?code=" + encodeURIComponent(product.product_code || "");
+    try {
+      await Share.share({
+        title: product.name,
+        message: product.name + " — " + money(product.price) + "\n" + url,
+        url
+      });
+    } catch (error) {
+      setMessage(error?.message || "Unable to share this product.");
+    }
+  }
+
   async function buyNow() {
     if (!validateSelection()) return;
     try {
@@ -226,6 +247,24 @@ export default function ProductScreen({ productId, navigate, goBack }) {
                 style={styles.heroImage}
               />
             )}
+            <View pointerEvents="box-none" style={styles.mediaActions}>
+              <Pressable
+                onPress={toggleFavorite}
+                style={styles.mediaAction}
+                accessibilityRole="button"
+                accessibilityLabel={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <Text style={styles.mediaActionIcon}>{isWishlisted ? "❤️" : "🤍"}</Text>
+              </Pressable>
+              <Pressable
+                onPress={shareProduct}
+                style={styles.mediaAction}
+                accessibilityRole="button"
+                accessibilityLabel="Share product"
+              >
+                <Text style={styles.shareActionIcon}>➤</Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
           <View style={[styles.heroImage, styles.noImage]}>
@@ -384,6 +423,10 @@ const styles = {
   scrollContent: { padding: 18, paddingBottom: 22 },
   back: { color: colors.primary, fontWeight: "700", marginBottom: 12 },
   galleryMainWrap: { width: "100%", height: 390, borderRadius: radius.lg, backgroundColor: colors.surfaceSoft, overflow: "hidden", position: "relative" },
+  mediaActions: { position: "absolute", top: 13, right: 13, alignItems: "center", gap: 10 },
+  mediaAction: { width: 42, height: 42, borderRadius: 13, backgroundColor: "rgba(255,255,255,0.94)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(90,63,57,0.12)" },
+  mediaActionIcon: { fontSize: 22 },
+  shareActionIcon: { fontSize: 21, color: colors.primary, transform: [{ rotate: "-35deg" }] },
   heroImage: { width: "100%", height: 390, borderRadius: radius.lg, backgroundColor: "#161616" },
   noImage: { justifyContent: "center", alignItems: "center" },
   noImageText: { color: colors.accent, fontFamily: "serif", fontSize: 28 },

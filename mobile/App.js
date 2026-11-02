@@ -14,15 +14,18 @@ import AuthScreen from "./src/screens/AuthScreen";
 import CheckoutScreen from "./src/screens/CheckoutScreen";
 import PreorderScreen from "./src/screens/PreorderScreen";
 import OrdersScreen from "./src/screens/OrdersScreen";
+import WishlistScreen from "./src/screens/WishlistScreen";
 import { TopBar, Notice } from "./src/components/UI";
 import { colors } from "./src/theme";
 
 function Application() {
   const [route, setRoute] = useState({ name: "home", params: {} });
   const cartReturnRoute = useRef(null);
-  const { cartCount, catalogError, refreshCatalog } = useStore();
+  const { cartCount, wishlistCount, catalogError, refreshCatalog } = useStore();
+  const wishlistReturnRoute = useRef(null);
   const navigate = (name, params = {}) => {
     if (name === "cart" && route.name !== "cart" && route.name !== "checkout") cartReturnRoute.current = { name: route.name, params: route.params || {} };
+    if (name === "wishlist" && route.name !== "wishlist") wishlistReturnRoute.current = { name: route.name, params: route.params || {} };
     setRoute({ name, params });
   };
   const goBack = () => {
@@ -30,6 +33,11 @@ function Application() {
       const previous = cartReturnRoute.current;
       cartReturnRoute.current = null;
       return previous?.name ? navigate(previous.name, previous.params || {}) : navigate("shop");
+    }
+    if (route.name === "wishlist") {
+      const previous = wishlistReturnRoute.current;
+      wishlistReturnRoute.current = null;
+      return previous?.name ? navigate(previous.name, previous.params || {}) : navigate("account");
     }
     if (route.name === "profile" || route.name === "addresses" || route.name === "security") return navigate("account");
     if (route.name === "product") return navigate("shop");
@@ -54,6 +62,9 @@ function Application() {
       break;
     case "cart":
       screen = <CartScreen navigate={navigate} />;
+      break;
+    case "wishlist":
+      screen = <WishlistScreen navigate={navigate} />;
       break;
     case "account":
       screen = <AccountScreen navigate={navigate} />;
@@ -91,9 +102,11 @@ function Application() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <TopBar
-        title={route.name === "product" ? "Product details" : route.name === "cart" ? "Your Cart" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : route.name === "profile" ? "Personal details" : route.name === "addresses" ? "Saved addresses" : route.name === "security" ? "Sign-in & security" : undefined}
-        onBack={route.name === "cart" || !tabsVisible ? goBack : undefined}
+        title={route.name === "product" ? "Product details" : route.name === "cart" ? "Your Cart" : route.name === "wishlist" ? "My Wishlist" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : route.name === "profile" ? "Personal details" : route.name === "addresses" ? "Saved addresses" : route.name === "security" ? "Sign-in & security" : undefined}
+        onBack={route.name === "cart" || route.name === "wishlist" || !tabsVisible ? goBack : undefined}
+        onWishlist={route.name !== "wishlist" ? () => navigate("wishlist") : undefined}
         onCart={route.name !== "cart" ? () => navigate("cart") : undefined}
+        wishlistCount={wishlistCount}
         cartCount={cartCount}
       />
       {!!catalogError && <Pressable onPress={() => refreshCatalog().catch(() => {})}><Notice tone="error">Catalogue refresh issue: {catalogError}. Tap here to retry.</Notice></Pressable>}

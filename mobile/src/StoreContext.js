@@ -12,6 +12,7 @@ import { supabase } from "./lib/supabase";
 
 const StoreContext = createContext(null);
 const CART_KEY = "suru.mobile.cart.v1";
+const WISHLIST_KEY = "suru.mobile.wishlist.v1";
 
 const imageSort = (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0);
 
@@ -23,6 +24,7 @@ export function StoreProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [cartReady, setCartReady] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
 
   const refreshCatalog = useCallback(async (quiet = false) => {
     if (!quiet) setLoadingCatalog(true);
@@ -99,6 +101,13 @@ export function StoreProvider({ children }) {
       .finally(() => {
         if (active) setCartReady(true);
       });
+    AsyncStorage.getItem(WISHLIST_KEY)
+      .then((value) => {
+        if (!active || !value) return;
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) setWishlist(parsed.filter((id) => typeof id === "string"));
+      })
+      .catch(() => {});
     refreshCatalog().catch(() => {});
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
@@ -201,6 +210,33 @@ export function StoreProvider({ children }) {
 
   const clearCart = useCallback(async () => persistCart([]), [persistCart]);
 
+  const toggleWishlist = useCallback(async (productId) => {
+    if (!productId) return false;
+    const exists = wishlist.includes(productId);
+    const next = exists ? wishlist.filter((id) => id !== productId) : [...wishlist, productId];
+    setWishlist(next);
+    try {
+      await AsyncStorage.setItem(WISHLIST_KEY, JSON.stringify(next));
+    } catch (error) {
+      console.warn("Wishlist could not be saved locally:", error?.message || error);
+    }
+    return !exists;
+  }, [wishlist]);
+
+  const removeFromWishlist = useCallback(async (productId) => {
+    const next = wishlist.filter((id) => id !== productId);
+    setWishlist(next);
+    try {
+      await AsyncStorage.setItem(WISHLIST_KEY, JSON.stringify(next));
+    } catch (error) {
+      console.warn("Wishlist could not be saved locally:", error?.message || error);
+    }
+  }, [wishlist]);
+
+  const wishlistItems = useMemo(() => wishlist
+    .map((id) => products.find((product) => product.id === id))
+    .filter(Boolean), [wishlist, products]);
+
   const cartItems = useMemo(() => cart.map((line) => ({
     ...line,
     product: products.find((product) => product.id === line.productId) || null
@@ -227,6 +263,11 @@ export function StoreProvider({ children }) {
     updateCartQuantity,
     removeFromCart,
     clearCart,
+    wishlist,
+    wishlistItems,
+    wishlistCount: wishlist.length,
+    toggleWishlist,
+    removeFromWishlist,
     session,
     profile,
     refreshProfile,

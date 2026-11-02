@@ -11,14 +11,18 @@ export function Page({ children, scroll = true, style }) {
     : <View style={[{ flex: 1, backgroundColor: colors.background, padding: 18 }, style]}>{children}</View>;
 }
 
-export function TopBar({ title = "Suru Collection", onBack, onCart, cartCount = 0 }) {
+export function TopBar({ title = "Suru Collection", onBack, onWishlist, onCart, cartCount = 0, wishlistCount = 0 }) {
   return (
     <View style={styles.topBar}>
       {onBack ? <Pressable onPress={onBack} style={styles.backButton}><Text style={styles.backText}>‹</Text></Pressable> : <View style={styles.brandMark}><Image source={require("../../assets/icon.png")} style={styles.brandLogo} resizeMode="contain" /></View>}
       <View style={{ flex: 1 }}>
         <Text style={styles.brandName}>{title}</Text>
-        {!onBack && <Text style={styles.brandTag}>TRADITIONAL • ETHNIC • EVERYDAY</Text>}
+        {!onBack && <Text style={styles.brandTag}>TRADITION • ELEGANCE • STYLE</Text>}
       </View>
+      {onWishlist && <Pressable onPress={onWishlist} style={styles.cartButton} accessibilityRole="button" accessibilityLabel={"Open wishlist" + (wishlistCount ? ", " + wishlistCount + " saved items" : "")}>
+        <Text style={styles.cartIcon}>❤️</Text>
+        {wishlistCount > 0 && <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{wishlistCount > 99 ? "99+" : wishlistCount}</Text></View>}
+      </Pressable>}
       {onCart && <Pressable onPress={onCart} style={styles.cartButton} accessibilityRole="button" accessibilityLabel={"Open cart" + (cartCount ? ", " + cartCount + " items" : "")}>
         <Text style={styles.cartIcon}>🛒</Text>
         {cartCount > 0 && <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{cartCount > 99 ? "99+" : cartCount}</Text></View>}
