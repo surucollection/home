@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
 import { supabase } from "../lib/supabase";
+import { useStore } from "../StoreContext";
 import { normalizeNepalPhone, isNepalMobile } from "../lib/format";
 import { Button, Field, Notice, Page } from "../components/UI";
 import NepalLocationFields from "../components/NepalLocationFields";
@@ -13,6 +14,7 @@ const empty = {
 };
 
 export default function AuthScreen({ onDone, goBack }) {
+  const { refreshProfile } = useStore();
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState(empty);
   const [otp, setOtp] = useState("");
@@ -20,6 +22,41 @@ export default function AuthScreen({ onDone, goBack }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+
+  async function ensureCustomerProfile() {
+    const { data: authData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    const user = authData?.session?.user;
+    if (!user) throw new Error("Google sign-in completed without an active Suru session.");
+
+    const { data: existing, error: profileError } = await supabase.rpc("my_customer_profile");
+    if (profileError) throw profileError;
+    if (!existing) {
+      const metadata = user.user_metadata || {};
+      const fullName = String(
+        metadata.full_name || metadata.name ||
+        [metadata.given_name || metadata.first_name, metadata.family_name || metadata.last_name].filter(Boolean).join(" ") ||
+        user.email?.split("@")[0] || "Customer"
+      ).trim();
+      const parts = fullName.split(/\s+/);
+      const { error } = await supabase.from("customers").upsert({
+        auth_user_id: user.id,
+        name: fullName,
+        first_name: metadata.given_name || metadata.first_name || parts[0] || "",
+        last_name: metadata.family_name || metadata.last_name || parts.slice(1).join(" "),
+        email: user.email || metadata.email || null,
+        phone: metadata.phone || "",
+        address: metadata.address || null,
+        city: metadata.city || null,
+        district: metadata.district || null,
+        province: metadata.province || null,
+        postal_code: metadata.postal_code || null,
+        is_active: true
+      }, { onConflict: "auth_user_id" });
+      if (error) throw error;
+    }
+    await refreshProfile().catch(() => {});
+  }
 
   async function login() {
     if (!form.email.trim() || !form.password) return setMessage("Enter your email address and password.");
@@ -177,7 +214,7 @@ export default function AuthScreen({ onDone, goBack }) {
           <Button title="Sign in" onPress={login} loading={busy} />
           <Button title="Continue with Google" secondary onPress={async () => {
             setBusy(true); setMessage("");
-            try { await continueWithGoogle(); onDone?.(); }
+            try { await continueWithGoogle(); await ensureCustomerProfile(); onDone?.(); }
             catch (error) { setMessage(error?.message || "Google sign-in could not be completed."); }
             finally { setBusy(false); }
           }} disabled={busy} />
