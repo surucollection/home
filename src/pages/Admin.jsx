@@ -163,7 +163,7 @@ function Admin(){
      if(action==="cancel_order"&&!silent){
        setNcmSyncMessage(data?.message||"NCM cancellation requested; shipment marked Cancelled locally. You can create a replacement shipment if needed.");
      }
-     if(action==="cancel_order"||action==="return"||action==="exchange"||action==="redirect")loadOrders();
+     if(action==="cancel_order"||action==="return"||action==="reverse_pickup"||action==="exchange"||action==="redirect")loadOrders();
      return data;
    }catch(e){if(!silent)setNcmSyncMessage("NCM: "+e.message);throw e}
    finally{setNcmBusy(false)}
