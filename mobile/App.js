@@ -36,8 +36,7 @@ function productCodeFromUrl(rawUrl) {
 function Application() {
   const [route, setRoute] = useState({ name: "home", params: {} });
   const cartReturnRoute = useRef(null);
-  const { cartCount, wishlistCount, catalogError, refreshCatalog } = useStore();
-  const { products } = useStore();
+  const { cartCount, wishlistCount, catalogError, refreshCatalog, products } = useStore();
   const lastHandledDeepLink = useRef("");
   const handleDeepLink = useCallback(async (url) => {
     const raw = String(url || "");
