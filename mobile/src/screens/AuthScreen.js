@@ -214,14 +214,29 @@ export default function AuthScreen({ onDone, goBack }) {
           <Button title="Sign in" onPress={login} loading={busy} />
           <Button title="Continue with Google" secondary onPress={async () => {
             setBusy(true); setMessage("");
-            try { await continueWithGoogle(); await ensureCustomerProfile(); onDone?.(); }
-            catch (error) { setMessage(error?.message || "Google sign-in could not be completed."); }
+            try {
+              const oauthResult = await continueWithGoogle();
+              if (!oauthResult?.session?.user?.id) {
+                throw new Error("Google did not return an active Suru Collection app session.");
+              }
+              await ensureCustomerProfile();
+              onDone?.();
+            } catch (error) {
+              setMessage(error?.message || "Google sign-in could not be completed.");
+            }
             finally { setBusy(false); }
           }} disabled={busy} />
           <Button title="Sign in with a passkey" secondary onPress={async () => {
             setBusy(true); setMessage("");
-            try { await signInWithNativePasskey(); onDone?.(); }
-            catch (error) { setMessage(error?.message || "Passkey sign-in could not be completed."); }
+            try {
+              const passkeyResult = await signInWithNativePasskey();
+              if (!passkeyResult?.session?.user?.id) {
+                throw new Error("Passkey verification completed without an active Suru Collection app session.");
+              }
+              onDone?.();
+            } catch (error) {
+              setMessage(error?.message || "Passkey sign-in could not be completed.");
+            }
             finally { setBusy(false); }
           }} disabled={busy} />
         </> : <>
