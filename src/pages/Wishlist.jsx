@@ -20,12 +20,17 @@ export default function Wishlist(){
   const[error,setError]=useState("");
   const[notice,setNotice]=useState("");
 
-  const load=useCallback(async()=>{
+  const load=useCallback(async(suppliedSession)=>{
     setLoading(true);
     setError("");
+    setNotice("");
     try{
-      const{data:{session:activeSession},error:sessionError}=await supabase.auth.getSession();
-      if(sessionError)throw sessionError;
+      let activeSession=suppliedSession;
+      if(activeSession===undefined){
+        const{data,error:sessionError}=await supabase.auth.getSession();
+        if(sessionError)throw sessionError;
+        activeSession=data?.session||null;
+      }
       setSession(activeSession||null);
       let ids=[];
       let customerId="";
@@ -87,7 +92,7 @@ export default function Wishlist(){
 
   useEffect(()=>{
     void load();
-    const{data:listener}=supabase.auth.onAuthStateChange(()=>{void load()});
+    const{data:listener}=supabase.auth.onAuthStateChange((_event,nextSession)=>{void load(nextSession||null)});
     return()=>listener.subscription.unsubscribe();
   },[load]);
 
