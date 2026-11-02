@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, PanResponder, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useStore } from "../StoreContext";
@@ -121,6 +121,26 @@ export default function ProductScreen({ productId, navigate, goBack }) {
     : -1;
   const currentIsVideo = currentMedia?.media_type === "video";
 
+  // Horizontal swipes change the main product image. Vertical movement remains
+  // available to the surrounding ScrollView, and videos keep their native controls.
+  const gallerySwipeResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      !currentIsVideo &&
+      galleryMedia.length > 1 &&
+      Math.abs(gesture.dx) > 18 &&
+      Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.25,
+    onPanResponderRelease: (_event, gesture) => {
+      if (Math.abs(gesture.dx) < 45 || !galleryMedia.length) return;
+      const nextIndex = Math.max(
+        0,
+        Math.min(galleryMedia.length - 1, currentMediaIndex + (gesture.dx < 0 ? 1 : -1))
+      );
+      if (nextIndex !== currentMediaIndex) {
+        setMainMedia(galleryMedia[nextIndex].image_url);
+      }
+    }
+  }), [currentIsVideo, galleryMedia, currentMediaIndex]);
+
   if (!product) {
     return <Page><Text style={styles.title}>Product not available</Text><Button title="Go back" onPress={goBack} /></Page>;
   }
@@ -194,7 +214,7 @@ export default function ProductScreen({ productId, navigate, goBack }) {
         <Text onPress={goBack} style={styles.back}>‹  Back to collection</Text>
 
         {currentMedia?.image_url ? (
-          <View style={styles.galleryMainWrap}>
+          <View style={styles.galleryMainWrap} {...gallerySwipeResponder.panHandlers}>
             {currentIsVideo ? (
               <ProductVideo key={currentMedia.image_url} uri={currentMedia.image_url} />
             ) : (
@@ -204,13 +224,6 @@ export default function ProductScreen({ productId, navigate, goBack }) {
                 resizeMode="contain"
                 style={styles.heroImage}
               />
-            )}
-            {galleryMedia.length > 1 && (
-              <View style={styles.imageCounter}>
-                <Text style={styles.imageCounterText}>
-                  {currentMediaIndex + 1} / {galleryMedia.length}
-                </Text>
-              </View>
             )}
           </View>
         ) : (
@@ -363,8 +376,6 @@ const styles = {
   heroImage: { width: "100%", height: 390, borderRadius: radius.lg, backgroundColor: "#161616" },
   noImage: { justifyContent: "center", alignItems: "center" },
   noImageText: { color: colors.accent, fontFamily: "serif", fontSize: 28 },
-  imageCounter: { position: "absolute", right: 12, bottom: 12, borderRadius: radius.pill, backgroundColor: "rgba(48,34,31,0.76)", paddingHorizontal: 10, paddingVertical: 5 },
-  imageCounterText: { color: colors.white, fontSize: 10, fontWeight: "800" },
   thumbnailList: { gap: 9, paddingVertical: 11 },
   thumbnail: { width: 68, height: 86, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: 2, overflow: "hidden", backgroundColor: colors.surface },
   thumbnailSelected: { borderWidth: 2, borderColor: colors.primary },
