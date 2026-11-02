@@ -129,7 +129,7 @@ export default function Wishlist(){
     <Header/>
     <main className="page wishlist-page">
       <section className="account-card">
-        <div className="account-section-heading">
+        <div className="wishlist-heading">
           <div>
             <p className="account-section-kicker">SAVED FOR LATER</p>
             <h1>My Wishlist</h1>
@@ -140,25 +140,25 @@ export default function Wishlist(){
 
         {loading?<p className="account-security-muted">Loading your wishlist…</p>:
           error?<div className="message error" role="alert">{error}</div>:
-          !items.length?<div className="account-security-muted">
+          !items.length?<div className="wishlist-empty">
             <p>Your wishlist is empty. Tap the heart on a product to save it here.</p>
             {!session&&<p><a href={"/login.html?return="+returnUrl}>Sign in</a> to sync your saved styles across devices.</p>}
           </div>:
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:14}}>
-            {items.map(item=><article key={item.id} style={{border:"1px solid var(--border,#e9dfd8)",borderRadius:12,overflow:"hidden",background:"#fff"}}>
-              <a href={"/product.html?code="+encodeURIComponent(item.product_code)} style={{display:"block",color:"inherit",textDecoration:"none"}}>
-                {item.image?<img src={imageUrl(item.image,540)} alt={item.imageAlt||item.name} loading="lazy" style={{width:"100%",height:190,objectFit:"cover",display:"block"}}/>:<div style={{height:190,display:"grid",placeItems:"center",background:"#f8f2ee"}}>Suru Collection</div>}
-                <div style={{padding:"10px 11px"}}>
-                  <strong style={{display:"block",fontSize:13,lineHeight:1.4}}>{item.name}</strong>
-                  <span style={{display:"block",marginTop:6,fontWeight:800,color:"var(--primary,#65413c)"}}>{money(item.price)}</span>
+          <div className="wishlist-grid">
+            {items.map(item=><article className="wishlist-product-card" key={item.id}>
+              <a className="wishlist-product-link" href={"/product.html?code="+encodeURIComponent(item.product_code)}>
+                {item.image?<img className="wishlist-product-image" src={imageUrl(item.image,540)} alt={item.imageAlt||item.name} loading="lazy"/>:<div className="wishlist-product-image wishlist-product-placeholder">Suru Collection</div>}
+                <div className="wishlist-product-info">
+                  <strong>{item.name}</strong>
+                  <span className="wishlist-product-price">{money(item.price)}</span>
                 </div>
               </a>
-              <button className="btn secondary" type="button" disabled={!!busyId} onClick={()=>removeItem(item.id)} style={{margin:"0 10px 10px",width:"calc(100% - 20px)"}}>{busyId===item.id?"Removing…":"♥ Remove"}</button>
+              <button className="btn secondary wishlist-remove" type="button" disabled={!!busyId} onClick={()=>removeItem(item.id)}>{busyId===item.id?"Removing…":"♥ Remove"}</button>
             </article>)}
           </div>}
 
         {!loading&&notice&&<div className="message">{notice}</div>}
-        <div className="account-profile-actions" style={{marginTop:20}}>
+        <div className="account-profile-actions wishlist-actions">
           {!session&&<a className="btn" href={"/login.html?return="+returnUrl}>Sign in or create account</a>}
           <a className="btn secondary" href="/account/">My Account</a>
           <a className="btn secondary" href="/products.html">Continue shopping</a>
