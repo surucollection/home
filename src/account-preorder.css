@@ -273,34 +273,16 @@
 }
 
 
-/* Account profile summary and product sharing */
-.account-profile-summary-card{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
-  margin:20px clamp(20px,5vw,46px) 0;padding:18px 20px;
-  border:1px solid #e8ddd7;border-radius:16px;background:#fff;
-  box-shadow:0 6px 20px rgba(75,35,39,.035);
+
+/* Product share action: visually matches the native app's image overlay. */
+.product-share-overlay-button{
+  position:absolute;top:72px;right:16px;z-index:10;
+  width:48px;height:48px;border-radius:14px;
+  border:1px solid #e7dfda;background:rgba(255,255,255,.96);
+  color:#6d393b;font-size:21px;line-height:1;
+  display:grid;place-items:center;cursor:pointer;
 }
-.account-profile-summary-content{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
-.account-profile-summary-content strong{color:#30272a;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
-.account-profile-summary-content span{color:#82716d;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
-.account-profile-signout{
-  flex:none;min-width:112px;min-height:44px;padding:10px 18px;border:1px solid #76292d;
-  border-radius:999px;background:#fff;color:#76292d;font-family:inherit;font-size:14px;font-weight:700;line-height:1.2;cursor:pointer;
+.product-share-overlay-button span{
+  display:block;transform:rotate(-35deg);
 }
-.account-profile-signout:disabled{opacity:.55;cursor:wait}
-.product-heading-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.product-heading-row h1{flex:1;min-width:0}
-.product-share-button{
-  flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  min-height:40px;padding:8px 13px;border:1px solid #dfd2cc;border-radius:999px;
-  background:#fff;color:#6d393b;font-size:13px;font-weight:750;cursor:pointer;
-}
-.product-share-button:hover{background:#fff8f4;border-color:#b88d7b}
-@media(max-width:600px){
-  .account-profile-summary-card{margin:16px 16px 0;padding:14px;gap:10px}
-  .account-profile-summary-content strong{font-size:15px}
-  .account-profile-summary-content span{font-size:12px}
-  .account-profile-signout{min-width:88px;min-height:40px;padding:8px 11px;font-size:12px}
-  .product-heading-row{gap:8px}
-  .product-share-button{min-height:36px;padding:7px 10px;font-size:12px}
-}
+.product-share-overlay-button:hover{background:#fff8f4;border-color:#b88d7b}
