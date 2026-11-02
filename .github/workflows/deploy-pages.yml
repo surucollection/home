@@ -45,6 +45,8 @@ jobs:
           grep -q 'https://suru.com.np/product.html?code=SC065' "$SHARE_PAGE"
           grep -q 'suru://product?code=SC065' "$SHARE_PAGE"
           grep -q 'intent://product?code=SC065' "$SHARE_PAGE"
+          test -s "dist/.well-known/assetlinks.json"
+          grep -q "np.com.suru.collection" "dist/.well-known/assetlinks.json"
           test -s "dist/wishlist/index.html"
           test -s "dist/account/index.html"
           LEGACY_URL="https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=SC065"
@@ -60,6 +62,7 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
+          include-hidden-files: true
 
   deploy:
     needs: build
