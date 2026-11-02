@@ -29,6 +29,36 @@ jobs:
         with:
           node-version: 22
 
+      - name: Optimize SC063 main product image for mobile and web
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/optimized-products
+          curl -fsSL "https://images.suru.com.np/products/SC063_1.png" -o /tmp/SC063_1.png
+          python3 -m venv /tmp/suru-image-venv
+          /tmp/suru-image-venv/bin/python -m pip install --disable-pip-version-check Pillow
+          /tmp/suru-image-venv/bin/python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          source_path = Path("/tmp/SC063_1.png")
+          output_path = Path("assets/optimized-products/SC063_1.webp")
+          with Image.open(source_path) as source:
+              source.load()
+              original_dimensions = source.size
+              source.thumbnail((1600, 2000), Image.Resampling.LANCZOS)
+              optimized = source.convert("RGB")
+              optimized.save(output_path, "WEBP", quality=84, method=6)
+          original_size = source_path.stat().st_size
+          optimized_size = output_path.stat().st_size
+          if optimized_size <= 0 or optimized_size >= original_size:
+              raise SystemExit(
+                  f"SC063 image optimization did not reduce the file: {original_size} -> {optimized_size} bytes"
+              )
+          print(f"SC063 source: {original_dimensions[0]}x{original_dimensions[1]}, {original_size:,} bytes")
+          print(f"SC063 WebP: {optimized_size:,} bytes ({optimized_size / original_size:.1%} of source)")
+          PY
+
       - name: Install dependencies
         run: npm install
 
@@ -47,6 +77,8 @@ jobs:
           grep -q 'intent://product?code=SC065' "$SHARE_PAGE"
           test -s "dist/.well-known/assetlinks.json"
           grep -q "np.com.suru.collection" "dist/.well-known/assetlinks.json"
+          test -s "dist/assets/optimized-products/SC063_1.webp"
+          grep -q "https://suru.com.np/assets/optimized-products/SC063_1.webp" "dist/share/SC063/index.html"
           test -s "dist/wishlist/index.html"
           test -s "dist/account/index.html"
           LEGACY_URL="https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=SC065"
