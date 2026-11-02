@@ -190,7 +190,7 @@ function Product(){
  const shareProduct=async()=>{
    const shareCode=String(p?.product_code||code||"").trim().toUpperCase();
    if(!shareCode){setMsg("Product link is not available yet.");return}
-   const shareUrl="https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code="+encodeURIComponent(shareCode)+"&v=2";
+   const shareUrl="https://suru.com.np/share/"+encodeURIComponent(shareCode)+"/";
    const shareTitle=String(p?.name||"Suru Collection");
    const shareText=shareTitle+(Number(p?.price)>0?" — "+money(p.price):"");
    try{
