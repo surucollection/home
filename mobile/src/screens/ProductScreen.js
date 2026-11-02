@@ -29,7 +29,7 @@ function ProductVideo({ uri }) {
   );
 }
 
-export default function ProductScreen({ productId, navigate, goBack }) {
+export default function ProductScreen({ productId, initialColor = "", navigate, goBack }) {
   const insets = useSafeAreaInsets();
   const { products, session, cartItems, wishlist, wishlistReady, toggleWishlist, addToCart, buyNow: replaceCartWithProduct } = useStore();
   const product = products.find((item) => item.id === productId);
@@ -58,22 +58,33 @@ export default function ProductScreen({ productId, navigate, goBack }) {
     [variants]
   );
 
+  // Honour the colour represented by the product tile the customer tapped.
+  // If the tile has no colour metadata, prefer the main gallery image's colour.
+  const defaultColor = useMemo(() => {
+    const productImages = (product?.images || []).filter((item) => item.media_type !== "video");
+    const primaryImage = productImages.find((item) => item.is_main) || productImages[0];
+    const preferred = [initialColor, primaryImage?.color, product?.color]
+      .map((value) => norm(value)).filter(Boolean);
+    return colours.find((value) => preferred.includes(norm(value))) || colours[0] || "";
+  }, [colours, initialColor, product?.images, product?.color]);
+
   useEffect(() => {
     setSize("");
-    setColor("");
+    setColor(initialColor || defaultColor || "");
     setQuantity(1);
     setMainMedia("");
     setMessage("");
-  }, [productId]);
+  }, [productId, initialColor, defaultColor]);
 
   useEffect(() => {
     if (sizes.length === 1) setSize(sizes[0]);
     else if (size && !sizes.some((item) => norm(item) === norm(size))) setSize("");
 
     if (colours.length === 1) setColor(colours[0]);
-    else if (colours.length && !colours.some((item) => norm(item) === norm(color))) setColor(colours[0]);
+    else if (color && !colours.some((item) => norm(item) === norm(color))) setColor(defaultColor);
+    else if (!color && defaultColor) setColor(defaultColor);
     else if (!colours.length && color) setColor("");
-  }, [productId, sizes, colours, size, color]);
+  }, [productId, sizes, colours, size, color, defaultColor]);
 
   const matching = useMemo(() => variants.filter((item) =>
     (!sizes.length || norm(item.size) === norm(size)) &&
@@ -415,7 +426,7 @@ export default function ProductScreen({ productId, navigate, goBack }) {
                 const media = (item.images || []).filter((entry) => entry.media_type !== "video");
                 const image = media.find((entry) => entry.is_main) || media[0];
                 return (
-                  <Pressable key={item.id} onPress={() => navigate("product", { productId: item.id })} style={styles.relatedCard}>
+                  <Pressable key={item.id} onPress={() => navigate("product", { productId: item.id, initialColor: image?.color || item.color || "" })} style={styles.relatedCard}>
                     {image?.image_url ? (
                       <Image source={{ uri: imageUrl(image.image_url, 480) }} resizeMode="cover" style={styles.relatedImage} />
                     ) : (
