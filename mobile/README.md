@@ -49,6 +49,7 @@ The Android `preview` profile produces an installable APK for device testing. Th
 ## Native Google sign-in and passkeys
 
 - Google OAuth returns to `suru://auth/callback`. Android registers this callback host in `app.json`; the app exchanges the callback code with Supabase and checks that a persisted native session exists before leaving the sign-in screen.
+- Add `suru://auth/callback` to Authentication → URL Configuration → Redirect URLs in the Supabase Dashboard. The Google provider's own OAuth callback remains the Supabase Auth callback URL shown in its provider settings.
 - Native passkey registration and sign-in use `react-native-passkeys` with Supabase Auth's two-step WebAuthn API. Supabase passkey support is experimental and must be enabled in Authentication → Passkeys.
 - Set the Supabase relying-party ID to `suru.com.np`, keep `https://suru.com.np` in the allowed relying-party origins, and add this Android app origin as well:
 
