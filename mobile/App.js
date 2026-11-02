@@ -22,7 +22,7 @@ function Application() {
   const cartReturnRoute = useRef(null);
   const { cartCount, catalogError, refreshCatalog } = useStore();
   const navigate = (name, params = {}) => {
-    if (name === "cart" && route.name !== "cart") cartReturnRoute.current = { name: route.name, params: route.params || {} };
+    if (name === "cart" && route.name !== "cart" && route.name !== "checkout") cartReturnRoute.current = { name: route.name, params: route.params || {} };
     setRoute({ name, params });
   };
   const goBack = () => {
