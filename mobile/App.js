@@ -66,10 +66,10 @@ function Application() {
       <View style={{ flex: 1 }}>{screen}</View>
       {tabsVisible && <View style={styles.tabBar}>
         {[
-          ["home", "Home", "⌂"],
-          ["shop", "Shop", "◇"],
-          ["cart", "Bag", "▱"],
-          ["account", "Account", "○"]
+          ["home", "Home", "🏠"],
+          ["shop", "Shop", "🛍️"],
+          ["cart", "Cart", "🛒"],
+          ["account", "Account", "👤"]
         ].map(([name, label, icon]) => {
           const active = route.name === name;
           return <Pressable key={name} onPress={() => navigate(name)} style={styles.tab}>
@@ -89,7 +89,7 @@ export default function App() {
 const styles = {
   tabBar: { flexDirection: "row", backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8, paddingBottom: 5 },
   tab: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 4 },
-  tabIcon: { fontSize: 19, color: colors.muted, lineHeight: 22 },
+  tabIcon: { fontSize: 22, color: colors.muted, lineHeight: 27 },
   tabLabel: { fontSize: 9, color: colors.muted, fontWeight: "700", marginTop: 2 },
   tabActive: { color: colors.primary }
 };
