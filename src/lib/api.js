@@ -39,12 +39,7 @@ export const imageUrl=(url,width=600)=>{
       }
     }catch{}
   }
-  const marker="/upload/";
-  const i=value.indexOf(marker);
-  if(!value.includes("res.cloudinary.com")||i<0)return value;
-  const rest=value.slice(i+marker.length);
-  if(/^f_auto,q_auto,w_\d+/.test(rest))return value;
-  return value.slice(0,i+marker.length)+"f_auto,q_auto,w_"+Math.max(120,Math.round(width))+",c_limit/"+rest;
+  return value;
 };
 
 export const money=v=>"NPR "+Math.round(Number(v||0)).toLocaleString("en-IN",{maximumFractionDigits:0});
