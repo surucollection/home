@@ -267,8 +267,8 @@ export default function PreorderScreen({ productId, size = "", color = "", quant
         setConfirmed({
           orderNumber: data.order_number || data.orderNumber || "",
           purpose: data.purpose || paymentPurpose,
-          advancePaid: Number(data.advance_amount || 0),
-          balanceDue: Number(data.balance_amount || 0)
+          advancePaid: Number(data.advance_paid ?? data.advance_amount ?? 0),
+          balanceDue: Number(data.balance_due ?? data.balance_amount ?? 0)
         });
         await refreshProfile().catch(() => {});
         return;
