@@ -15,7 +15,8 @@ export default function CartScreen({ navigate }) {
       {!cartItems.length ? <Notice>Your cart is empty. Discover the latest Suru Collection styles.</Notice> : <>
         {cartItems.map((item) => {
           const product = item.product;
-          const image = product?.images?.find((entry) => entry.is_main) || product?.images?.[0];
+          const productImages = product?.images?.filter((entry) => entry.media_type !== "video") || [];
+          const image = productImages.find((entry) => entry.is_main) || productImages[0];
           return (
             <View key={[item.productId, item.size, item.color].join("::")} style={styles.item}>
               {image?.image_url ? <Image source={{ uri: imageUrl(image.image_url, 260) }} style={styles.image} /> : <View style={[styles.image, styles.placeholder]} />}
