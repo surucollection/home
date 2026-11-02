@@ -20,7 +20,7 @@ export function TopBar({ title = "Suru Collection", onBack, onCart, cartCount = 
         {!onBack && <Text style={styles.brandTag}>TRADITIONAL • ETHNIC • EVERYDAY</Text>}
       </View>
       {onCart && <Pressable onPress={onCart} style={styles.cartButton} accessibilityRole="button" accessibilityLabel={"Open cart" + (cartCount ? ", " + cartCount + " items" : "")}>
-        <Text style={styles.cartIcon}>🛍️</Text>
+        <Text style={styles.cartIcon}>🛒</Text>
         {cartCount > 0 && <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{cartCount > 99 ? "99+" : cartCount}</Text></View>}
       </Pressable>}
     </View>
