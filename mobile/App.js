@@ -109,7 +109,7 @@ function Application() {
       screen = <ShopScreen navigate={navigate} params={route.params} />;
       break;
     case "product":
-      screen = <ProductScreen productId={route.params.productId} navigate={navigate} goBack={goBack} />;
+      screen = <ProductScreen productId={route.params.productId} initialColor={route.params.initialColor || ""} navigate={navigate} goBack={goBack} />;
       break;
     case "cart":
       screen = <CartScreen navigate={navigate} />;
