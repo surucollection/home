@@ -6,6 +6,7 @@ import { imageUrl, money } from "../lib/format";
 import { colors, radius } from "../theme";
 
 const norm = (value) => String(value ?? "").trim().toLowerCase();
+const EMPTY_VARIANTS = [];
 
 export default function ProductScreen({ productId, navigate, goBack }) {
   const { products, addToCart, buyNow: replaceCartWithProduct } = useStore();
@@ -16,7 +17,7 @@ export default function ProductScreen({ productId, navigate, goBack }) {
   const [message, setMessage] = useState("");
   const [mainImage, setMainImage] = useState("");
 
-  const variants = product?.variants || [];
+  const variants = product?.variants || EMPTY_VARIANTS;
   const sizes = useMemo(
     () => [...new Set(variants.map((item) => item.size).filter(Boolean))]
       .sort((a, b) => norm(a).localeCompare(norm(b))),
@@ -45,7 +46,7 @@ export default function ProductScreen({ productId, navigate, goBack }) {
     if (colours.length === 1) setColor(colours[0]);
     else if (colours.length && !colours.some((item) => norm(item) === norm(color))) setColor(colours[0]);
     else if (!colours.length && color) setColor("");
-  }, [productId, sizes, colours]);
+  }, [productId, sizes, colours, size, color]);
 
   const matching = useMemo(() => variants.filter((item) =>
     (!sizes.length || norm(item.size) === norm(size)) &&
