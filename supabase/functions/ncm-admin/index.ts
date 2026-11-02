@@ -625,7 +625,7 @@ Deno.serve(async (req) => {
         const normalizedStatus = latestStatus
           .toLowerCase()
           .replace(/[_-]+/g, " ")
-          .replace(/\\s+/g, " ")
+          .replace(/\s+/g, " ")
           .trim();
         const allowedReturnStatuses = new Set([
           "arrived",
