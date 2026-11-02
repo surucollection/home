@@ -196,7 +196,7 @@ export default function ProductReviewsSection({ product, onSignIn }) {
             <Text style={styles.fieldLabel}>Title (optional)</Text>
             <TextInput value={title} onChangeText={setTitle} maxLength={120} placeholder="Sum up your experience" placeholderTextColor={colors.muted} style={styles.input} />
             <Text style={styles.fieldLabel}>Your review</Text>
-            <TextInput value={reviewText} onChangeText={setReviewText} multiline minHeight={110} textAlignVertical="top" maxLength={2000} placeholder="What did you like or notice about this product?" placeholderTextColor={colors.muted} style={[styles.input, styles.multiline]} />
+            <TextInput value={reviewText} onChangeText={setReviewText} multiline textAlignVertical="top" maxLength={2000} placeholder="What did you like or notice about this product?" placeholderTextColor={colors.muted} style={[styles.input, styles.multiline]} />
             <Text style={styles.fieldLabel}>Display name</Text>
             <TextInput value={displayName} onChangeText={setDisplayName} maxLength={80} placeholder="Your display name" placeholderTextColor={colors.muted} style={styles.input} />
             <Button title={submitting ? "Saving…" : myReview ? "Save changes" : "Submit Review"} onPress={submitReview} loading={submitting} disabled={submitting} />
