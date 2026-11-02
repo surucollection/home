@@ -32,10 +32,10 @@ export default function HomeScreen({ navigate }) {
         </ScrollView>
 
         {!!featured.length && <SectionHeading eyebrow="HANDPICKED FOR YOU" title="Featured products" action="View all" onAction={() => navigate("shop", { featured: true })} />}
-        <View style={styles.grid}>{featured.map((product) => <ProductCard key={product.id} product={product} onPress={() => navigate("product", { productId: product.id })} />)}</View>
+        <View style={styles.grid}>{featured.map((product) => <ProductCard key={product.id} product={product} onPress={(initialColor) => navigate("product", { productId: product.id, initialColor })} />)}</View>
 
         <SectionHeading eyebrow="JUST ARRIVED" title="Recently added" action="Shop all" onAction={() => navigate("shop")} />
-        <View style={styles.grid}>{latest.map((product) => <ProductCard key={product.id} product={product} onPress={() => navigate("product", { productId: product.id })} />)}</View>
+        <View style={styles.grid}>{latest.map((product) => <ProductCard key={product.id} product={product} onPress={(initialColor) => navigate("product", { productId: product.id, initialColor })} />)}</View>
         {!products.length && !loadingCatalog && <Text style={styles.emptyText}>The collection is being refreshed. Pull down to try again.</Text>}
         <Button title={"View Cart" + (cartCount ? " (" + cartCount + ")" : "")} secondary onPress={() => navigate("cart")} />
       </ScrollView>
