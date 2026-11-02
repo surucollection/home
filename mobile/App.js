@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { StatusBar, Text, View, Pressable } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Linking, StatusBar, Text, View, Pressable } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StoreProvider, useStore } from "./src/StoreContext";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -18,10 +18,62 @@ import WishlistScreen from "./src/screens/WishlistScreen";
 import { TopBar, Notice } from "./src/components/UI";
 import { colors } from "./src/theme";
 
+function productCodeFromUrl(rawUrl) {
+  const raw = String(rawUrl || "");
+  if (!raw) return "";
+  const query = raw.match(/[?&]code=([^&#]+)/i);
+  if (query?.[1]) {
+    try { return decodeURIComponent(query[1]).trim().toUpperCase(); }
+    catch { return query[1].trim().toUpperCase(); }
+  }
+  const share = raw.match(/\/share\/([A-Za-z0-9_-]{1,40})(?:\/|[?#]|$)/i);
+  if (share?.[1]) return share[1].toUpperCase();
+  const schemePath = raw.match(/^suru:\/\/product\/([A-Za-z0-9_-]{1,40})(?:[/?#]|$)/i);
+  if (schemePath?.[1]) return schemePath[1].toUpperCase();
+  return "";
+}
+
 function Application() {
   const [route, setRoute] = useState({ name: "home", params: {} });
   const cartReturnRoute = useRef(null);
   const { cartCount, wishlistCount, catalogError, refreshCatalog } = useStore();
+  const { products } = useStore();
+  const lastHandledDeepLink = useRef("");
+  const handleDeepLink = useCallback(async (url) => {
+    const raw = String(url || "");
+    if (!raw || lastHandledDeepLink.current === raw) return;
+    const code = productCodeFromUrl(raw);
+    if (!code) return;
+    lastHandledDeepLink.current = raw;
+    let match = products.find((item) => String(item.product_code || "").toUpperCase() === code);
+    if (!match) {
+      try {
+        const refreshed = await refreshCatalog(true);
+        match = (refreshed || []).find((item) => String(item.product_code || "").toUpperCase() === code);
+      } catch (error) {
+        console.warn("Could not refresh products for incoming share link:", error?.message || error);
+      }
+    }
+    if (match?.id) {
+      setRoute({ name: "product", params: { productId: match.id } });
+    } else {
+      setRoute({ name: "shop", params: { search: code } });
+    }
+  }, [products, refreshCatalog]);
+
+  useEffect(() => {
+    let active = true;
+    Linking.getInitialURL().then((url) => {
+      if (active && url) void handleDeepLink(url);
+    }).catch((error) => console.warn("Could not read the initial app link:", error?.message || error));
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      void handleDeepLink(url);
+    });
+    return () => {
+      active = false;
+      subscription.remove();
+    };
+  }, [handleDeepLink]);
   const wishlistReturnRoute = useRef(null);
   const navigate = (name, params = {}) => {
     if (name === "cart" && route.name !== "cart" && route.name !== "checkout") cartReturnRoute.current = { name: route.name, params: route.params || {} };
