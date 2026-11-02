@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ImageBackground, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useStore } from "../StoreContext";
 import { Page, ProductCard, SectionHeading, Button } from "../components/UI";
 import { colors, radius } from "../theme";
@@ -14,12 +14,13 @@ export default function HomeScreen({ navigate }) {
         refreshControl={<RefreshControl refreshing={loadingCatalog} onRefresh={() => refreshCatalog(true).catch(() => {})} tintColor={colors.primary} />}
         contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
       >
-        <View style={styles.hero}>
+        <ImageBackground source={{ uri: "https://suru.com.np/assets/hero.jpg" }} style={styles.hero} imageStyle={styles.heroImage} resizeMode="cover">
+          <View style={styles.heroShade} />
           <Text style={styles.heroEyebrow}>WELCOME TO SURU COLLECTION</Text>
           <Text style={styles.heroTitle}>More Than Fashion.{"\n"}<Text style={{ fontStyle: "italic", color: "#e6b9aa" }}>It’s a Feeling.</Text></Text>
           <Text style={styles.heroText}>Thoughtfully selected traditional and ethnic wear for the moments that matter.</Text>
           <Pressable onPress={() => navigate("shop")} style={styles.heroButton}><Text style={styles.heroButtonText}>Explore the collection  →</Text></Pressable>
-        </View>
+        </ImageBackground>
 
         <SectionHeading eyebrow="DISCOVER YOUR STYLE" title="Shop by collection" />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9, paddingBottom: 2 }}>
@@ -36,7 +37,7 @@ export default function HomeScreen({ navigate }) {
         <SectionHeading eyebrow="JUST ARRIVED" title="Recently added" action="Shop all" onAction={() => navigate("shop")} />
         <View style={styles.grid}>{latest.map((product) => <ProductCard key={product.id} product={product} onPress={() => navigate("product", { productId: product.id })} />)}</View>
         {!products.length && !loadingCatalog && <Text style={styles.emptyText}>The collection is being refreshed. Pull down to try again.</Text>}
-        <Button title={"Open shopping bag" + (cartCount ? " (" + cartCount + ")" : "")} secondary onPress={() => navigate("cart")} />
+        <Button title={"View Cart" + (cartCount ? " (" + cartCount + ")" : "")} secondary onPress={() => navigate("cart")} />
       </ScrollView>
     </Page>
   );
@@ -44,6 +45,8 @@ export default function HomeScreen({ navigate }) {
 
 const styles = {
   hero: { backgroundColor: colors.primaryDark, borderRadius: radius.lg, padding: 22, minHeight: 250, justifyContent: "center", overflow: "hidden" },
+  heroImage: { borderRadius: radius.lg },
+  heroShade: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(34, 18, 16, 0.48)", borderRadius: radius.lg },
   heroEyebrow: { color: "#e1b6a8", fontSize: 9, letterSpacing: 2, fontWeight: "800", marginBottom: 12 },
   heroTitle: { color: colors.white, fontFamily: "serif", fontSize: 31, lineHeight: 37, fontWeight: "700" },
   heroText: { color: "#f1ded6", lineHeight: 21, fontSize: 13, marginTop: 12, maxWidth: 290 },
