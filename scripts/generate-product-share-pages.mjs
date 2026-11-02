@@ -102,7 +102,7 @@ function renderPage(product, image) {
     + '  <main><h1>' + escapeHtml(title) + '</h1>'
     + (priceText ? '<p>' + escapeHtml(priceText) + '</p>' : "")
     + (image ? '<img src="' + encodedImage + '" alt="' + escapeHtml(image.alt_text || title) + '" style="max-width:100%;height:auto">' : "")
-    + '<p><a href="' + encodedProductUrl + '">Open this product on Suru Collection</a></p></main>\n'
+    + '<p><a href="' + escapeHtml(appSchemeUrl) + '">Open in Suru App</a> · <a href="' + encodedProductUrl + '">Open this product on Suru Collection</a></p></main>\n'
     + '  <script>(function(){var webUrl=' + JSON.stringify(productUrl) + ';var appUrl=' + JSON.stringify(appSchemeUrl) + ';var androidUrl=' + JSON.stringify(androidIntentUrl) + ';var agent=navigator.userAgent||"";if(/Android/i.test(agent)){window.location.href=androidUrl;return;}if(/iPhone|iPad|iPod/i.test(agent)){var fallback=setTimeout(function(){window.location.replace(webUrl);},1800);document.addEventListener("visibilitychange",function(){if(document.hidden)clearTimeout(fallback);});window.location.href=appUrl;return;}window.location.replace(webUrl);})();</script>\n'
     + '</body>\n</html>\n';
 }
