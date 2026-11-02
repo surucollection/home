@@ -68,7 +68,8 @@ export function SectionHeading({ eyebrow, title, action, onAction }) {
 }
 
 export function ProductCard({ product, onPress }) {
-  const image = product?.images?.find((item) => item.is_main) || product?.images?.[0];
+  const productImages = product?.images?.filter((item) => item.media_type !== "video") || [];
+  const image = productImages.find((item) => item.is_main) || productImages[0];
   return (
     <Pressable onPress={onPress} style={styles.productCard}>
       {image?.image_url
