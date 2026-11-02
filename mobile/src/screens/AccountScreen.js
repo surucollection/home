@@ -1,5 +1,5 @@
 import React from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useStore } from "../StoreContext";
 import { Button, Notice, Page } from "../components/UI";
 import { colors, radius } from "../theme";
@@ -12,12 +12,6 @@ function AccountOption({ title, description, onPress }) {
     </View>
     <Text style={styles.chevron}>›</Text>
   </Pressable>;
-}
-
-function openWebsitePage(path) {
-  Linking.openURL("https://suru.com.np/" + path).catch((error) => {
-    console.warn("Could not open Suru Collection page:", error?.message || error);
-  });
 }
 
 export default function AccountScreen({ navigate }) {
@@ -50,9 +44,9 @@ export default function AccountScreen({ navigate }) {
       <Button title="Browse as guest" secondary onPress={() => navigate("shop")} />
     </>}
     <Text style={[styles.sectionTitle, styles.helpHeading]}>Help & information</Text>
-    <AccountOption title="Contact Us" description="Questions about products, orders or delivery" onPress={() => openWebsitePage("contact.html")} />
-    <AccountOption title="About Suru Collection" description="Learn about our story and collections" onPress={() => openWebsitePage("about.html")} />
-    <AccountOption title="Policies & Terms" description="Privacy, delivery, returns and other policies" onPress={() => openWebsitePage("policy.html")} />
+    <AccountOption title="Contact Us" description="Questions about products, orders or delivery" onPress={() => navigate("website", { title: "Contact Us", url: "https://suru.com.np/contact.html" })} />
+    <AccountOption title="About Suru Collection" description="Learn about our story and collections" onPress={() => navigate("website", { title: "About Suru Collection", url: "https://suru.com.np/about.html" })} />
+    <AccountOption title="Policies & Terms" description="Privacy, delivery, returns and other policies" onPress={() => navigate("website", { title: "Policies & Terms", url: "https://suru.com.np/policy.html" })} />
     <Notice>Your account uses the same customer login as suru.com.np.</Notice>
   </Page>;
 }
