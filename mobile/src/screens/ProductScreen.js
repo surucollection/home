@@ -6,6 +6,7 @@ import { useStore } from "../StoreContext";
 import { Button, Notice, Page } from "../components/UI";
 import { imageUrl, money } from "../lib/format";
 import { colors, radius } from "../theme";
+import ProductReviewsSection from "../components/ProductReviewsSection";
 
 const norm = (value) => String(value ?? "").trim().toLowerCase();
 const EMPTY_VARIANTS = [];
@@ -32,6 +33,12 @@ export default function ProductScreen({ productId, navigate, goBack }) {
   const insets = useSafeAreaInsets();
   const { products, session, cartItems, wishlist, wishlistReady, toggleWishlist, addToCart, buyNow: replaceCartWithProduct } = useStore();
   const product = products.find((item) => item.id === productId);
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+    return products
+      .filter((item) => item.id !== product.id && (!product.category || item.category === product.category))
+      .slice(0, 4);
+  }, [products, product?.id, product?.category]);
   const isWishlisted = Boolean(product && wishlist.includes(product.id));
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
@@ -183,7 +190,7 @@ export default function ProductScreen({ productId, navigate, goBack }) {
 
   async function shareProduct() {
     if (!product) return;
-    const url = "https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=" + encodeURIComponent(product.product_code || "");
+    const url = "https://vkycraymxhkqxgpcpdzw.supabase.co/functions/v1/product-share?code=" + encodeURIComponent(product.product_code || "") + "&v=2";
     try {
       await Share.share({
         title: product.name,
@@ -386,6 +393,47 @@ export default function ProductScreen({ productId, navigate, goBack }) {
           </View>
         </View>
         {!!message && <Notice tone={message.startsWith("Added") ? "success" : "error"}>{message}</Notice>}
+
+        <ProductReviewsSection
+          product={product}
+          onSignIn={() => navigate("auth", { returnRoute: { name: "product", params: { productId } } })}
+        />
+
+        {relatedProducts.length > 0 && (
+          <View style={styles.relatedSection}>
+            <View style={styles.relatedHeading}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.relatedEyebrow}>COMPLETE YOUR LOOK</Text>
+                <Text style={styles.relatedTitle}>You May Also Like</Text>
+              </View>
+              <Pressable onPress={() => navigate("shop", product.category ? { category: product.category } : {})}>
+                <Text style={styles.relatedViewAll}>View all</Text>
+              </Pressable>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedList}>
+              {relatedProducts.map((item) => {
+                const media = (item.images || []).filter((entry) => entry.media_type !== "video");
+                const image = media.find((entry) => entry.is_main) || media[0];
+                return (
+                  <Pressable key={item.id} onPress={() => navigate("product", { productId: item.id })} style={styles.relatedCard}>
+                    {image?.image_url ? (
+                      <Image source={{ uri: imageUrl(image.image_url, 480) }} resizeMode="cover" style={styles.relatedImage} />
+                    ) : (
+                      <View style={[styles.relatedImage, styles.relatedImageFallback]}>
+                        <Text style={styles.relatedFallbackText}>{String(item.name || "S").slice(0, 1)}</Text>
+                      </View>
+                    )}
+                    <View style={styles.relatedInfo}>
+                      <Text numberOfLines={2} style={styles.relatedName}>{item.name}</Text>
+                      <Text style={styles.relatedCategory}>{item.category || "Collection"}</Text>
+                      <Text style={styles.relatedPrice}>{money(item.price)}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
@@ -462,5 +510,19 @@ const styles = {
   quantityText: { color: colors.ink, minWidth: 20, textAlign: "center", fontWeight: "800" },
   bottomBar: { flexDirection: "row", justifyContent: "space-between", gap: 10, paddingHorizontal: 18, paddingTop: 11, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background },
   actionButton: { width: "48%", flexGrow: 0, flexShrink: 0, marginTop: 0, paddingHorizontal: 6 },
-  actionButtonFull: { width: "100%", marginTop: 0 }
+  actionButtonFull: { width: "100%", marginTop: 0 },
+  relatedSection: { marginTop: 30, paddingTop: 22, borderTopWidth: 1, borderTopColor: colors.border },
+  relatedHeading: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginBottom: 14 },
+  relatedEyebrow: { color: colors.accent, fontSize: 9, fontWeight: "800", letterSpacing: 1.5, marginBottom: 4 },
+  relatedTitle: { color: colors.ink, fontSize: 22, fontWeight: "800" },
+  relatedViewAll: { color: colors.primary, fontSize: 12, fontWeight: "800", paddingBottom: 3 },
+  relatedList: { gap: 11, paddingBottom: 5 },
+  relatedCard: { width: 158, overflow: "hidden", borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  relatedImage: { width: "100%", height: 170, backgroundColor: colors.surfaceSoft },
+  relatedImageFallback: { alignItems: "center", justifyContent: "center" },
+  relatedFallbackText: { color: colors.accent, fontFamily: "serif", fontSize: 42, fontWeight: "700" },
+  relatedInfo: { padding: 10 },
+  relatedName: { color: colors.ink, fontSize: 12, fontWeight: "700", lineHeight: 17, minHeight: 34 },
+  relatedCategory: { color: colors.muted, fontSize: 10, marginTop: 4 },
+  relatedPrice: { color: colors.primary, fontSize: 14, fontWeight: "900", marginTop: 6 }
 };
