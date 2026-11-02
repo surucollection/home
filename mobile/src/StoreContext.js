@@ -48,7 +48,7 @@ export function StoreProvider({ children }) {
 
       const imagesByProduct = new Map();
       (imageResult.data || []).forEach((image) => {
-        if (image.media_type === "video") return;
+        // Keep both image and video rows; the product gallery renders each media type natively.
         const list = imagesByProduct.get(image.product_id) || [];
         list.push(image);
         imagesByProduct.set(image.product_id, list);
