@@ -48,6 +48,9 @@ jobs:
               pixels = source.load()
               seen = bytearray(width * height)
               stack = []
+              def is_canvas_white(x, y):
+                  r, g, b, _ = pixels[x, y]
+                  return r >= 245 and g >= 245 and b >= 245
               def enqueue(x, y):
                   index = y * width + x
                   if not seen[index] and is_canvas_white(x, y):
