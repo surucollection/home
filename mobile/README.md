@@ -45,6 +45,20 @@ eas build --platform ios --profile ios-simulator
 
 The Android `preview` profile produces an installable APK for device testing. The `ios-simulator` profile produces a simulator build, not an installable iPhone IPA. To install on a physical iPhone before App Store release, use an ad hoc iOS build with the iPhone registered on your Apple Developer account; TestFlight/App Store distribution also requires Apple Developer Program membership. For store builds, use `--profile production`. Google Play Console and Apple Developer / App Store Connect credentials are required for publishing. The Android package and iOS bundle identifier in `app.json` are proposed identifiers and must be checked for availability before store registration.
 
+
+## Native Google sign-in and passkeys
+
+- Google OAuth returns to `suru://auth/callback`. Android registers this callback host in `app.json`; the app exchanges the callback code with Supabase and checks that a persisted native session exists before leaving the sign-in screen.
+- Native passkey registration and sign-in use `react-native-passkeys` with Supabase Auth's two-step WebAuthn API. Supabase passkey support is experimental and must be enabled in Authentication → Passkeys.
+- Set the Supabase relying-party ID to `suru.com.np`, keep `https://suru.com.np` in the allowed relying-party origins, and add this Android app origin as well:
+
+  ```text
+  android:apk-key-hash:-sYXRdwJA3hvue3mKpYrOZ9zSPC7b4mbgzJmdZEDO5w
+  ```
+
+- The website publishes `/.well-known/assetlinks.json` for package `np.com.suru.collection`, including the Android CI APK signing certificate. The Android build workflow verifies this fingerprint so a changed signer cannot silently produce an APK whose passkeys are not domain-associated.
+- iOS also needs `https://suru.com.np/.well-known/apple-app-site-association` containing `webcredentials.apps: ["<APPLE_TEAM_ID>.np.com.suru.collection"]`, plus the matching `webcredentials:suru.com.np` entitlement. The app config already declares the entitlement, but the team ID and an iOS signing profile with Associated Domains must be supplied before the AASA file and a working signed iOS build can be completed. The current CI IPA is unsigned, so native iOS passkey support is not yet verified.
+
 ## Synchronisation model
 
 - The database remains the single source of truth.
