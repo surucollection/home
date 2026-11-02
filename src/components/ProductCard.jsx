@@ -59,6 +59,7 @@ export default function ProductCard({product,image,variants=[],displayColour="",
         loading={priority?"eager":"lazy"}
         fetchPriority={priority?"high":"auto"}
         decoding="async"
+        onError={e=>{if(e.currentTarget.src!==image.image_url){e.currentTarget.onerror=null;e.currentTarget.src=image.image_url;}}}
       />:<div className="product-image-placeholder">Suru Collection</div>}
     </a>
     <div className="product-card-content">
