@@ -24,8 +24,6 @@ function ProductVideo({ uri }) {
       style={styles.heroImage}
       contentFit="contain"
       nativeControls
-      allowsFullscreen
-      allowsPictureInPicture
     />
   );
 }
