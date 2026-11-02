@@ -303,8 +303,8 @@ export default function ProductScreen({ productId, navigate, goBack }) {
         {variantRequired && (
           <Text style={styles.stock}>Available stock for this selection: {stock}</Text>
         )}
-        {!!product.preorder_enabled && stock <= 0 && (
-          <Notice>Pre-order is enabled for this item. Pre-order checkout is available on suru.com.np.</Notice>
+        {!!product.preorder_enabled && showPreorderAction && (
+          <Notice>This option can be pre-ordered directly in the Suru Collection app using Fonepay.</Notice>
         )}
 
         <View style={styles.quantityRow}>
