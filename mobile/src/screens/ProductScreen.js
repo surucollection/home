@@ -30,7 +30,7 @@ function ProductVideo({ uri }) {
 
 export default function ProductScreen({ productId, navigate, goBack }) {
   const insets = useSafeAreaInsets();
-  const { products, addToCart, buyNow: replaceCartWithProduct } = useStore();
+  const { products, session, addToCart, buyNow: replaceCartWithProduct } = useStore();
   const product = products.find((item) => item.id === productId);
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
@@ -74,6 +74,9 @@ export default function ProductScreen({ productId, navigate, goBack }) {
   const stock = matching.reduce((sum, item) => sum + Number(item.stock || 0), 0);
   const variantRequired = sizes.length > 0 || colours.length > 0;
   const selectionComplete = (!sizes.length || !!size) && (!colours.length || !!color);
+  const showPreorderAction = Boolean(product?.preorder_enabled && (
+    !selectionComplete || !variants.length || !matching.length || stock <= 0
+  ));
 
   // Product images and videos share the same ordered product_images collection.
   // Colour-specific media takes precedence; otherwise shared media remains visible.
@@ -156,6 +159,27 @@ export default function ProductScreen({ productId, navigate, goBack }) {
     } catch (error) {
       setMessage(error?.message || "Unable to start checkout. Please try again.");
     }
+  }
+
+  function startPreorder() {
+    if (!product?.preorder_enabled) {
+      setMessage("Pre-orders are not enabled for this product.");
+      return;
+    }
+    if (variantRequired && !selectionComplete) {
+      setMessage("Please select a colour and size first.");
+      return;
+    }
+    if (variants.length && matching.length && stock > 0) {
+      setMessage("This option is in stock. Use Add to Cart or Buy Now instead.");
+      return;
+    }
+    const params = { productId, size, color, quantity };
+    if (!session?.user) {
+      navigate("auth", { returnRoute: { name: "preorder", params } });
+      return;
+    }
+    navigate("preorder", params);
   }
 
   return (
@@ -299,19 +323,30 @@ export default function ProductScreen({ productId, navigate, goBack }) {
       </ScrollView>
 
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-        <Button
-          title="Add to Cart"
-          secondary
-          onPress={add}
-          style={styles.actionButton}
-          disabled={variantRequired && (!selectionComplete || (variants.length > 0 && stock <= 0))}
-        />
-        <Button
-          title="Buy Now"
-          onPress={buyNow}
-          style={styles.actionButton}
-          disabled={variantRequired && (!selectionComplete || (variants.length > 0 && stock <= 0))}
-        />
+        {showPreorderAction ? (
+          <Button
+            title="Pre-order"
+            onPress={startPreorder}
+            style={styles.actionButtonFull}
+            disabled={variantRequired && !selectionComplete}
+          />
+        ) : (
+          <>
+            <Button
+              title="Add to Cart"
+              secondary
+              onPress={add}
+              style={styles.actionButton}
+              disabled={variantRequired && (!selectionComplete || (variants.length > 0 && stock <= 0))}
+            />
+            <Button
+              title="Buy Now"
+              onPress={buyNow}
+              style={styles.actionButton}
+              disabled={variantRequired && (!selectionComplete || (variants.length > 0 && stock <= 0))}
+            />
+          </>
+        )}
       </View>
     </View>
   );
@@ -356,5 +391,6 @@ const styles = {
   quantityButton: { color: colors.primary, fontSize: 20, fontWeight: "700" },
   quantityText: { color: colors.ink, minWidth: 20, textAlign: "center", fontWeight: "800" },
   bottomBar: { flexDirection: "row", gap: 10, paddingHorizontal: 18, paddingTop: 11, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background },
-  actionButton: { flex: 1, marginTop: 0, paddingHorizontal: 8 }
+  actionButton: { flex: 1, marginTop: 0, paddingHorizontal: 8 },
+  actionButtonFull: { width: "100%", marginTop: 0 }
 };
