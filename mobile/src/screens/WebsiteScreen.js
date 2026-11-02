@@ -46,6 +46,7 @@ export default function WebsiteScreen({ title, url }) {
         originWhitelist={["https://*"]}
         javaScriptEnabled
         domStorageEnabled
+        cacheEnabled={false}
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
         setSupportMultipleWindows={false}
