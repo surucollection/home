@@ -46,8 +46,8 @@ export const productThumbnailUrl=(url,width=480)=>{
   try{
     const parsed=new URL(value);
     if(parsed.hostname.toLowerCase()==="images.suru.com.np"&&/^https?:$/.test(parsed.protocol)){
-      const path=parsed.pathname.replace(/^\\/+/,"");
-      if(!path||/^cdn-cgi\\/image\\//i.test(path))return value;
+      const path=parsed.pathname.startsWith("/")?parsed.pathname.slice(1):parsed.pathname;
+      if(!path||path.startsWith("cdn-cgi/image/"))return value;
       const targetWidth=Math.min(1200,Math.max(120,Math.round(Number(width)||480)));
       return parsed.origin+"/cdn-cgi/image/width="+targetWidth+",quality=75,format=auto,fit=contain/"+path+parsed.search;
     }
