@@ -1,10 +1,12 @@
 import React,{useEffect,useMemo,useState} from "react";
-import { money, norm, imageUrl, get } from "../lib/api.js";
+import { money, norm, imageUrl, productThumbnailUrl, get } from "../lib/api.js";
 import { addCart } from "../lib/cart.js";
 
 export default function ProductCard({product,image,variants=[],displayColour="",priority=false}){
   const href="/product.html?code="+encodeURIComponent(product.product_code)+(displayColour?"&color="+encodeURIComponent(displayColour):"");
-  const cardImage=imageUrl(image?.image_url||"",480);
+  const sourceImage=String(image?.image_url||"").trim();
+  const cardImage=productThumbnailUrl(sourceImage,480);
+  const cartImage=imageUrl(sourceImage,720);
   const[loadedVariants,setLoadedVariants]=useState(variants);
   const[variantLoading,setVariantLoading]=useState(false);
   const[added,setAdded]=useState(false),[open,setOpen]=useState(false),[buyNow,setBuyNow]=useState(false),[size,setSize]=useState(""),[colour,setColour]=useState(displayColour||""),[qty,setQty]=useState(1);
@@ -47,7 +49,7 @@ export default function ProductCard({product,image,variants=[],displayColour="",
     const stock=Number(variant?.stock||0);
     const q=Math.max(1,Math.min(Number(qty)||1,stock||Number(qty)||1));
     if(buyNow)localStorage.removeItem("suruCart");
-    addCart({product_id:product.id,code:product.product_code,name:product.name,price:Number(product.price||0),image:cardImage,size:variant?.size||size||null,color:variant?.color||colour||product.color||null,quantity:q});
+    addCart({product_id:product.id,code:product.product_code,name:product.name,price:Number(product.price||0),image:cartImage,size:variant?.size||size||null,color:variant?.color||colour||product.color||null,quantity:q});
     setOpen(false);if(buyNow){window.location.href="/order.html";return;}setAdded(true);window.setTimeout(()=>setAdded(false),1200);
   };
   return <article className="product-card">
@@ -59,7 +61,13 @@ export default function ProductCard({product,image,variants=[],displayColour="",
         loading={priority?"eager":"lazy"}
         fetchPriority={priority?"high":"auto"}
         decoding="async"
-        onError={e=>{if(e.currentTarget.src!==image.image_url){e.currentTarget.onerror=null;e.currentTarget.src=image.image_url;}}}
+        onError={e=>{
+          const img=e.currentTarget;
+          if(img.dataset.originalFallback==="1"){img.style.visibility="hidden";return;}
+          img.dataset.originalFallback="1";
+          if(cardImage!==cartImage){img.src=cartImage;return;}
+          img.style.visibility="hidden";
+        }}
       />:<div className="product-image-placeholder">Suru Collection</div>}
     </a>
     <div className="product-card-content">
