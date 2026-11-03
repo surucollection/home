@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Image, PanResponder, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useStore } from "../StoreContext";
-import { Button, Notice, Page } from "../components/UI";
+import { Button, Notice, Page, ProductThumbnail } from "../components/UI";
 import { imageUrl, money } from "../lib/format";
 import { colors, radius } from "../theme";
 import ProductReviewsSection from "../components/ProductReviewsSection";
@@ -310,11 +310,7 @@ export default function ProductScreen({ productId, initialColor = "", navigate, 
                   {video ? (
                     <View style={styles.videoThumbnail}>
                       {!!videoPoster?.image_url && (
-                        <Image
-                          source={{ uri: imageUrl(videoPoster.image_url, 220) }}
-                          resizeMode="cover"
-                          style={styles.videoThumbnailImage}
-                        />
+                        <ProductThumbnail uri={videoPoster.image_url} width={220} resizeMode="cover" style={styles.videoThumbnailImage} />
                       )}
                       <View style={styles.videoThumbnailShade}>
                         <View style={styles.videoPlayCircle}>
@@ -323,11 +319,7 @@ export default function ProductScreen({ productId, initialColor = "", navigate, 
                       </View>
                     </View>
                   ) : (
-                    <Image
-                      source={{ uri: imageUrl(item.image_url, 220) }}
-                      resizeMode="cover"
-                      style={styles.thumbnailImage}
-                    />
+                    <ProductThumbnail uri={item.image_url} width={220} resizeMode="cover" style={styles.thumbnailImage} />
                   )}
                 </Pressable>
               );
@@ -427,7 +419,7 @@ export default function ProductScreen({ productId, initialColor = "", navigate, 
                 return (
                   <Pressable key={item.id} onPress={() => navigate("product", { productId: item.id, initialColor: image?.color || item.color || "" })} style={styles.relatedCard}>
                     {image?.image_url ? (
-                      <Image source={{ uri: imageUrl(image.image_url, 480) }} resizeMode="cover" style={styles.relatedImage} />
+                      <ProductThumbnail uri={image.image_url} width={480} resizeMode="cover" style={styles.relatedImage} />
                     ) : (
                       <View style={[styles.relatedImage, styles.relatedImageFallback]}>
                         <Text style={styles.relatedFallbackText}>{String(item.name || "S").slice(0, 1)}</Text>
