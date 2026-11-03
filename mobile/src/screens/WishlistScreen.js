@@ -1,8 +1,8 @@
 import React from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useStore } from "../StoreContext";
-import { Button, Notice, Page } from "../components/UI";
-import { imageUrl, money } from "../lib/format";
+import { Button, Notice, Page, ProductThumbnail } from "../components/UI";
+import { money } from "../lib/format";
 import { colors, radius } from "../theme";
 
 export default function WishlistScreen({ navigate }) {
@@ -22,7 +22,7 @@ export default function WishlistScreen({ navigate }) {
           return <View key={product.id} style={styles.card}>
             <Pressable onPress={() => navigate("product", { productId: product.id })} style={styles.productCard}>
               {image?.image_url
-                ? <Image source={{ uri: imageUrl(image.image_url, 520) }} resizeMode="cover" style={styles.productImage} />
+                ? <ProductThumbnail uri={image.image_url} width={520} resizeMode="cover" style={styles.productImage} />
                 : <View style={[styles.productImage, styles.imageFallback]}><Text style={styles.fallbackLetter}>S</Text></View>}
               <View style={styles.info}>
                 <Text numberOfLines={2} style={styles.productName}>{product.name}</Text>
