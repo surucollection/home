@@ -22,15 +22,35 @@ import { colors } from "./src/theme";
 function productCodeFromUrl(rawUrl) {
   const raw = String(rawUrl || "");
   if (!raw) return "";
-  const query = raw.match(/[?&]code=([^&#]+)/i);
-  if (query?.[1]) {
-    try { return decodeURIComponent(query[1]).trim().toUpperCase(); }
-    catch { return query[1].trim().toUpperCase(); }
+
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    return "";
   }
-  const share = raw.match(/\/share\/([A-Za-z0-9_-]{1,40})(?:\/|[?#]|$)/i);
+
+  // OAuth callbacks also contain a query parameter named "code". They are
+  // authentication links, not product links, so never send them to Shop search.
+  if (url.protocol === "suru:" && url.hostname === "auth") return "";
+
+  // Product links use an explicit product route or a product share URL.
+  if (url.protocol === "suru:" && url.hostname === "product") {
+    const schemePath = url.pathname.match(/^\/([A-Za-z0-9_-]{1,40})(?:[/?#]|$)/i);
+    if (schemePath?.[1]) return schemePath[1].toUpperCase();
+  }
+
+  const share = url.pathname.match(/\/share\/([A-Za-z0-9_-]{1,40})(?:\/|[?#]|$)/i);
   if (share?.[1]) return share[1].toUpperCase();
-  const schemePath = raw.match(/^suru:\/\/product\/([A-Za-z0-9_-]{1,40})(?:[/?#]|$)/i);
-  if (schemePath?.[1]) return schemePath[1].toUpperCase();
+
+  // Only accept product-code-shaped query values (e.g. SC068), not OAuth
+  // authorization codes or UUIDs returned by identity providers.
+  const queryCode = url.searchParams.get("product_code") || url.searchParams.get("code") || "";
+  const normalizedCode = queryCode.trim();
+  if (/^[A-Z]{2,6}\d{2,8}$/i.test(normalizedCode)) {
+    return normalizedCode.toUpperCase();
+  }
+
   return "";
 }
 
