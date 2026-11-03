@@ -57,7 +57,7 @@ export const productThumbnailUrl = (url, width = 480) => {
       const path = parsed.pathname.startsWith("/") ? parsed.pathname.slice(1) : parsed.pathname;
       if (!path || path.startsWith("cdn-cgi/image/")) return value;
       const targetWidth = Math.min(1200, Math.max(120, Math.round(Number(width) || 480)));
-      return parsed.origin + "/cdn-cgi/image/width=" + targetWidth + ",quality=50,format=auto,fit=contain/" + path + parsed.search;
+      return parsed.origin + "/cdn-cgi/image/width=" + targetWidth + ",quality=60,format=auto,fit=contain/" + path + parsed.search;
     }
   } catch {}
   return imageUrl(value, width);
