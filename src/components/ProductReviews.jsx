@@ -74,6 +74,26 @@ export default function ProductReviews({product}){
   const ownReview=myReview;
   const average=useMemo(()=>reviews.length?reviews.reduce((total,review)=>total+Number(review.rating||0),0)/reviews.length:0,[reviews]);
   const returnUrl=encodeURIComponent(location.pathname+location.search);
+  const openNewReview=()=>{
+    setRating(5);
+    setTitle("");
+    setReviewText("");
+    setSelectedPhotos([]);
+    setError("");
+    setNotice("");
+    setIsEditing(false);
+    setEditModalOpen(true);
+  };
+  const openEditReview=()=>{
+    setRating(Number(ownReview?.rating)||5);
+    setTitle(ownReview?.title||"");
+    setReviewText(ownReview?.review_text||"");
+    setDisplayName(ownReview?.display_name||displayName);
+    setError("");
+    setNotice("");
+    setIsEditing(true);
+    setEditModalOpen(true);
+  };
 
   const submitReview=async event=>{
     event.preventDefault();
@@ -137,28 +157,36 @@ export default function ProductReviews({product}){
           {review.title&&<h3 className="product-review-title">{review.title}</h3>}
           <p className="product-review-body">{review.review_text}</p>
           {(publicPhotos[review.id]||[]).some(photo=>photo.approval_status==="approved")&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>{(publicPhotos[review.id]||[]).filter(photo=>photo.approval_status==="approved").map(photo=><button key={photo.id} type="button" onClick={()=>setLightboxPhoto(photo)} aria-label="View customer review photo" style={{padding:0,border:0,background:"none",cursor:"zoom-in",borderRadius:8,lineHeight:0}}><img src={photo.url} alt="Customer review photo" loading="lazy" style={{width:92,height:92,objectFit:"cover",borderRadius:8}}/></button>)}</div>}
-          {review.user_id===user?.id&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",marginTop:12}}><span className="product-review-own-label">Your review</span><button type="button" className="secondary" onClick={()=>{setRating(Number(ownReview?.rating)||5);setTitle(ownReview?.title||"");setReviewText(ownReview?.review_text||"");setDisplayName(ownReview?.display_name||displayName);setError("");setNotice("");setIsEditing(true);setEditModalOpen(true);}}>Edit review</button></div>}
+          {review.user_id===user?.id&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",marginTop:12}}><span className="product-review-own-label">Your review</span><button type="button" className="secondary" onClick={openEditReview}>Edit review</button></div>}
         </article>)}
       </div>
 
       <aside className="product-review-form-card">
-        <h3>{ownReview?"Customer review":"Write a review"}</h3>
-        {!user?<div className="product-review-signin"><p>Sign in to leave a review.</p><a className="buy-button" href={"/login.html?return="+returnUrl}>Sign in to review</a></div>:ownReview?<p className="product-review-form-intro">You have already reviewed this product. Use “Edit review” on your review to make changes.</p>:<><p className="product-review-form-intro">Tried this product? Share your thoughts with other shoppers.</p><form onSubmit={submitReview}>
-          <label className="product-review-field-label">Your rating</label>
-          <div className="product-review-rating-picker" role="group" aria-label="Choose a rating from one to five stars">{[1,2,3,4,5].map(value=><button key={value} type="button" className={value<=rating?"selected":""} aria-label={value+" star"+(value===1?"":"s")} aria-pressed={rating===value} onClick={()=>setRating(value)}>★</button>)}<span>{rating} of 5</span></div>
-          <label className="product-review-field-label" htmlFor={"review-title-"+product.id}>Title <span>(optional)</span></label><input id={"review-title-"+product.id} value={title} onChange={e=>setTitle(e.target.value)} maxLength={120} placeholder="Sum up your experience"/>
-          <label className="product-review-field-label" htmlFor={"review-text-"+product.id}>Your review</label><textarea id={"review-text-"+product.id} value={reviewText} onChange={e=>setReviewText(e.target.value)} rows={5} minLength={5} maxLength={2000} required placeholder="What did you like or notice about this product?"/>
-          <label className="product-review-field-label" htmlFor={"review-photos-"+product.id}>Customer photos <span>(optional, up to 4 photos, 5 MB each)</span></label><input id={"review-photos-"+product.id} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={e=>{const files=Array.from(e.target.files||[]);if(selectedPhotos.length+files.length>4){setError("You can add up to 4 photos per review.");e.target.value="";return;}if(files.some(file=>file.size>5*1024*1024)){setError("Each photo must be 5 MB or smaller.");e.target.value="";return;}setSelectedPhotos(items=>[...items,...files]);e.target.value="";}}/>
-          {selectedPhotos.length>0&&<div style={{display:"flex",gap:8,flexWrap:"wrap",margin:"8px 0"}}>{selectedPhotos.map((file,index)=><div key={file.name+file.lastModified+index} style={{width:90}}><img src={URL.createObjectURL(file)} alt={file.name} style={{width:80,height:80,objectFit:"cover",borderRadius:8}}/><button type="button" className="secondary" onClick={()=>setSelectedPhotos(items=>items.filter((_,i)=>i!==index))}>Remove</button></div>)}</div>}
-          <label className="product-review-field-label" htmlFor={"review-name-"+product.id}>Display name</label><input id={"review-name-"+product.id} value={displayName} onChange={e=>setDisplayName(e.target.value)} maxLength={80} required/>
-          <button type="submit" className="buy-button product-review-submit" disabled={submitting}>{submitting?"Saving…":"Submit Review"}</button>
-        </form></>}
+        {!user ? <>
+          <h3>Write a review</h3>
+          <div className="product-review-signin">
+            <p>Sign in to leave a review.</p>
+            <a className="buy-button" href={"/login.html?return="+returnUrl}>Sign in to review</a>
+          </div>
+        </> : ownReview ? <>
+          <h3>Your review</h3>
+          <div className="product-review-own-summary">
+            <div className="product-review-stars" aria-label={ownReview.rating+" out of 5 stars"}>{starsFor(Number(ownReview.rating)||0)}</div>
+            {ownReview.title&&<strong className="product-review-title">{ownReview.title}</strong>}
+            <p className="product-review-body">{ownReview.review_text}</p>
+            <p className="product-review-form-intro">{ownReview.is_approved?"Your review is published.":"Your review is awaiting approval."}</p>
+            <button type="button" className="secondary" onClick={openEditReview}>Edit review</button>
+          </div>
+        </> : <>
+          <h3>Write a review</h3>
+          <p className="product-review-form-intro">Tried this product? Share your thoughts with other shoppers.</p>
+          <button type="button" className="buy-button product-review-submit" onClick={openNewReview}>Add a review</button>
+        </>}
         {user&&error&&<p className="product-review-message error" role="alert">{error}</p>}
         {user&&notice&&<p className="product-review-message success" role="status">{notice}</p>}
         <p className="product-review-note">One review per account for each product. New reviews and edits must be approved by Suru Collection before they appear publicly.</p>
-      </aside>
-    </div>
-    {editModalOpen&&ownReview&&<div role="dialog" aria-modal="true" aria-labelledby={"edit-review-heading-"+product.id} onClick={()=>setEditModalOpen(false)} style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,.65)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}><div onClick={event=>event.stopPropagation()} style={{position:"relative",width:"min(100%,600px)",maxHeight:"90vh",overflowY:"auto",background:"var(--surface,#fff)",color:"var(--text,#111)",borderRadius:14,padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.3)"}}><button type="button" onClick={()=>{setEditModalOpen(false);setIsEditing(false);}} aria-label="Close edit review" style={{position:"absolute",top:10,right:12,border:0,background:"transparent",fontSize:28,cursor:"pointer"}}>×</button><h3 id={"edit-review-heading-"+product.id}>Edit your review</h3><p className="product-review-form-intro">Your changes will be sent for approval again.</p><form onSubmit={submitReview}>
+      </aside>   </div>
+    {editModalOpen&&user&&<div role="dialog" aria-modal="true" aria-labelledby={"edit-review-heading-"+product.id} onClick={()=>setEditModalOpen(false)} style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,.65)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}><div onClick={event=>event.stopPropagation()} style={{position:"relative",width:"min(100%,600px)",maxHeight:"90vh",overflowY:"auto",background:"var(--surface,#fff)",color:"var(--text,#111)",borderRadius:14,padding:24,boxShadow:"0 20px 60px rgba(0,0,0,.3)"}}><button type="button" onClick={()=>{setEditModalOpen(false);setIsEditing(false);}} aria-label="Close edit review" style={{position:"absolute",top:10,right:12,border:0,background:"transparent",fontSize:28,cursor:"pointer"}}>×</button><h3 id={"edit-review-heading-"+product.id}>{isEditing?"Edit your review":"Write a review"}</h3><p className="product-review-form-intro">{isEditing?"Your changes will be sent for approval again.":"Your feedback helps other customers choose with confidence."}</p><form onSubmit={submitReview}>
           <label className="product-review-field-label">Your rating</label><div className="product-review-rating-picker" role="group" aria-label="Choose a rating from one to five stars">{[1,2,3,4,5].map(value=><button key={value} type="button" className={value<=rating?"selected":""} aria-label={value+" star"+(value===1?"":"s")} aria-pressed={rating===value} onClick={()=>setRating(value)}>★</button>)}<span>{rating} of 5</span></div>
           <label className="product-review-field-label" htmlFor={"edit-review-title-"+product.id}>Title <span>(optional)</span></label><input id={"edit-review-title-"+product.id} value={title} onChange={e=>setTitle(e.target.value)} maxLength={120} placeholder="Sum up your experience"/>
           <label className="product-review-field-label" htmlFor={"edit-review-text-"+product.id}>Your review</label><textarea id={"edit-review-text-"+product.id} value={reviewText} onChange={e=>setReviewText(e.target.value)} rows={5} minLength={5} maxLength={2000} required placeholder="What did you like or notice about this product?"/>
