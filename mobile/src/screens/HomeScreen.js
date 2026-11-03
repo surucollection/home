@@ -1,11 +1,14 @@
 import React from "react";
-import { ImageBackground, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ImageBackground, Pressable, RefreshControl, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { useStore } from "../StoreContext";
-import { Page, ProductCard, SectionHeading, Button } from "../components/UI";
+import { Page, ProductCard, SectionHeading } from "../components/UI";
 import { colors, radius } from "../theme";
 
 export default function HomeScreen({ navigate }) {
-  const { products, categories, loadingCatalog, refreshCatalog, cartCount } = useStore();
+  const { products, categories, loadingCatalog, refreshCatalog } = useStore();
+  const { width: windowWidth } = useWindowDimensions();
+  const heroTitleSize = Math.max(19, Math.min(29, Math.round((windowWidth - 32) * 0.075)));
+  const heroContentWidth = windowWidth < 360 ? "64%" : "67%";
   const featured = products.filter((item) => item.is_featured).slice(0, 8);
   const latest = [...products].slice(0, 8);
   return (
@@ -16,10 +19,20 @@ export default function HomeScreen({ navigate }) {
       >
         <ImageBackground source={{ uri: "https://suru.com.np/assets/hero.jpg" }} style={styles.hero} imageStyle={styles.heroImage} resizeMode="cover">
           <View style={styles.heroShade} />
-          <Text style={styles.heroEyebrow}>WELCOME TO SURU COLLECTION</Text>
-          <Text style={styles.heroTitle}>More Than Fashion.{"\n"}<Text style={{ fontStyle: "italic", color: "#e6b9aa" }}>It’s a Feeling.</Text></Text>
-          <Text style={styles.heroText}>Thoughtfully selected traditional and ethnic wear for the moments that matter.</Text>
-          <Pressable onPress={() => navigate("shop")} style={styles.heroButton}><Text style={styles.heroButtonText}>Explore the collection  →</Text></Pressable>
+          <View style={[styles.heroContent, { width: heroContentWidth }]}>
+            <Text style={styles.heroEyebrow} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.68}>WELCOME TO SURU COLLECTION</Text>
+            <Text
+              style={[styles.heroTitle, { fontSize: heroTitleSize, lineHeight: Math.round(heroTitleSize * 1.16) }]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.68}
+              ellipsizeMode="clip"
+            >More Than Fashion.{"\n"}<Text style={{ fontStyle: "italic", color: "#e6b9aa" }}>It’s a Feeling.</Text></Text>
+            <Text style={styles.heroText}>Thoughtfully selected traditional and ethnic wear for the moments that matter.</Text>
+            <Pressable onPress={() => navigate("shop")} style={styles.heroButton}>
+              <Text style={styles.heroButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>Explore the collection  →</Text>
+            </Pressable>
+          </View>
         </ImageBackground>
 
         <SectionHeading eyebrow="DISCOVER YOUR STYLE" title="Shop by collection" />
@@ -37,7 +50,6 @@ export default function HomeScreen({ navigate }) {
         <SectionHeading eyebrow="JUST ARRIVED" title="Recently added" action="Shop all" onAction={() => navigate("shop")} />
         <View style={styles.grid}>{latest.map((product) => <ProductCard key={product.id} product={product} onPress={(initialColor) => navigate("product", { productId: product.id, initialColor })} />)}</View>
         {!products.length && !loadingCatalog && <Text style={styles.emptyText}>The collection is being refreshed. Pull down to try again.</Text>}
-        <Button title={"View Cart" + (cartCount ? " (" + cartCount + ")" : "")} secondary onPress={() => navigate("cart")} />
       </ScrollView>
     </Page>
   );
@@ -47,11 +59,12 @@ const styles = {
   hero: { backgroundColor: colors.primaryDark, borderRadius: radius.lg, padding: 22, minHeight: 250, justifyContent: "center", overflow: "hidden" },
   heroImage: { borderRadius: radius.lg },
   heroShade: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(34, 18, 16, 0.48)", borderRadius: radius.lg },
-  heroEyebrow: { color: "#e1b6a8", fontSize: 9, letterSpacing: 2, fontWeight: "800", marginBottom: 12 },
-  heroTitle: { color: colors.white, fontFamily: "serif", fontSize: 31, lineHeight: 37, fontWeight: "700" },
-  heroText: { color: "#f1ded6", lineHeight: 21, fontSize: 13, marginTop: 12, maxWidth: 290 },
-  heroButton: { alignSelf: "flex-start", backgroundColor: colors.white, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, marginTop: 18 },
-  heroButtonText: { color: colors.primary, fontWeight: "800", fontSize: 12 },
+  heroContent: { alignSelf: "flex-start", alignItems: "flex-start" },
+  heroEyebrow: { color: "#e1b6a8", fontSize: 9, letterSpacing: 1.2, fontWeight: "800", marginBottom: 12, maxWidth: "100%" },
+  heroTitle: { color: colors.white, fontFamily: "serif", fontWeight: "700", textAlign: "left", width: "100%" },
+  heroText: { color: "#f1ded6", lineHeight: 18, fontSize: 12, marginTop: 10, maxWidth: "100%", textAlign: "left" },
+  heroButton: { alignSelf: "flex-start", maxWidth: "100%", backgroundColor: colors.white, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 10, marginTop: 15 },
+  heroButtonText: { color: colors.primary, fontWeight: "800", fontSize: 11 },
   categoryChip: { backgroundColor: colors.surfaceSoft, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 15, paddingVertical: 10, borderRadius: radius.pill },
   categoryText: { color: colors.primary, fontWeight: "700", fontSize: 12 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 3 },
