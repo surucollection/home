@@ -5,7 +5,7 @@ import { addCart } from "../lib/cart.js";
 export default function ProductCard({product,image,variants=[],displayColour="",priority=false}){
   const href="/product.html?code="+encodeURIComponent(product.product_code)+(displayColour?"&color="+encodeURIComponent(displayColour):"");
   const sourceImage=String(image?.image_url||"").trim();
-  const cardImage=productThumbnailUrl(sourceImage,480);
+  const cardImage=productThumbnailUrl(sourceImage,360);
   const cartImage=imageUrl(sourceImage,720);
   const[loadedVariants,setLoadedVariants]=useState(variants);
   const[variantLoading,setVariantLoading]=useState(false);
