@@ -23,9 +23,10 @@ function isAppAuthCallback(rawUrl) {
   if (!rawUrl) return false;
   try {
     const url = new URL(rawUrl);
+    const pathname = url.pathname.endsWith("/") ? url.pathname.slice(0, -1) : url.pathname;
     return url.protocol === "suru:" &&
-      ((url.hostname === "auth" && url.pathname.replace(/\\/$/, "") === "/callback") ||
-       url.pathname.replace(/\\/$/, "") === "/auth/callback");
+      ((url.hostname === "auth" && pathname === "/callback") ||
+       pathname === "/auth/callback");
   } catch {
     return false;
   }
