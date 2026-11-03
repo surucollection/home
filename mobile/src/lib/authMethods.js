@@ -22,7 +22,7 @@ async function currentSessionOrNull() {
 export async function continueWithGoogle({ link = false } = {}) {
   // This derives the redirect from the scheme registered in mobile/app.json.
   // Keep this exact URI allowlisted in Supabase Auth → URL Configuration.
-  const redirectTo = Linking.createURL("auth/callback");
+  const redirectTo = Linking.createURL("auth/callback", { scheme: "suru" });
   const options = { redirectTo, skipBrowserRedirect: true };
 
   const { data, error } = link
