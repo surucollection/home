@@ -6,108 +6,89 @@ import { supabase } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const APP_AUTH_REDIRECT = "suru://auth/callback";
-
 function getRedirectParts(url) {
   const parsed = new URL(url);
   const query = parsed.searchParams;
   const hash = new URLSearchParams(String(parsed.hash || "").replace(/^#/, ""));
-  return { query, hash };
+  return { parsed, query, hash };
 }
 
-function isAppAuthCallback(url) {
-  if (!url) return false;
-  try {
-    const candidate = new URL(url);
-    const expected = new URL(APP_AUTH_REDIRECT);
-    return candidate.protocol === expected.protocol &&
-      candidate.hostname === expected.hostname &&
-      candidate.pathname.replace(/\/$/, "") === expected.pathname.replace(/\/$/, "");
-  } catch {
-    return false;
-  }
-}
-
-async function readCallbackUrl(result, callbackPromise) {
-  if (result?.type === "success" && isAppAuthCallback(result.url)) return result.url;
-
-  // Some iOS/Android browser hand-offs activate the app through the URL
-  // listener but resolve the browser sheet as dismissed. Accept the matching
-  // app callback rather than treating a successful OAuth hand-off as a cancel.
-  try {
-    const initialUrl = await Linking.getInitialURL();
-    if (isAppAuthCallback(initialUrl)) return initialUrl;
-  } catch {}
-
-  return await Promise.race([
-    callbackPromise,
-    new Promise((resolve) => setTimeout(() => resolve(""), 4000))
-  ]);
+async function currentSessionOrNull() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  return data?.session?.user ? data : null;
 }
 
 export async function continueWithGoogle({ link = false } = {}) {
-  const redirectTo = APP_AUTH_REDIRECT;
+  // This derives the redirect from the scheme registered in mobile/app.json.
+  // Keep this exact URI allowlisted in Supabase Auth → URL Configuration.
+  const redirectTo = Linking.createURL("auth/callback");
   const options = { redirectTo, skipBrowserRedirect: true };
+
   const { data, error } = link
     ? await supabase.auth.linkIdentity({ provider: "google", options })
     : await supabase.auth.signInWithOAuth({ provider: "google", options });
+
   if (error) throw error;
   if (!data?.url) {
     throw new Error("Google sign-in did not return an authorization URL. Check that Google is enabled in Supabase Auth.");
   }
 
-  let resolveCallback;
-  const callbackPromise = new Promise((resolve) => { resolveCallback = resolve; });
-  const subscription = Linking.addEventListener("url", ({ url }) => {
-    if (isAppAuthCallback(url)) resolveCallback(url);
-  });
+  // On iOS this is handled by ASWebAuthenticationSession. Do not add a
+  // Linking URL listener here: the native auth session owns its callback.
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
-  let callbackUrl = "";
-  try {
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-    callbackUrl = await readCallbackUrl(result, callbackPromise);
+  if (result?.type !== "success" || !result?.url) {
+    // A callback may have been delivered just as iOS closed the auth sheet.
+    // Read the persisted Supabase session once before reporting a redirect error.
+    const existingSession = await currentSessionOrNull();
+    if (existingSession) return existingSession;
 
-    if (!callbackUrl) {
-      const { data: existingSession, error: existingSessionError } = await supabase.auth.getSession();
-      if (existingSessionError) throw existingSessionError;
-      if (existingSession?.session?.user) return existingSession;
-      if (result?.type === "cancel" || result?.type === "dismiss") {
-        throw new Error("Google sign-in was cancelled before Google returned to the Suru app.");
-      }
-      throw new Error("Google returned without opening the Suru app. Add suru://auth/callback to Supabase Authentication → URL Configuration → Redirect URLs.");
+    if (result?.type === "cancel" || result?.type === "dismiss") {
+      throw new Error(
+        "iOS closed Google sign-in without delivering the Suru callback. Confirm that " +
+        redirectTo +
+        " (or suru://**) is allowed in Supabase Authentication → URL Configuration → Redirect URLs, then try again."
+      );
     }
-
-    const { query, hash } = getRedirectParts(callbackUrl);
-    const callbackError =
-      query.get("error_description") || query.get("error") || query.get("error_code") ||
-      hash.get("error_description") || hash.get("error") || hash.get("error_code");
-    if (callbackError) throw new Error(callbackError);
-
-    const code = query.get("code");
-    if (code) {
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-      if (exchangeError) {
-        throw new Error("Google returned to Suru, but the sign-in code could not be exchanged: " + exchangeError.message);
-      }
-    } else {
-      const access_token = hash.get("access_token") || query.get("access_token");
-      const refresh_token = hash.get("refresh_token") || query.get("refresh_token");
-      if (!access_token || !refresh_token) {
-        throw new Error("Google returned to Suru without an authentication code or session tokens. Check the Supabase redirect URL configuration.");
-      }
-      const { error: setError } = await supabase.auth.setSession({ access_token, refresh_token });
-      if (setError) throw setError;
-    }
-
-    const { data: activeSession, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!activeSession?.session?.user) {
-      throw new Error("Google returned to Suru, but the app did not save the signed-in session. Please try again.");
-    }
-    return activeSession;
-  } finally {
-    subscription.remove();
+    throw new Error("Google sign-in did not return a callback to the Suru app. Please try again.");
   }
+
+  const { parsed, query, hash } = getRedirectParts(result.url);
+  if (parsed.protocol !== "suru:") {
+    throw new Error("Google returned to an unexpected app link. Expected the Suru app callback scheme.");
+  }
+
+  const callbackError =
+    query.get("error_description") || query.get("error") || query.get("error_code") ||
+    hash.get("error_description") || hash.get("error") || hash.get("error_code");
+  if (callbackError) throw new Error(callbackError);
+
+  // PKCE returns a one-time authorization code. Exchange it on this same
+  // device so Supabase can use the verifier stored in AsyncStorage.
+  const code = query.get("code");
+  if (code) {
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (exchangeError) {
+      throw new Error("Google returned to Suru, but the authorization code could not be exchanged: " + exchangeError.message);
+    }
+  } else {
+    // Backward compatibility for an implicit-flow callback from an older
+    // Supabase configuration. New app builds use PKCE in supabase.js.
+    const access_token = hash.get("access_token") || query.get("access_token");
+    const refresh_token = hash.get("refresh_token") || query.get("refresh_token");
+    if (!access_token || !refresh_token) {
+      throw new Error("Google returned to Suru without an authorization code or session tokens. Check the Supabase redirect URL configuration.");
+    }
+    const { error: setError } = await supabase.auth.setSession({ access_token, refresh_token });
+    if (setError) throw setError;
+  }
+
+  const activeSession = await currentSessionOrNull();
+  if (!activeSession) {
+    throw new Error("Google completed, but the Suru app did not store the signed-in session. Please try again.");
+  }
+  return activeSession;
 }
 
 export function isNativePasskeysSupported() {
