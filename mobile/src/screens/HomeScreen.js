@@ -28,7 +28,7 @@ export default function HomeScreen({ navigate }) {
               minimumFontScale={0.68}
               ellipsizeMode="clip"
             >More Than Fashion.{"\n"}<Text style={{ fontStyle: "italic", color: "#e6b9aa" }}>It’s a Feeling.</Text></Text>
-            <Text style={styles.heroText}>Thoughtfully selected traditional and ethnic wear for the moments that matter.</Text>
+            <Text style={styles.heroText}>Discover thoughtfully selected traditional, stylish and ethnic wear designed to make every occasion feel special.</Text>
             <Pressable onPress={() => navigate("shop")} style={styles.heroButton}>
               <Text style={styles.heroButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>Explore the collection  →</Text>
             </Pressable>
