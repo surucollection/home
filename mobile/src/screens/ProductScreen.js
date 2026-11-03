@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Image, PanResponder, Pressable, ScrollView, Share, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useStore } from "../StoreContext";
 import { Button, Notice, Page } from "../components/UI";
@@ -30,7 +29,6 @@ function ProductVideo({ uri }) {
 }
 
 export default function ProductScreen({ productId, initialColor = "", navigate, goBack }) {
-  const insets = useSafeAreaInsets();
   const { products, session, cartItems, wishlist, wishlistReady, toggleWishlist, addToCart, buyNow: replaceCartWithProduct } = useStore();
   const product = products.find((item) => item.id === productId);
   const relatedProducts = useMemo(() => {
@@ -448,7 +446,7 @@ export default function ProductScreen({ productId, initialColor = "", navigate, 
         )}
       </ScrollView>
 
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+      <View style={styles.bottomBar}>
         {showPreorderAction ? (
           <Button
             title="Pre-order"
