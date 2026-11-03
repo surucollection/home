@@ -48,6 +48,21 @@ export const imageUrl = (url, width = 720) => {
   return value;
 };
 
+export const productThumbnailUrl = (url, width = 480) => {
+  const value = String(url || "").trim();
+  if (!value) return value;
+  try {
+    const parsed = new URL(value);
+    if (parsed.hostname.toLowerCase() === "images.suru.com.np" && /^https?:$/.test(parsed.protocol)) {
+      const path = parsed.pathname.startsWith("/") ? parsed.pathname.slice(1) : parsed.pathname;
+      if (!path || path.startsWith("cdn-cgi/image/")) return value;
+      const targetWidth = Math.min(1200, Math.max(120, Math.round(Number(width) || 480)));
+      return parsed.origin + "/cdn-cgi/image/width=" + targetWidth + ",quality=75,format=auto,fit=contain/" + path + parsed.search;
+    }
+  } catch {}
+  return imageUrl(value, width);
+};
+
 export const randomIdempotencyKey = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
     const value = Math.floor(Math.random() * 16);
