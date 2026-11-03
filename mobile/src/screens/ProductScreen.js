@@ -419,7 +419,7 @@ export default function ProductScreen({ productId, initialColor = "", navigate, 
                 return (
                   <Pressable key={item.id} onPress={() => navigate("product", { productId: item.id, initialColor: image?.color || item.color || "" })} style={styles.relatedCard}>
                     {image?.image_url ? (
-                      <ProductThumbnail uri={image.image_url} width={480} resizeMode="cover" style={styles.relatedImage} />
+                      <ProductThumbnail uri={image.image_url} width={360} resizeMode="cover" style={styles.relatedImage} />
                     ) : (
                       <View style={[styles.relatedImage, styles.relatedImageFallback]}>
                         <Text style={styles.relatedFallbackText}>{String(item.name || "S").slice(0, 1)}</Text>
