@@ -154,7 +154,7 @@ function Application() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right", "bottom"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <TopBar
         title={route.name === "website" ? route.params.title : route.name === "product" ? "Product details" : route.name === "cart" ? "Your Cart" : route.name === "wishlist" ? "My Wishlist" : route.name === "checkout" ? "Checkout" : route.name === "preorder" ? "Pre-order" : route.name === "orders" ? "My orders" : route.name === "profile" ? "Personal details" : route.name === "addresses" ? "Saved addresses" : route.name === "security" ? "Sign-in & security" : undefined}
