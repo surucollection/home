@@ -146,8 +146,21 @@ async function main() {
       if (order) return order;
       return String(a.created_at || "").localeCompare(String(b.created_at || ""));
     });
-    const image = options[0] || null;
-    if (!image) missingImages += 1;
+    let image = options[0] || null;
+    if (!image) {
+      missingImages += 1;
+    } else {
+      // Prefer a repository-hosted optimized WebP when the build pipeline has
+      // generated one for this product. Keep the original R2 URL as fallback.
+      const optimizedAsset = path.join("assets", "optimized-products", code + "_1.webp");
+      try {
+        await fs.access(optimizedAsset);
+        image = {
+          ...image,
+          image_url: SITE + "/assets/optimized-products/" + code + "_1.webp"
+        };
+      } catch {}
+    }
     const directory = path.join(OUTPUT, code);
     await fs.mkdir(directory, { recursive: true });
     await fs.writeFile(path.join(directory, "index.html"), renderPage(product, image), "utf8");
