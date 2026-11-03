@@ -1,4 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { Platform } from "react-native";
 import * as NativePasskeys from "react-native-passkeys";
 import { supabase } from "./supabase";
@@ -20,8 +21,6 @@ async function currentSessionOrNull() {
 
 
 export async function continueWithGoogle({ link = false } = {}) {
-  // Keep this exact native URI registered in mobile/app.json and allowlisted
-  // in Supabase Auth → URL Configuration → Redirect URLs.
   const redirectTo = "suru://auth/callback";
   const options = { redirectTo, skipBrowserRedirect: true };
 
@@ -33,20 +32,66 @@ export async function continueWithGoogle({ link = false } = {}) {
     throw new Error("Google sign-in did not return an authorization URL. Check that Google is enabled in Supabase Auth.");
   }
 
-  // This API uses ASWebAuthenticationSession on iOS and a Custom Tab plus
-  // AppState/Linking on Android. It closes the browser and resolves only when
-  // the configured custom-scheme callback is delivered to the app.
-  const authResult = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  if (authResult?.type !== "success" || !authResult?.url) {
-    if (authResult?.type === "cancel" || authResult?.type === "dismiss") {
-      throw new Error("Google sign-in was closed before Suru received the sign-in callback. No login was completed.");
-    }
-    throw new Error("Google sign-in did not return to the Suru app. Confirm suru://auth/callback is allowlisted in Supabase Auth → URL Configuration and rebuild the app if its URL scheme changed.");
+  // Verify the redirect Supabase will send to Google. Keep the native
+  // callback explicit even if a future SDK change omits the query parameter.
+  const authorizeUrl = new URL(data.url);
+  const sdkRedirect = authorizeUrl.searchParams.get("redirect_to");
+  if (sdkRedirect !== redirectTo) {
+    authorizeUrl.searchParams.set("redirect_to", redirectTo);
+  }
+  const requestedRedirect = authorizeUrl.searchParams.get("redirect_to");
+  if (requestedRedirect !== redirectTo) {
+    throw new Error("Suru could not set its native Google callback. Expected " + redirectTo + " but received " + String(requestedRedirect));
   }
 
-  const { parsed, query, hash } = getRedirectParts(authResult.url);
+  let resolveDeepLink;
+  const deepLinkPromise = new Promise((resolve) => { resolveDeepLink = resolve; });
+  const subscription = Linking.addEventListener("url", ({ url }) => {
+    if (isAppAuthCallback(url)) resolveDeepLink(url);
+  });
+
+  let callbackUrl = "";
+  try {
+    const browserPromise = WebBrowser.openAuthSessionAsync(authorizeUrl.toString(), redirectTo)
+      .then((result) => ({ source: "auth-session", result }));
+
+    // Some native shells deliver the custom URL through Linking instead of
+    // returning it from the browser session. Listen for both delivery paths.
+    const first = await Promise.race([
+      browserPromise,
+      deepLinkPromise.then((url) => ({ source: "linking", url }))
+    ]);
+
+    if (first.source === "linking") {
+      callbackUrl = first.url;
+      void WebBrowser.dismissAuthSession().catch(() => {});
+    } else if (first.result?.type === "success" && first.result.url) {
+      callbackUrl = first.result.url;
+    } else {
+      // Give a URL event already in flight a short chance to arrive before
+      // treating a browser dismissal as a cancelled login.
+      const lateUrl = await Promise.race([
+        deepLinkPromise,
+        new Promise((resolve) => setTimeout(() => resolve(""), 1500))
+      ]);
+      if (lateUrl) callbackUrl = lateUrl;
+      else if (first.result?.type === "cancel" || first.result?.type === "dismiss") {
+        throw new Error(
+          "Google sign-in was closed before Suru received its native callback. " +
+          "Supabase was asked to return to " + requestedRedirect +
+          ". Confirm the app is allowed to receive the suru URL scheme, then try again."
+        );
+      } else {
+        throw new Error("Google sign-in did not return to Suru. Expected callback: " + requestedRedirect);
+      }
+    }
+  } finally {
+    subscription.remove();
+  }
+
+  const { parsed, query, hash } = getRedirectParts(callbackUrl);
   if (parsed.protocol !== "suru:") {
-    throw new Error("Google returned to an unexpected app link.");
+    throw new Error("Google returned to an unexpected app link: " + parsed.protocol);
   }
 
   const callbackError =
@@ -75,6 +120,19 @@ export async function continueWithGoogle({ link = false } = {}) {
     throw new Error("Google completed, but the Suru app did not store the signed-in session. Please try again.");
   }
   return activeSession;
+}
+
+function isAppAuthCallback(rawUrl) {
+  if (!rawUrl) return false;
+  try {
+    const url = new URL(rawUrl);
+    const pathname = url.pathname.endsWith("/") ? url.pathname.slice(0, -1) : url.pathname;
+    return url.protocol === "suru:" &&
+      ((url.hostname === "auth" && pathname === "/callback") ||
+       pathname === "/auth/callback");
+  } catch {
+    return false;
+  }
 }
 
 export function isNativePasskeysSupported() {
