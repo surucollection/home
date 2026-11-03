@@ -1,8 +1,8 @@
 import React from "react";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useStore } from "../StoreContext";
-import { Button, Notice, Page, SectionHeading } from "../components/UI";
-import { imageUrl, money } from "../lib/format";
+import { Button, Notice, Page, SectionHeading, ProductThumbnail } from "../components/UI";
+import { money } from "../lib/format";
 import { colors, radius } from "../theme";
 
 export default function CartScreen({ navigate }) {
@@ -19,7 +19,7 @@ export default function CartScreen({ navigate }) {
           const image = productImages.find((entry) => entry.is_main) || productImages[0];
           return (
             <View key={[item.productId, item.size, item.color].join("::")} style={styles.item}>
-              {image?.image_url ? <Image source={{ uri: imageUrl(image.image_url, 260) }} style={styles.image} /> : <View style={[styles.image, styles.placeholder]} />}
+              {image?.image_url ? <ProductThumbnail uri={image.image_url} width={260} style={styles.image} resizeMode="cover" /> : <View style={[styles.image, styles.placeholder]} />}
               <View style={{ flex: 1 }}>
                 <Text style={styles.code}>{product?.product_code || item.productCode}</Text>
                 <Text style={styles.name}>{product?.name || "This product is no longer available"}</Text>
