@@ -31,7 +31,7 @@ export default function AuthScreen({ onDone, goBack }) {
 
     const { data: existing, error: profileError } = await supabase.rpc("my_customer_profile");
     if (profileError) throw profileError;
-    if (!existing) {
+    if (!existing?.id) {
       const metadata = user.user_metadata || {};
       const fullName = String(
         metadata.full_name || metadata.name ||
@@ -70,7 +70,7 @@ export default function AuthScreen({ onDone, goBack }) {
       if (error) throw error;
       const { data: customer, error: profileError } = await supabase.rpc("my_customer_profile");
       if (profileError) throw profileError;
-      if (!customer && data?.user) {
+      if (!customer?.id && data?.user) {
         const metadata = data.user.user_metadata || {};
         const { error: upsertError } = await supabase.from("customers").upsert({
           auth_user_id: data.user.id,
