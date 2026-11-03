@@ -3,12 +3,31 @@ import {
   ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View
 } from "react-native";
 import { colors, radius } from "../theme";
-import { imageUrl, money } from "../lib/format";
+import { imageUrl, money, productThumbnailUrl } from "../lib/format";
 
 export function Page({ children, scroll = true, style }) {
   return scroll
     ? <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={[{ padding: 18, paddingBottom: 34 }, style]} keyboardShouldPersistTaps="handled">{children}</ScrollView>
     : <View style={[{ flex: 1, backgroundColor: colors.background, padding: 18 }, style]}>{children}</View>;
+}
+
+export function ProductThumbnail({ uri, width = 520, style, resizeMode = "cover" }) {
+  const [useOriginal, setUseOriginal] = React.useState(false);
+  React.useEffect(() => { setUseOriginal(false); }, [uri, width]);
+  if (!uri) return null;
+  const optimizedUri = productThumbnailUrl(uri, width);
+  const originalFallback = imageUrl(uri, width);
+  const sourceUri = useOriginal ? originalFallback : optimizedUri;
+  return (
+    <Image
+      source={{ uri: sourceUri }}
+      style={style}
+      resizeMode={resizeMode}
+      onError={() => {
+        if (!useOriginal && sourceUri !== originalFallback) setUseOriginal(true);
+      }}
+    />
+  );
 }
 
 export function TopBar({ title = "Suru Collection", onBack, onWishlist, onCart, cartCount = 0, wishlistCount = 0 }) {
@@ -77,7 +96,7 @@ export function ProductCard({ product, onPress }) {
   return (
     <Pressable onPress={() => onPress?.(image?.color || product?.color || "")} style={styles.productCard}>
       {image?.image_url
-        ? <Image source={{ uri: imageUrl(image.image_url, 520) }} style={styles.productImage} resizeMode="cover" />
+        ? <ProductThumbnail uri={image.image_url} width={520} style={styles.productImage} resizeMode="cover" />
         : <View style={[styles.productImage, styles.imageFallback]}><Text style={styles.fallbackLetter}>{String(product?.name || "S").slice(0, 1)}</Text></View>}
       {product?.is_featured && <View style={styles.featuredTag}><Text style={styles.featuredTagText}>FEATURED</Text></View>}
       <View style={styles.productInfo}>
