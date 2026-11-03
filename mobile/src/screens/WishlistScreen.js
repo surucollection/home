@@ -22,7 +22,7 @@ export default function WishlistScreen({ navigate }) {
           return <View key={product.id} style={styles.card}>
             <Pressable onPress={() => navigate("product", { productId: product.id })} style={styles.productCard}>
               {image?.image_url
-                ? <ProductThumbnail uri={image.image_url} width={520} resizeMode="cover" style={styles.productImage} />
+                ? <ProductThumbnail uri={image.image_url} width={360} resizeMode="cover" style={styles.productImage} />
                 : <View style={[styles.productImage, styles.imageFallback]}><Text style={styles.fallbackLetter}>S</Text></View>}
               <View style={styles.info}>
                 <Text numberOfLines={2} style={styles.productName}>{product.name}</Text>
