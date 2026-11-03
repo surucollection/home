@@ -147,7 +147,7 @@ export default function Wishlist(){
           <div className="wishlist-grid">
             {items.map(item=><article className="wishlist-product-card" key={item.id}>
               <a className="wishlist-product-link" href={"/product.html?code="+encodeURIComponent(item.product_code)}>
-                {item.image?<img className="wishlist-product-image" src={productThumbnailUrl(item.image,540)} alt={item.imageAlt||item.name} loading="lazy" onError={e=>{const img=e.currentTarget;if(img.dataset.fallback==="1"){img.style.visibility="hidden";return;}img.dataset.fallback="1";const fallback=imageUrl(item.image,720);if(fallback!==productThumbnailUrl(item.image,540)){img.src=fallback;}else{img.style.visibility="hidden";}}}/>:<div className="wishlist-product-image wishlist-product-placeholder">Suru Collection</div>}
+                {item.image?<img className="wishlist-product-image" src={productThumbnailUrl(item.image,360)} alt={item.imageAlt||item.name} loading="lazy" onError={e=>{const img=e.currentTarget;if(img.dataset.fallback==="1"){img.style.visibility="hidden";return;}img.dataset.fallback="1";const fallback=imageUrl(item.image,720);if(fallback!==productThumbnailUrl(item.image,360)){img.src=fallback;}else{img.style.visibility="hidden";}}}/>:<div className="wishlist-product-image wishlist-product-placeholder">Suru Collection</div>}
                 <div className="wishlist-product-info">
                   <strong>{item.name}</strong>
                   <span className="wishlist-product-price">{money(item.price)}</span>
