@@ -96,7 +96,7 @@ export function ProductCard({ product, onPress }) {
   return (
     <Pressable onPress={() => onPress?.(image?.color || product?.color || "")} style={styles.productCard}>
       {image?.image_url
-        ? <ProductThumbnail uri={image.image_url} width={520} style={styles.productImage} resizeMode="cover" />
+        ? <ProductThumbnail uri={image.image_url} width={360} style={styles.productImage} resizeMode="cover" />
         : <View style={[styles.productImage, styles.imageFallback]}><Text style={styles.fallbackLetter}>{String(product?.name || "S").slice(0, 1)}</Text></View>}
       {product?.is_featured && <View style={styles.featuredTag}><Text style={styles.featuredTagText}>FEATURED</Text></View>}
       <View style={styles.productInfo}>
