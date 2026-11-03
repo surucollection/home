@@ -1997,3 +1997,25 @@
   font-size:10px!important;
   line-height:1.3!important;
 }
+
+
+/* Compact customer review summary and Add/Edit review actions */
+.product-review-own-summary{
+  display:grid;
+  gap:8px;
+  min-width:0;
+}
+.product-review-own-summary .product-review-title{margin:0}
+.product-review-own-summary .product-review-body{
+  margin:0;
+  display:-webkit-box;
+  -webkit-line-clamp:4;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.product-review-own-summary .product-review-form-intro{margin:0}
+.product-review-own-summary .secondary{
+  justify-self:start;
+  min-height:40px;
+  padding:9px 16px;
+}
