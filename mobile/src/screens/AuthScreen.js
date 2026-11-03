@@ -261,7 +261,7 @@ export default function AuthScreen({ onDone, goBack }) {
           <Button title="Create account and send OTP" onPress={register} loading={busy} />
         </>}
         {!!message && <Notice tone={/unable|failed|error|must|enter|complete|match|not /i.test(message) ? "error" : "info"}>{message}</Notice>}
-        <Text style={styles.footnote}>Google sign-in and passkeys use your Suru Collection account. Passkey sign-in requires passkey support to be enabled for this project.</Text>
+        <Text style={styles.footnote}>Google sign-in uses your Suru Collection account. Native passkeys also require verified Suru domain association for this app and a supported device credential provider.</Text>
       </Page>
     </KeyboardAvoidingView>
   );
