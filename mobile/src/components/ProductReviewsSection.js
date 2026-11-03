@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useStore } from "../StoreContext";
 import { supabase } from "../lib/supabase";
 import { Button, Notice } from "./UI";
@@ -14,6 +14,7 @@ export default function ProductReviewsSection({ product, onSignIn }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState("");
   const [reviewText, setReviewText] = useState("");
@@ -97,6 +98,7 @@ export default function ProductReviewsSection({ product, onSignIn }) {
       setMyReview(data);
       setReviews((previous) => previous.filter((item) => item.user_id !== user.id));
       setEditing(false);
+      setFormOpen(false);
       setNotice(myReview
         ? "Your review was updated and sent for approval again."
         : "Thank you! Your review has been submitted and will appear after approval.");
@@ -105,6 +107,27 @@ export default function ProductReviewsSection({ product, onSignIn }) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function openNewReview() {
+    setRating(5);
+    setTitle("");
+    setReviewText("");
+    setError("");
+    setNotice("");
+    setEditing(false);
+    setFormOpen(true);
+  }
+
+  function openEditReview() {
+    setRating(Number(myReview?.rating) || 5);
+    setTitle(myReview?.title || "");
+    setReviewText(myReview?.review_text || "");
+    setDisplayName(myReview?.display_name || displayName);
+    setError("");
+    setNotice("");
+    setEditing(true);
+    setFormOpen(true);
   }
 
   return (
@@ -148,15 +171,7 @@ export default function ProductReviewsSection({ product, onSignIn }) {
           {item.user_id === session?.user?.id && (
             <View style={styles.ownReviewRow}>
               <Text style={styles.ownReviewLabel}>Your review</Text>
-              <Pressable onPress={() => {
-                setRating(Number(myReview?.rating) || 5);
-                setTitle(myReview?.title || "");
-                setReviewText(myReview?.review_text || "");
-                setDisplayName(myReview?.display_name || displayName);
-                setError("");
-                setNotice("");
-                setEditing(true);
-              }}>
+              <Pressable onPress={openEditReview}>
                 <Text style={styles.editAction}>Edit review</Text>
               </Pressable>
             </View>
@@ -168,22 +183,43 @@ export default function ProductReviewsSection({ product, onSignIn }) {
         <View style={styles.pendingCard}>
           <Text style={styles.pendingTitle}>Your review is awaiting approval</Text>
           <Text style={styles.muted}>Only approved reviews are shown publicly.</Text>
-          <Button title="Edit review" secondary onPress={() => setEditing(true)} />
+          <Button title="Edit review" secondary onPress={openEditReview} />
         </View>
       )}
 
       <View style={styles.formCard}>
-        <Text style={styles.formTitle}>{myReview ? "Your customer review" : "Write a review"}</Text>
+        <Text style={styles.formTitle}>{myReview ? "Your review" : "Write a review"}</Text>
         {!session?.user ? (
           <>
             <Text style={styles.formIntro}>Sign in to leave a review.</Text>
             <Button title="Sign in to review" onPress={onSignIn} />
           </>
-        ) : myReview && !editing ? (
-          <Text style={styles.formIntro}>You have already reviewed this product. Use Edit review to make changes.</Text>
+        ) : myReview ? (
+          <>
+            <Text style={styles.reviewStars}>{starString(Number(myReview.rating) || 0)}</Text>
+            {!!myReview.title && <Text style={styles.reviewTitle}>{myReview.title}</Text>}
+            <Text style={styles.reviewBody} numberOfLines={3}>{myReview.review_text}</Text>
+            <Text style={styles.muted}>{myReview.is_approved ? "Your review is published." : "Your review is awaiting approval."}</Text>
+            <Button title="Edit review" secondary onPress={openEditReview} />
+          </>
         ) : (
           <>
             <Text style={styles.formIntro}>Tried this product? Share your thoughts with other shoppers.</Text>
+            <Button title="Add a review" onPress={openNewReview} />
+          </>
+        )}
+        {!!error && <Notice tone="error">{error}</Notice>}
+        {!!notice && <Notice tone="success">{notice}</Notice>}
+        <Text style={styles.note}>One review per account for each product. New reviews and edits must be approved by Suru Collection before they appear publicly.</Text>
+      </View>
+      <Modal visible={formOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setFormOpen(false)}>
+        <View style={styles.modalRoot}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{editing ? "Edit your review" : "Write a review"}</Text>
+            <Pressable onPress={() => setFormOpen(false)} hitSlop={12}><Text style={styles.modalClose}>×</Text></Pressable>
+          </View>
+          <ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
+            <Text style={styles.formIntro}>{editing ? "Your changes will be sent for approval again." : "Your feedback helps other customers choose with confidence."}</Text>
             <Text style={styles.fieldLabel}>Your rating</Text>
             <View style={styles.ratingPicker}>
               {[1, 2, 3, 4, 5].map((value) => (
@@ -199,14 +235,13 @@ export default function ProductReviewsSection({ product, onSignIn }) {
             <TextInput value={reviewText} onChangeText={setReviewText} multiline textAlignVertical="top" maxLength={2000} placeholder="What did you like or notice about this product?" placeholderTextColor={colors.muted} style={[styles.input, styles.multiline]} />
             <Text style={styles.fieldLabel}>Display name</Text>
             <TextInput value={displayName} onChangeText={setDisplayName} maxLength={80} placeholder="Your display name" placeholderTextColor={colors.muted} style={styles.input} />
-            <Button title={submitting ? "Saving…" : myReview ? "Save changes" : "Submit Review"} onPress={submitReview} loading={submitting} disabled={submitting} />
-            {editing && <Button title="Cancel" secondary onPress={() => { setEditing(false); setError(""); setNotice(""); }} />}
-          </>
-        )}
-        {!!error && <Notice tone="error">{error}</Notice>}
-        {!!notice && <Notice tone="success">{notice}</Notice>}
-        <Text style={styles.note}>One review per account for each product. New reviews and edits must be approved by Suru Collection before they appear publicly.</Text>
-      </View>
+            {!!error && <Notice tone="error">{error}</Notice>}
+            {!!notice && <Notice tone="success">{notice}</Notice>}
+            <Button title={submitting ? "Saving…" : editing ? "Save changes" : "Submit review"} onPress={submitReview} loading={submitting} disabled={submitting} />
+            <Button title="Cancel" secondary onPress={() => setFormOpen(false)} disabled={submitting} />
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -248,5 +283,10 @@ const styles = {
   ratingValue: { color: colors.muted, fontSize: 11, marginLeft: 4 },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.background, color: colors.ink, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13 },
   multiline: { minHeight: 110, marginTop: 0 },
-  note: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 11 }
+  note: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 11 },
+  modalRoot: { flex: 1, backgroundColor: colors.background },
+  modalHeader: { minHeight: 58, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  modalTitle: { color: colors.ink, fontSize: 17, fontWeight: "800" },
+  modalClose: { color: colors.primary, fontSize: 30, lineHeight: 34, paddingHorizontal: 4 },
+  modalContent: { padding: 18, paddingBottom: 34 }
 };
