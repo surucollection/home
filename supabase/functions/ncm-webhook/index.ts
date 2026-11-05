@@ -42,29 +42,58 @@ function extractOrderIds(payload: any): number[] {
   return [];
 }
 
-async function patchOrder(ncmId: number, payload: any) {
-  const rawStatus = payload?.event || payload?.status || payload?.orderStatus || payload?.order_status || "";
-  const mapped = mapStatus(rawStatus);
-  const patch: Record<string, unknown> = {
-    ncm_status: String(rawStatus || ""),
-    ncm_last_sync_at: new Date().toISOString(),
-    ncm_response: payload,
-  };
-  if (mapped) patch.order_status = mapped;
-
+async function patchMatchingOrders(filter: string, patch: Record<string, unknown>) {
   const response = await fetch(
-    SUPABASE_URL + "/rest/v1/orders?ncm_order_id=eq." + encodeURIComponent(ncmId),
+    SUPABASE_URL + "/rest/v1/orders?" + filter,
     {
       method: "PATCH",
       headers: {
         apikey: SERVICE_ROLE_KEY,
         Authorization: "Bearer " + SERVICE_ROLE_KEY,
         "Content-Type": "application/json",
+        Prefer: "return=representation",
       },
       body: JSON.stringify(patch),
     },
   );
-  return response.ok;
+  if (!response.ok) {
+    console.error("NCM webhook order update failed", response.status, await response.text());
+    return 0;
+  }
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
+async function patchOrder(ncmId: number, payload: any) {
+  const rawStatus = payload?.event || payload?.status || payload?.orderStatus || payload?.order_status || "";
+  const mapped = mapStatus(rawStatus);
+  const now = new Date().toISOString();
+
+  // Original forward shipment: update the main NCM and store order status fields.
+  const originalPatch: Record<string, unknown> = {
+    ncm_status: String(rawStatus || ""),
+    ncm_last_sync_at: now,
+    ncm_response: payload,
+  };
+  if (mapped) originalPatch.order_status = mapped;
+
+  // Reverse shipment: update only its own tracking/status fields. Never overwrite
+  // the customer's original delivery status with the reverse courier status.
+  const reversePatch: Record<string, unknown> = {
+    ncm_return_status: String(rawStatus || ""),
+    ncm_return_last_sync_at: now,
+  };
+
+  const [originalUpdated, reverseUpdated] = await Promise.all([
+    patchMatchingOrders("ncm_order_id=eq." + encodeURIComponent(ncmId), originalPatch),
+    patchMatchingOrders("ncm_return_order_id=eq." + encodeURIComponent(ncmId), reversePatch),
+  ]);
+
+  return {
+    original_updated: originalUpdated,
+    reverse_updated: reverseUpdated,
+    matched: originalUpdated + reverseUpdated > 0,
+  };
 }
 
 Deno.serve(async (req) => {
