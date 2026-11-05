@@ -380,7 +380,30 @@ Deno.serve(async (req) => {
           if(!saved.ok) exchange_sync.push({exchange_id:ex.id,saved:false,error:(await saved.text()).slice(0,250)});
         }
       }
-      return json({ order: updated, history, exchange_sync });
+      let reverse_return_sync: any = null;
+      if (order.ncm_return_order_id) {
+        try {
+          let reverseDetail: any = null, reverseHistory: any = null;
+          for (const base of [NCM_BASE, "https://portal.nepalcanmove.com"]) {
+            try { reverseDetail = await ncmJson("/api/v1/order?id=" + encodeURIComponent(order.ncm_return_order_id), {}, base); break; } catch {}
+          }
+          for (const base of [NCM_BASE, "https://portal.nepalcanmove.com"]) {
+            try { reverseHistory = await ncmJson("/api/v1/order/status?id=" + encodeURIComponent(order.ncm_return_order_id), {}, base); break; } catch {}
+          }
+          const reverseRows = Array.isArray(reverseHistory) ? reverseHistory : Array.isArray(reverseHistory?.results) ? reverseHistory.results : Array.isArray(reverseHistory?.data) ? reverseHistory.data : Array.isArray(reverseHistory?.history) ? reverseHistory.history : [];
+          reverseRows.sort((a: any, b: any) => new Date(a.added_time || a.addedTime || a.timestamp || 0).getTime() - new Date(b.added_time || b.addedTime || b.timestamp || 0).getTime());
+          const reverseStatus = String(reverseRows[reverseRows.length - 1]?.status || reverseRows[reverseRows.length - 1]?.event || reverseDetail?.status || order.ncm_return_status || "");
+          const reverseTracking = extractNcmTrackingId(reverseDetail);
+          const reversePatch: Record<string, unknown> = { ncm_return_last_sync_at: new Date().toISOString() };
+          if (reverseStatus) reversePatch.ncm_return_status = reverseStatus;
+          if (reverseTracking && reverseTracking !== String(order.ncm_return_order_id)) reversePatch.ncm_return_tracking_id = reverseTracking;
+          const savedReverse = await updateOrder(order.id, reversePatch, userToken);
+          reverse_return_sync = { ncm_return_order_id: order.ncm_return_order_id, status: reverseStatus || null, tracking_id: reverseTracking || null, synced: !!savedReverse };
+        } catch (e) {
+          reverse_return_sync = { ncm_return_order_id: order.ncm_return_order_id, synced: false, error: e instanceof Error ? e.message : String(e) };
+        }
+      }
+      return json({ order: updated, history, exchange_sync, reverse_return_sync });
     }
 
     if (action === "create") {
