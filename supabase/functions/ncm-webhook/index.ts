@@ -131,11 +131,14 @@ Deno.serve(async (req) => {
       }), { status: 200, headers: corsHeaders });
     }
 
-    const results = await Promise.all(ids.map(async (id) => ({ id, updated: await patchOrder(id, payload) })));
+    const results = await Promise.all(ids.map(async (id) => ({ id, ...(await patchOrder(id, payload)) })));
 
     return new Response(JSON.stringify({
-      success: results.every((item) => item.updated),
-      updated: results.filter((item) => item.updated).length,
+      success: true,
+      matched: results.filter((item) => item.matched).length,
+      original_orders_updated: results.reduce((sum, item) => sum + item.original_updated, 0),
+      reverse_returns_updated: results.reduce((sum, item) => sum + item.reverse_updated, 0),
+      unmatched_order_ids: results.filter((item) => !item.matched).map((item) => item.id),
       order_ids: ids,
     }), { status: 200, headers: corsHeaders });
   } catch (error) {
