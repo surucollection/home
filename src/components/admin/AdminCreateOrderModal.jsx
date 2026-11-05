@@ -571,7 +571,9 @@ Thank you for ordering from Suru Collection.`;
       }
       const result={...data,confirmation:buildConfirmation(data)};
       setCreated(result);
-      await onCreated?.(data);
+      // Order creation is already committed. Do not keep the submit button spinning
+      // while the parent refreshes the orders list and dashboard in the background.
+      Promise.resolve(onCreated?.(data)).catch(()=>{});
     }catch(e){
       setError(e?.message||"Unable to create order.");
     }finally{
