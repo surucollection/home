@@ -120,13 +120,14 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
   };
 
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
+  const adminThumbnail=imageLinks.find(x=>x.media_type!=="video")||null;
   const isMainForColor=(img,index)=>!images.slice(0,index).some(other=>colorGroupKey(other.color)===colorGroupKey(img.color));
   const close=()=>{setSaveMessage("");setEditing(null)};
 
   return <div className="product-admin-card">
     <div className="product-admin-summary">
       <div className="product-admin-thumb">
-        {imageLinks[0]?<img src={imageUrl(imageLinks[0].image_url,160)} alt={p.name||"Product"} loading="lazy" onError={e=>{e.currentTarget.style.visibility="hidden"}}/>:<span aria-hidden="true">No image</span>}
+        {adminThumbnail?<img src={imageUrl(adminThumbnail.image_url,160)} alt={p.name||"Product"} loading="lazy" onError={e=>{e.currentTarget.style.visibility="hidden"}}/>:<span aria-hidden="true">No image</span>}
       </div>
       <div className="product-admin-info" style={{minWidth:0,width:"100%",maxWidth:"100%",overflow:"hidden"}}>
         <div className="product-admin-title" style={{minWidth:0,maxWidth:"100%",overflow:"hidden"}}><b style={{display:"block",whiteSpace:"normal",overflowWrap:"anywhere",wordBreak:"break-word",maxWidth:"100%"}}>{p.name}</b><small>{p.product_code} · {p.category}</small></div>
@@ -196,7 +197,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
                   <button type="button" className="product-image-drag-handle" title="Hold and drag to reorder" aria-label={"Drag "+rowLabel+" to reorder"} onPointerDown={event=>beginDrag(event,i)} disabled={uploading}>⠿</button>
                 </div>
                 {(img.previewUrl||img.image_url)
-                  ? <div className={"product-image-thumb"+(img.media_type==="video"?" is-video-thumb":"")}>{img.media_type==="video"?<><video src={img.previewUrl||img.image_url} muted playsInline preload="metadata"/><span className="product-video-play" aria-label="Video">▶</span></>:<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={event=>{event.currentTarget.style.display="none"}}/>}</div>
+                  ? <div className={"product-image-thumb"+(img.media_type==="video"?" is-video-thumb":"")}>{img.media_type==="video"?(adminThumbnail?<><img src={imageUrl(adminThumbnail.image_url,160)} alt={p.name+" video thumbnail"} onError={event=>{event.currentTarget.style.display="none"}}/><span className="product-video-play" aria-label="Video">▶</span></>:<span className="product-video-play" aria-label="Video">▶</span>):<img src={img.previewUrl||imageUrl(img.image_url,96)} alt={img.alt_text||p.name} onError={event=>{event.currentTarget.style.display="none"}}/>}</div>
                   : <label className="product-image-thumb product-image-single-upload" title="Choose one image or video for this row">
                       <span>＋<small>Choose</small></span>
                       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" disabled={uploading} aria-label={"Choose one image or video for row "+(i+1)} onChange={event=>{
