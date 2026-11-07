@@ -1,12 +1,29 @@
-import React,{useEffect,useMemo,useState} from "react";
+import React,{useEffect,useMemo,useRef,useState} from "react";
 import { money, norm, imageUrl, productThumbnailUrl, get } from "../lib/api.js";
 import { addCart } from "../lib/cart.js";
 
-export default function ProductCard({product,image,variants=[],displayColour="",priority=false}){
+export default function ProductCard({product,image,poster=null,variants=[],displayColour="",priority=false}){
   const href="/product.html?code="+encodeURIComponent(product.product_code)+(displayColour?"&color="+encodeURIComponent(displayColour):"");
   const sourceImage=String(image?.image_url||"").trim();
-  const cardImage=productThumbnailUrl(sourceImage,360);
-  const cartImage=imageUrl(sourceImage,720);
+  const isVideo=image?.media_type==="video";
+  const posterSource=String(poster?.image_url||"").trim();
+  const cardImage=isVideo?sourceImage:productThumbnailUrl(sourceImage,360);
+  const cartImage=imageUrl(isVideo?(posterSource||sourceImage):sourceImage,720);
+  const videoRef=useRef(null);
+  useEffect(()=>{
+    const video=videoRef.current;
+    if(!isVideo||!video)return;
+    const play=()=>{video.play().catch(()=>{});};
+    if(typeof IntersectionObserver==="undefined"){play();return()=>video.pause();}
+    const observer=new IntersectionObserver(entries=>{
+      for(const entry of entries){
+        if(entry.isIntersecting&&entry.intersectionRatio>=0.2)play();
+        else video.pause();
+      }
+    },{threshold:[0,0.2,0.6],rootMargin:"80px"});
+    observer.observe(video);
+    return()=>{observer.disconnect();video.pause();};
+  },[isVideo,sourceImage]);
   const[loadedVariants,setLoadedVariants]=useState(variants);
   const[variantLoading,setVariantLoading]=useState(false);
   const[added,setAdded]=useState(false),[open,setOpen]=useState(false),[buyNow,setBuyNow]=useState(false),[size,setSize]=useState(""),[colour,setColour]=useState(displayColour||""),[qty,setQty]=useState(1);
@@ -55,7 +72,18 @@ export default function ProductCard({product,image,variants=[],displayColour="",
   return <article className="product-card">
     <a className="product-image" href={href}>
       <span className="product-code-badge">{product.product_code}</span>
-      {image?<img
+      {image?(isVideo?<video
+        ref={videoRef}
+        src={sourceImage}
+        poster={posterSource?productThumbnailUrl(posterSource,360):undefined}
+        muted
+        autoPlay
+        loop
+        playsInline
+        preload="none"
+        aria-label={product.name+" product video"}
+        style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+      />:<img
         src={cardImage}
         alt={image.alt_text||product.name}
         loading={priority?"eager":"lazy"}
@@ -68,7 +96,7 @@ export default function ProductCard({product,image,variants=[],displayColour="",
           if(cardImage!==cartImage){img.src=cartImage;return;}
           img.style.visibility="hidden";
         }}
-      />:<div className="product-image-placeholder">Suru Collection</div>}
+      />):<div className="product-image-placeholder">Suru Collection</div>}
     </a>
     <div className="product-card-content">
       {product.category&&<div className="product-category">{product.category}</div>}
