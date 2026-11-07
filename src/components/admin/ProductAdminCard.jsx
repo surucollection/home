@@ -142,7 +142,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
       subtitle={p.product_code+" · "+p.name}
       bodyClassName="admin-product-modal-body"
       maxWidth="1000px"
-      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>{setSaveMessage("");uploadAndSave()}} disabled={imagesLoading||uploading}>{imagesLoading?"Loading images…":uploading?"Uploading…":"Save Product"}</button></div>}
+      footer={<div className="admin-product-modal-footer-content"><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" type="button" onClick={()=>{setSaveMessage("");uploadAndSave()}} disabled={imagesLoading||uploading}>{imagesLoading?"Loading images…":uploading?"Saving…":"Save Product"}</button></div>}
     >
       <div className="admin-form admin-product-compact-form">
         {saveMessage&&<div className="message" role="status" style={{marginBottom:12,whiteSpace:"normal"}}>{saveMessage}</div>}
