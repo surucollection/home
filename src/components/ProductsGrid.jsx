@@ -69,8 +69,9 @@ function expandProducts(products){
     return colours.map(colour=>{
       const sameColour=images.filter(i=>String(i.color||"").trim().toLowerCase()===colour.toLowerCase());
       const shared=images.filter(i=>!String(i.color||"").trim());
-      const candidates=sameColour.length?sameColour:(shared.length?shared:images);
-      const listingImage=candidates.find(i=>i.is_main)||[...candidates].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0];
+      const candidates=(sameColour.length?[...sameColour,...shared]:(shared.length?shared:images))
+        .sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
+      const listingImage=candidates[0];
       return {...product,listingColour:colour,listingImage,listingVariants:variants.filter(v=>String(v.color||"").trim().toLowerCase()===colour.toLowerCase()||!String(v.color||"").trim())};
     });
   });
