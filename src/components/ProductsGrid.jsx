@@ -63,9 +63,9 @@ function filterCatalog(rows,category,featured,excludeFeatured){
 function expandProducts(products){
   return (products||[]).flatMap(product=>{
     const variants=product.product_sizes||[];
-    const images=(product.product_images||[]).filter(i=>i.media_type!=="video");
+    const images=[...(product.product_images||[])].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
     const colours=[...new Set([...variants.map(v=>String(v.color||"").trim()),...images.map(i=>String(i.color||"").trim())].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-    if(!colours.length)return [{...product,listingColour:"",listingImage:undefined,listingVariants:variants}];
+    if(!colours.length)return [{...product,listingColour:"",listingImage:images.find(i=>i.is_main)||images[0],listingVariants:variants}];
     return colours.map(colour=>{
       const sameColour=images.filter(i=>String(i.color||"").trim().toLowerCase()===colour.toLowerCase());
       const shared=images.filter(i=>!String(i.color||"").trim());
@@ -147,12 +147,17 @@ export default function ProductsGrid({limit,category,featured=false,excludeFeatu
   return <>
     <div className="product-grid">
       {visible.map((product,index)=>{
-        const images=(product.product_images||[]).filter(i=>i.media_type!=="video");
-        const image=product.listingImage||images.find(i=>i.is_main)||[...images].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0];
+        const media=[...(product.product_images||[])].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
+        const image=product.listingImage||media.find(i=>i.is_main)||media[0];
+        const stills=media.filter(i=>i.media_type!=="video");
+        const colourKey=String(product.listingColour||"").trim().toLowerCase();
+        const poster=(colourKey?stills.find(i=>String(i.color||"").trim().toLowerCase()===colourKey):null)
+          ||stills.find(i=>!String(i.color||"").trim())||stills[0];
         return <ProductCard
           key={product.id+(product.listingColour?"-"+product.listingColour:"")}
           product={product}
           image={image}
+          poster={poster}
           variants={product.listingVariants||product.product_sizes||[]}
           displayColour={product.listingColour||""}
           priority={index<2}
