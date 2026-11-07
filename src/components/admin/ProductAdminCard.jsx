@@ -120,7 +120,9 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
   };
 
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
-  const adminThumbnail=imageLinks.find(x=>x.media_type!=="video")||null;
+  const isVideoMedia=media=>String(media?.media_type||"").toLowerCase()==="video"||/\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(String(media?.image_url||""));
+  // Admin product-list thumbnails must always use the first photo, never a video.
+  const adminThumbnail=imageLinks.find(x=>!isVideoMedia(x))||null;
   const isMainForColor=(img,index)=>!images.slice(0,index).some(other=>colorGroupKey(other.color)===colorGroupKey(img.color));
   const close=()=>{setSaveMessage("");setEditing(null)};
 
