@@ -178,7 +178,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
             <div className="admin-product-inline-title"><b>Product Media</b><small>Drag or use the arrows to reorder. The first media item for each colour becomes its main gallery media.</small></div>
             <button type="button" className="secondary product-image-add-button" onClick={addImage} disabled={uploading}>+ Add Media</button>
           </div>
-          <label className="admin-product-upload-label">Upload image files
+          <label className="admin-product-upload-label">Upload photo/video files
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" multiple disabled={uploading} onChange={event=>{
               const files=Array.from(event.target.files||[]);
               setImages(prev=>[...prev,...files.map(file=>({id:null,clientKey:"file-"+crypto.randomUUID(),file,previewUrl:URL.createObjectURL(file),image_url:"",alt_text:file.name,color:"",media_type:file.type.startsWith("video/")?"video":"image",is_main:false}))]);
