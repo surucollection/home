@@ -92,17 +92,21 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
   },[dragIndex]);
 
   const uploadAndSave=async()=>{
-    setUploading(true);setSaveMessage("Uploading images…");
+    const pendingUploads=images.filter(x=>x.file).length;
+    setUploading(true);setSaveMessage(pendingUploads?"Uploading "+pendingUploads+" new/replaced media file(s)…":"Saving gallery changes…");
     try{
       const prepared=images.map(x=>({...x}));
+      let uploaded=0;
       for(let i=0;i<prepared.length;i++){
         const img=prepared[i];
         if(img.file){
+          uploaded++;
+          setSaveMessage("Uploading new/replaced media "+uploaded+" of "+pendingUploads+"…");
           const url=await uploadProductImage(p.id,img.file);
           prepared[i]={...img,image_url:url,media_type:img.file.type.startsWith("video/")?"video":"image",file:null};
         }
       }
-      setSaveMessage("Saving gallery order and colour main images…");
+      setSaveMessage("Saving gallery order and media metadata…");
       await saveProduct(e,prepared,setSaveMessage);
       const{data:rows,error}=await supabase.from("product_images")
         .select("id,image_url,alt_text,is_main,sort_order,color,media_type")
@@ -116,7 +120,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
   };
 
   const imageLinks=images.filter(x=>String(x.image_url||"").trim());
-  const isMainForColor=(img,index)=>img.media_type!=="video"&&!images.slice(0,index).some(other=>other.media_type!=="video"&&colorGroupKey(other.color)===colorGroupKey(img.color));
+  const isMainForColor=(img,index)=>!images.slice(0,index).some(other=>colorGroupKey(other.color)===colorGroupKey(img.color));
   const close=()=>{setSaveMessage("");setEditing(null)};
 
   return <div className="product-admin-card">
