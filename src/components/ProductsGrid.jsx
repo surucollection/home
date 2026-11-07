@@ -3,7 +3,7 @@ import { get } from "../lib/api.js";
 import ProductCard from "./ProductCard.jsx";
 
 const PAGE_SIZE=24;
-const CATALOG_CACHE_KEY="suru_full_product_catalog_v1";
+const CATALOG_CACHE_KEY="suru_full_product_catalog_v2";
 const CATALOG_REVALIDATE_MS=60000;
 
 let catalogMemoryCache=null;
