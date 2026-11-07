@@ -175,8 +175,8 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
 
         <div className="admin-product-section admin-product-images-section">
           <div className="product-images-toolbar">
-            <div className="admin-product-inline-title"><b>Product Images</b><small>Drag or use the arrows to reorder. The first image for each colour becomes its main image.</small></div>
-            <button type="button" className="secondary product-image-add-button" onClick={addImage} disabled={uploading}>+ Add Image</button>
+            <div className="admin-product-inline-title"><b>Product Media</b><small>Drag or use the arrows to reorder. The first media item for each colour becomes its main gallery media.</small></div>
+            <button type="button" className="secondary product-image-add-button" onClick={addImage} disabled={uploading}>+ Add Media</button>
           </div>
           <label className="admin-product-upload-label">Upload image files
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" multiple disabled={uploading} onChange={event=>{
@@ -190,7 +190,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
           <div className={"product-image-edit-list"+(dragIndex!==null?" is-dragging":"")}>
             {images.map((img,i)=>{
               const isColorMain=isMainForColor(img,i);
-              const rowLabel="Image "+(i+1)+(isColorMain?" — main image for "+(String(img.color||"").trim()||"unspecified colour"):"");
+              const rowLabel="Media "+(i+1)+(isColorMain?" — main media for "+(String(img.color||"").trim()||"unspecified colour"):"");
               return <div key={img.clientKey||img.id||"new-"+i} data-image-index={i} className={"product-image-edit-row"+(dragOverIndex===i?" is-drag-over":"")+(dragIndex===i?" is-drag-source":"")}>
                 <div className="product-image-order-controls">
                   <button type="button" className="product-image-drag-handle" title="Hold and drag to reorder" aria-label={"Drag "+rowLabel+" to reorder"} onPointerDown={event=>beginDrag(event,i)} disabled={uploading}>⠿</button>
@@ -211,7 +211,7 @@ export default function ProductAdminCard({p,editing,setEditing,saveProduct,uploa
                 <button type="button" className="danger product-image-remove" title="Remove image" aria-label={"Remove image "+(i+1)} onClick={()=>setImages(prev=>prev.filter((_,j)=>j!==i))} disabled={uploading}>×</button>
               </div>;
             })}
-            {!imagesLoading&&images.length===0&&<p className="form-note">No images yet. Upload multiple files above or choose Add Image to add one file.</p>}
+            {!imagesLoading&&images.length===0&&<p className="form-note">No media yet. Upload photos or videos above or choose Add Media to add one file.</p>}
           </div>
         </div>
       </div>
